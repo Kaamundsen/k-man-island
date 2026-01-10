@@ -4,74 +4,63 @@ import pandas_ta as ta
 import plotly.graph_objects as go
 import pandas as pd
 
-# 1. K-man Island Theme & Config
+# 1. K-man Island Style
 st.set_page_config(page_title="K-man Island", layout="wide")
-
 st.markdown("""
     <style>
     .stApp { background-color: #FFFFFF; }
-    [data-testid="stMetric"] {
-        background-color: #ffffff;
-        border-radius: 15px;
-        padding: 20px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-        border: 1px solid #f0f2f6;
-    }
+    [data-testid="stMetric"] { background-color: #f8fafc; border-radius: 15px; padding: 20px; border: 1px solid #e2e8f0; }
     h1 { color: #0e7490; font-family: 'Helvetica Neue', sans-serif; font-weight: 800; }
     </style>
     """, unsafe_allow_html=True)
 
 st.title("🏝️ K-man Island")
-st.subheader("Tactical Intelligence Terminal")
+st.subheader("Tactical Portfolio Intelligence")
 
-# 2. Funksjon for å hente data
-@st.cache_data(ttl=3600)
-def get_data(ticker):
+# 2. Skanner-motor (Her definerer vi vinner-kriteriene)
+def get_k_score(ticker):
     try:
-        df = yf.download(ticker, period="1y", interval="1d")
-        if df.empty: return None
-        df['RSI'] = ta.rsi(df['Close'], length=14)
-        df['SMA20'] = ta.sma(df['Close'], length=20)
-        df['SMA50'] = ta.sma(df['Close'], length=50)
-        return df
+        df = yf.download(ticker, period="6mo", interval="1d", progress=False)
+        if len(df) < 50: return None
+        
+        # Algoritmen:
+        rsi = ta.rsi(df['Close'], length=14).iloc[-1]
+        returns_3m = (df['Close'].iloc[-1] / df['Close'].iloc[-60]) - 1
+        vol_ratio = df['Volume'].iloc[-5:].mean() / df['Volume'].rolling(20).mean().iloc[-1]
+        
+        # K-Score logikk (Vi vil ha momentum + ok RSI)
+        score = (returns_3m * 50) + (vol_ratio * 10)
+        if 30 < rsi < 55: score += 20 # Bonus for "sweet spot" timing
+        
+        return {
+            "Ticker": ticker, 
+            "Pris": round(float(df['Close'].iloc[-1]), 2),
+            "RSI": round(float(rsi), 1), 
+            "K-Score": round(float(score), 1),
+            "Trend": "UP" if df['Close'].iloc[-1] > ta.sma(df['Close'], length=50).iloc[-1] else "DOWN"
+        }
     except:
         return None
 
-# 3. Scanner-logikk for Oslo Børs (Eksempelutvalg)
-# Her kan vi senere legge inn en komplett liste over alle 300 aksjer
-market_watch = ["NOD.OL", "SATS.OL", "KID.OL", "VAR.OL", "PROT.OL", "AKSO.OL", "NEL.OL", "BGBIO.OL", "TEL.OL", "ORK.OL"]
+# 3. Listen over aksjer vi vil overvåke (Vi kan legge til alle på OB senere)
+watchlist = ["NOD.OL", "SATS.OL", "KID.OL", "VAR.OL", "PROT.OL", "AKSO.OL", "NEL.OL", "BGBIO.OL", "TEL.OL", "ORK.OL", "FRO.OL", "GOGL.OL", "NAS.OL", "DNB.OL"]
 
-st.sidebar.header("K-man Controls")
-selected = st.sidebar.selectbox("Fokuser på objekt:", market_watch)
-
-# 4. Hovedvisning for valgt aksje
-df = get_data(selected)
-if df is not None:
-    col1, col2, col3 = st.columns(3)
-    curr = df['Close'].iloc[-1]
-    rsi = df['RSI'].iloc[-1]
+# 4. Kjør skanneren
+st.header("🎯 K-man Top 10 Opportunities")
+with st.spinner('Skanner markedet for Alpha...'):
+    results = []
+    for t in watchlist:
+        res = get_k_score(t)
+        if res: results.append(res)
     
-    col1.metric("Kurs", f"{curr:.2f} NOK")
-    col2.metric("RSI (Timing)", f"{rsi:.1f}", "Billig" if rsi < 40 else "Dyr" if rsi > 70 else "Nøytral")
-    col3.metric("K-Score", f"{int(100-rsi)}/100") # Enkel foreløpig score
+    # Sorter etter høyest score
+    df_results = pd.DataFrame(results).sort_values(by="K-Score", ascending=False)
 
-    fig = go.Figure()
-    fig.add_trace(go.Candlestick(x=df.index, open=df['Open'], high=df['High'], low=df['Low'], close=df['Close'], name="Pris"))
-    fig.add_trace(go.Scatter(x=df.index, y=df['SMA50'], line=dict(color='#0e7490', width=2), name="Trend (50D)"))
-    fig.update_layout(plot_bgcolor='white', paper_bgcolor='white', height=500, xaxis_rangeslider_visible=False)
-    st.plotly_chart(fig, use_container_width=True)
+# Vis topp 10 i en pen tabell
+st.table(df_results.head(10))
 
-# 5. Top 10 Rangering
-st.markdown("---")
-st.header("🎯 K-man Top 10 Watchlist")
-scan_data = []
-for t in market_watch:
-    d = get_data(t)
-    if d is not None:
-        scan_data.append({
-            "Ticker": t,
-            "Pris": d['Close'].iloc[-1],
-            "RSI": d['RSI'].iloc[-1],
-            "Trend": "OPP" if d['Close'].iloc[-1] > d['SMA50'].iloc[-1] else "NED"
-        })
-st.table(pd.DataFrame(scan_data))
+# 5. Detaljert innsyn
+st.sidebar.header("Island Navigator")
+selected_stock = st.sidebar.selectbox("Gå dypere i aksje:", df_results['Ticker'].tolist())
+
+# (Her legger du inn graf-koden vi hadde i forrige app.py)
