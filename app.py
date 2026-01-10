@@ -298,13 +298,32 @@ def fetch_and_analyze():
             risk_kr = close - stop_loss
             risk_pct = (risk_kr / close) * 100
             
-            # Sannsynlighet beregning
-            prob = min(max(int((100 - rsi) * 1.3), 15), 95)
-            
             five_day = (close / float(df['Close'].iloc[-5])) - 1 if len(df) >= 5 else 0
+            
+            # Signal-logikk
             is_buy = (rsi < 55 and close > sma20 and close > sma50 and ema12 > ema26 and five_day > 0)
             is_sell = rsi > 75 or (close < sma20 and close < sma50)
             signal = "BUY" if is_buy else "SELL" if is_sell else "HOLD"
+            
+            # Sannsynlighet beregning - basert på ALLE faktorer
+            # Teller hvor mange bullish-kriterier som er oppfylt
+            bullish_score = 0
+            if rsi < 55: bullish_score += 20  # RSI i kjøpssone
+            if rsi < 45: bullish_score += 10  # Ekstra bonus for lav RSI
+            if close > sma20: bullish_score += 15  # Over SMA20
+            if close > sma50: bullish_score += 15  # Over SMA50
+            if ema12 > ema26: bullish_score += 15  # Bullish EMA crossover
+            if five_day > 0: bullish_score += 10  # Positiv momentum
+            if five_day > 0.02: bullish_score += 5  # Sterk momentum (+2%)
+            if pot_pct > 5: bullish_score += 10  # God oppside
+            
+            # BUY-signal gir bonus, SELL gir straff
+            if signal == "BUY":
+                prob = min(bullish_score + 15, 95)  # Bonus for å møte alle kriterier
+            elif signal == "SELL":
+                prob = max(bullish_score - 30, 10)  # Straff for salgssignal
+            else:
+                prob = max(bullish_score - 10, 20)  # Litt lavere for HOLD
             
             results.append({
                 "ticker": t, "ticker_short": t.replace('.OL', ''),
