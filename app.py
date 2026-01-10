@@ -23,7 +23,7 @@ if 'page' not in st.session_state:
     st.session_state.page = 'Dashboard'
 
 # ============================================
-# 2. DESIGN (Inspirert av det nye designet)
+# 2. DESIGN (Kick-Arse Apple Style)
 # ============================================
 st.markdown("""
 <style>
@@ -40,7 +40,7 @@ html, body, [class*="css"] {
     background-color: #F8F7F4;
 }
 
-/* Sidebar Styling - Minimalist */
+/* Sidebar Styling - Clean and White */
 section[data-testid="stSidebar"] {
     background-color: #ffffff !important;
     border-right: 1px solid #f0f0f0;
@@ -48,67 +48,61 @@ section[data-testid="stSidebar"] {
 }
 
 /* Sidebar Nav Buttons as Icons */
-.stSidebar button {
+.stSidebar [data-testid="stVerticalBlock"] button {
     background: transparent !important;
     border: none !important;
-    font-size: 1.5rem !important;
-    margin-bottom: 20px !important;
+    font-size: 1.8rem !important;
+    margin-bottom: 25px !important;
     color: #888 !important;
+    width: 100% !important;
+    transition: all 0.2s ease;
 }
-.stSidebar button:hover {
+.stSidebar [data-testid="stVerticalBlock"] button:hover {
     color: #1a1a1a !important;
+    transform: scale(1.1);
 }
 
-/* Header */
-.top-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-}
-
-.search-bar {
-    background: white;
-    border-radius: 12px;
-    padding: 8px 15px;
-    border: 1px solid #eee;
-    width: 300px;
-    color: #888;
-    font-size: 0.9rem;
-}
-
-/* Status Cards - Vibrant Colors */
-.status-card {
-    border-radius: 24px;
-    padding: 30px;
-    color: #1a1a1a;
+/* --- CLICKABLE CARD HACK --- */
+.card-wrapper {
     position: relative;
-    overflow: hidden;
-    height: 160px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    transition: transform 0.2s;
+    width: 100%;
 }
-.card-lime { background-color: #E2FF3B; }
-.card-teal { background-color: #A3E7D8; }
-.card-pink { background-color: #FFB5B5; }
 
-.status-number { font-size: 3rem; font-weight: 800; line-height: 1; }
-.status-label { font-size: 1rem; font-weight: 600; color: #444; }
-.status-icon { position: absolute; top: 20px; right: 20px; font-size: 1.5rem; opacity: 0.6; }
-
-/* Content Cards (Stock Opportunities) */
 .stock-card {
     background: #ffffff;
-    border-radius: 24px;
+    border-radius: 28px;
+    padding: 0;
     overflow: hidden;
     box-shadow: 0 4px 20px rgba(0,0,0,0.03);
     margin-bottom: 24px;
     transition: all 0.3s ease;
     border: 1px solid #f0f0f0;
 }
-.stock-card:hover { transform: translateY(-8px); box-shadow: 0 12px 30px rgba(0,0,0,0.08); }
+
+.card-wrapper:hover .stock-card { 
+    transform: translateY(-8px); 
+    box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+    border: 1px solid #E2FF3B;
+}
+
+/* Gjør den usynlige knappen dekkende for hele kortet */
+.card-wrapper .stButton {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    z-index: 10 !important;
+}
+
+.card-wrapper .stButton > button {
+    width: 100% !important;
+    height: 100% !important;
+    opacity: 0 !important; /* HELT USYNLIG */
+    border: none !important;
+    background: transparent !important;
+    cursor: pointer !important;
+}
 
 .card-image-section {
     height: 180px;
@@ -135,34 +129,42 @@ section[data-testid="stSidebar"] {
     color: white;
 }
 
-.card-body { padding: 20px; }
+.card-body { padding: 25px; }
+
+.analysis-link {
+    color: #2563EB;
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
 
 .progress-container { margin-top: 15px; }
 .progress-bar-bg { background-color: #f0f0f0; height: 8px; border-radius: 4px; overflow: hidden; }
 .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 1s ease-in-out; }
 
-/* Widget Styles */
-.widget-box {
-    background: white;
+/* Status Cards */
+.status-card {
     border-radius: 24px;
-    padding: 25px;
-    margin-bottom: 20px;
-    border: 1px solid #f0f0f0;
+    padding: 30px;
+    color: #1a1a1a;
+    position: relative;
+    overflow: hidden;
+    height: 160px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
+.card-lime { background-color: #E2FF3B; }
+.card-teal { background-color: #A3E7D8; }
+.card-pink { background-color: #FFB5B5; }
 
-/* Clicking Hack */
-.card-wrapper { position: relative; }
-.card-wrapper .stButton > button {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    opacity: 0 !important;
-    z-index: 10 !important;
-}
+.status-number { font-size: 3rem; font-weight: 800; line-height: 1; }
+.status-label { font-size: 1rem; font-weight: 600; color: #444; }
 
-/* Analysis Massive Header */
+/* Massive Header in Analysis */
 .massive-header {
     font-size: 5rem !important;
     font-weight: 800 !important;
@@ -212,118 +214,64 @@ def fetch_and_analyze():
     return sorted(results, key=lambda x: (x['signal'] != 'BUY', -x['prob']))
 
 # ============================================
-# 4. SIDEBAR (Ikon-basert)
+# 4. SIDEBAR (Ikoner for Hjem, Scanner, Analyse)
 # ============================================
 with st.sidebar:
-    st.markdown("<div style='text-align: center; padding: 20px 0;'>🏝️</div>", unsafe_allow_html=True)
-    if st.button("🏠"):
+    st.markdown("<div style='text-align: center; padding: 20px 0; font-size: 2rem;'>🏝️</div>", unsafe_allow_html=True)
+    
+    # Dashboard Icon
+    if st.button("🏠", key="nav_home", help="Dashboard"):
         st.session_state.page = 'Dashboard'
         st.session_state.selected_ticker = None
         st.rerun()
-    if st.button("📊"):
+        
+    # Scanner Icon
+    if st.button("📋", key="nav_scan", help="Aksjeoversikt"):
         st.session_state.page = 'Overview'
         st.rerun()
-    if st.button("📁"): pass
-    if st.button("👤"): pass
-    if st.button("⚙️"): pass
+        
+    # Analysis Icon (Deep Dive)
+    if st.button("📈", key="nav_analysis", help="Dypanalyse"):
+        if st.session_state.selected_ticker:
+            st.session_state.page = 'Analysis'
+        else:
+            st.warning("Velg en aksje først!")
+        st.rerun()
+        
+    st.markdown("<div style='margin-top: 100px;'></div>", unsafe_allow_html=True)
+    if st.button("👤", key="nav_profile"): pass
+    if st.button("⚙️", key="nav_settings"): pass
 
 # ============================================
-# 5. DATA LASTING
+# 5. HOVEDINNHOLD
 # ============================================
 data = fetch_and_analyze()
 
-# Layout: Main Content | Widgets
 c_main, c_side = st.columns([3, 1])
 
 with c_main:
-    # --- Top Header ---
+    # --- Top Search Bar Area ---
     st.markdown("""
-        <div class="top-header">
-            <div class="search-bar">🔍 Søk aksjer, trender...</div>
-            <div style="background: black; color: white; padding: 10px 20px; border-radius: 12px; font-weight: 700; cursor: pointer;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <div style="background: white; border-radius: 12px; padding: 10px 20px; border: 1px solid #eee; width: 350px; color: #888;">
+                🔍 Søk aksjer, trender...
+            </div>
+            <div style="background: black; color: white; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer;">
                 + Ny Analyse
             </div>
         </div>
     """, unsafe_allow_html=True)
 
-    # --- Dashbord Oversikt ---
-    if st.session_state.page == 'Dashboard' and not st.session_state.selected_ticker:
-        st.markdown("<h1 style='font-size: 2.5rem; font-weight: 800; margin-bottom: 30px;'>Oversikt</h1>", unsafe_allow_html=True)
-        
-        # User Card
-        st.markdown("""
-            <div style="background: white; border-radius: 24px; padding: 30px; display: flex; align-items: center; gap: 20px; border: 1px solid #f0f0f0; margin-bottom: 30px;">
-                <div style="width: 80px; height: 80px; background: #ddd; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem;">👤</div>
-                <div>
-                    <h2 style="margin:0; font-size: 1.5rem;">K-man Trader</h2>
-                    <p style="margin:0; color: #888;">Strategisk Portefølje · Oslo & Viken</p>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-
-        # Status Cards
-        c1, c2, c3 = st.columns(3)
-        buys = len([d for d in data if d['signal'] == 'BUY'])
-        with c1: st.markdown(f'<div class="status-card card-lime"><span class="status-icon">🕒</span><div class="status-number">{buys}</div><div class="status-label">Hot Kjøp Nå</div></div>', unsafe_allow_html=True)
-        with c2: st.markdown(f'<div class="status-card card-teal"><span class="status-icon">✔️</span><div class="status-number">{len(data)-buys}</div><div class="status-label">Stabile Hold</div></div>', unsafe_allow_html=True)
-        with c3: st.markdown(f'<div class="status-card card-pink"><span class="status-icon">📝</span><div class="status-number">0</div><div class="status-label">Salg / Risk</div></div>', unsafe_allow_html=True)
-
-        st.markdown("<h2 style='font-size: 1.5rem; font-weight: 800; margin: 40px 0 20px 0;'>Dagens Muligheter</h2>", unsafe_allow_html=True)
-        
-        # Grid med aksjer (Kick-arse cards)
-        cols = st.columns(2)
-        for i, stock in enumerate(data[:4]):
-            with cols[i % 2]:
-                badge_class = "badge-buy" if stock['signal'] == "BUY" else "badge-hold"
-                prog_color = "#E2FF3B" if stock['prob'] > 70 else "#A3E7D8"
-                
-                st.markdown(f"""
-                <div class="card-wrapper">
-                    <div class="stock-card">
-                        <div class="card-image-section">
-                            <span class="card-badge {badge_class}">{stock['signal']}</span>
-                            <div class="card-title-area">
-                                <h3 style="margin:0; font-size: 1.5rem; font-weight: 800;">{stock['ticker']}</h3>
-                                <span style="font-size: 0.8rem;">Oslo Børs · #{i+1} Hotlist</span>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <div style="display: flex; justify-content: space-between; align-items: end;">
-                                <div>
-                                    <div style="font-size: 0.7rem; color: #888; text-transform: uppercase;">Pris</div>
-                                    <div style="font-size: 1.25rem; font-weight: 800;">{stock['pris']} NOK</div>
-                                </div>
-                                <div style="text-align: right;">
-                                    <div style="font-size: 0.7rem; color: #888; text-transform: uppercase;">Potensial</div>
-                                    <div style="font-size: 1.25rem; font-weight: 800; color: #34c759;">+10.5%</div>
-                                </div>
-                            </div>
-                            <div class="progress-container">
-                                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 700; margin-bottom: 5px;">
-                                    <span>Gevinst-sannsynlighet</span>
-                                    <span>{stock['prob']}%</span>
-                                </div>
-                                <div class="progress-bar-bg">
-                                    <div class="progress-bar-fill" style="width: {stock['prob']}%; background-color: {prog_color};"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                """, unsafe_allow_html=True)
-                if st.button("", key=f"btn_{stock['ticker']}"):
-                    st.session_state.selected_ticker = stock['ticker']
-                    st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
-
-    # --- Dypanalyse ---
-    elif st.session_state.selected_ticker:
+    # --- Dashbord / Dypanalyse Logikk ---
+    if st.session_state.selected_ticker:
+        # VIS ANALYSE
         stock = next(d for d in data if d['ticker'] == st.session_state.selected_ticker)
-        if st.button("⬅️ Tilbake"):
+        if st.button("⬅️ Tilbake til oversikt"):
             st.session_state.selected_ticker = None
             st.rerun()
-        
+            
         st.markdown(f"<h1 class='massive-header'>{stock['ticker']}</h1>", unsafe_allow_html=True)
-        st.markdown(f"<p style='font-size: 2rem; color: #888;'>{stock['pris']} NOK · <span style='color: #34c759;'>{stock['prob']}% Prob.</span></p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-size: 2rem; color: #888;'>{stock['pris']} NOK · <span style='color: #34c759;'>{stock['prob']}% Probabilitet</span></p>", unsafe_allow_html=True)
         
         df_p = stock['df'].tail(90)
         fig = go.Figure(data=[go.Candlestick(x=df_p.index, open=df_p['Open'], high=df_p['High'], low=df_p['Low'], close=df_p['Close'])])
@@ -332,9 +280,82 @@ with c_main:
         fig.update_layout(height=600, xaxis_rangeslider_visible=False, template="plotly_white")
         st.plotly_chart(fig, use_container_width=True)
 
-    # --- Full Oversikt ---
+    elif st.session_state.page == 'Dashboard':
+        st.markdown("<h1 style='font-size: 2.5rem; font-weight: 800; margin-bottom: 30px;'>Oversikt</h1>", unsafe_allow_html=True)
+        
+        # User Header Card
+        st.markdown("""
+            <div style="background: white; border-radius: 24px; padding: 30px; display: flex; align-items: center; gap: 25px; border: 1px solid #f0f0f0; margin-bottom: 30px;">
+                <div style="width: 70px; height: 70px; background: #eee; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem;">👤</div>
+                <div>
+                    <h2 style="margin:0; font-size: 1.4rem; font-weight: 800;">K-man Trader</h2>
+                    <p style="margin:0; color: #888; font-size: 0.9rem;">Strategisk Portefølje · Oslo & Viken</p>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+
+        # Status Row
+        c1, c2, c3 = st.columns(3)
+        buys = len([d for d in data if d['signal'] == 'BUY'])
+        with c1: st.markdown(f'<div class="status-card card-lime"><div class="status-number">{buys}</div><div class="status-label">Hot Kjøp Nå</div></div>', unsafe_allow_html=True)
+        with c2: st.markdown(f'<div class="status-card card-teal"><div class="status-number">{len(data)-buys}</div><div class="status-label">Stabile Hold</div></div>', unsafe_allow_html=True)
+        with c3: st.markdown(f'<div class="status-card card-pink"><div class="status-number">0</div><div class="status-label">Salg / Risk</div></div>', unsafe_allow_html=True)
+
+        st.markdown("<h2 style='font-size: 1.6rem; font-weight: 800; margin: 45px 0 25px 0;'>Dagens Muligheter</h2>", unsafe_allow_html=True)
+        
+        # Grid med aksjer
+        cols = st.columns(2)
+        for i, stock in enumerate(data[:4]):
+            with cols[i % 2]:
+                badge_class = "badge-buy" if stock['signal'] == "BUY" else "badge-hold"
+                prog_color = "#E2FF3B" if stock['prob'] > 75 else "#A3E7D8"
+                
+                st.markdown(f"""
+                <div class="card-wrapper">
+                    <div class="stock-card">
+                        <div class="card-image-section">
+                            <span class="card-badge {badge_class}">{stock['signal']}</span>
+                            <div class="card-title-area">
+                                <h3 style="margin:0; font-size: 1.6rem; font-weight: 800;">{stock['ticker']}</h3>
+                                <span style="font-size: 0.85rem; opacity: 0.8;">Oslo Børs · #{i+1} Hotlist</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div style="display: flex; justify-content: space-between; align-items: end;">
+                                <div>
+                                    <div style="font-size: 0.75rem; color: #888; text-transform: uppercase;">Siste Pris</div>
+                                    <div style="font-size: 1.4rem; font-weight: 800;">{stock['pris']} NOK</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 0.75rem; color: #888; text-transform: uppercase;">Potensial</div>
+                                    <div style="font-size: 1.4rem; font-weight: 800; color: #34c759;">+10.5%</div>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-container">
+                                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px;">
+                                    <span>Gevinst-sannsynlighet</span>
+                                    <span>{stock['prob']}%</span>
+                                </div>
+                                <div class="progress-bar-bg">
+                                    <div class="progress-bar-fill" style="width: {stock['prob']}%; background-color: {prog_color};"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="analysis-link">
+                                Sjekk dypanalyse for {stock['ticker']} →
+                            </div>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+                # Den usynlige knappen som gjør hele kortet klikkbart
+                if st.button("", key=f"btn_{stock['ticker']}"):
+                    st.session_state.selected_ticker = stock['ticker']
+                    st.rerun()
+                st.markdown("</div>", unsafe_allow_html=True)
+
     elif st.session_state.page == 'Overview':
-        st.markdown("<h1 style='font-size: 2.5rem; font-weight: 800;'>Børsoversikt</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='font-size: 2.5rem; font-weight: 800; margin-bottom: 30px;'>Børsoversikt</h1>", unsafe_allow_html=True)
         df_disp = pd.DataFrame([{ "Ticker": d['ticker'], "Signal": d['signal'], "Pris": d['pris'], "Sannsynlighet": f"{d['prob']}%" } for d in data])
         st.table(df_disp)
 
@@ -343,39 +364,35 @@ with c_side:
     # Agenda Widget
     st.markdown("""
         <div class="widget-box">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
                 <h3 style="margin:0; font-size: 1rem; font-weight: 800;">Min Agenda</h3>
-                <span style="font-size: 0.7rem; color: #888;">☀️ 14°C Oslo</span>
+                <span style="font-size: 0.75rem; color: #888;">☀️ 14°C Oslo</span>
             </div>
-            <div style="padding: 15px; background: #F8F7F4; border-radius: 12px; margin-bottom: 10px; border-left: 4px solid #1a1a1a;">
-                <div style="font-size: 0.7rem; color: #888;">NESTE TRADE</div>
-                <div style="font-weight: 800;">Åpne Oslo Børs</div>
-                <div style="font-size: 0.8rem; color: #555;">09:00 Mandag</div>
+            <div style="padding: 18px; background: #F8F7F4; border-radius: 16px; margin-bottom: 12px; border-left: 5px solid #1a1a1a;">
+                <div style="font-size: 0.7rem; color: #888; font-weight: 700;">NESTE TRADE</div>
+                <div style="font-weight: 800; font-size: 1.1rem; margin-top: 5px;">Åpne Oslo Børs</div>
+                <div style="font-size: 0.85rem; color: #555;">09:00 Mandag</div>
             </div>
         </div>
-    """, unsafe_allow_html=True)
-
-    # Lagringsplass/Portefølje Widget
-    st.markdown("""
+        
         <div class="widget-box">
-            <h3 style="margin:0; font-size: 1rem; font-weight: 800; margin-bottom: 15px;">Portefølje</h3>
-            <div style="font-size: 0.8rem; color: #888; display: flex; justify-content: space-between; margin-bottom: 5px;">
+            <h3 style="margin:0; font-size: 1.1rem; font-weight: 800; margin-bottom: 15px;">Portefølje</h3>
+            <div style="font-size: 0.85rem; color: #888; display: flex; justify-content: space-between; margin-bottom: 8px;">
                 <span>Eksponering</span>
-                <span>100% Totalt</span>
+                <span style="color: #1a1a1a; font-weight: 800;">75%</span>
             </div>
             <div class="progress-bar-bg">
                 <div class="progress-bar-fill" style="width: 75%; background-color: #1a1a1a;"></div>
             </div>
-            <div style="text-align: center; margin-top: 15px; font-size: 0.8rem; font-weight: 700; color: #2563EB;">Oppgrader Plan</div>
+            <div style="text-align: center; margin-top: 18px; font-size: 0.8rem; font-weight: 800; color: #2563EB; cursor: pointer;">
+                Oppgrader Strategi
+            </div>
         </div>
-    """, unsafe_allow_html=True)
 
-    # Help Widget
-    st.markdown("""
-        <div style="background: linear-gradient(135deg, #2563EB, #1E40AF); border-radius: 24px; padding: 25px; color: white;">
-            <h3 style="margin:0; font-size: 1.1rem; font-weight: 800; margin-bottom: 10px;">Trenger du hjelp?</h3>
-            <p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 20px;">Få support med AI-generering eller analyser.</p>
-            <div style="background: #E2FF3B; color: #1a1a1a; padding: 12px; border-radius: 12px; text-align: center; font-weight: 800;">
+        <div style="background: linear-gradient(135deg, #2563EB, #1E40AF); border-radius: 28px; padding: 30px; color: white; box-shadow: 0 10px 30px rgba(37,99,235,0.2);">
+            <h3 style="margin:0; font-size: 1.2rem; font-weight: 800; margin-bottom: 12px;">Trenger du hjelp?</h3>
+            <p style="font-size: 0.9rem; opacity: 0.85; margin-bottom: 25px;">Få support med AI-generering eller analyser.</p>
+            <div style="background: #E2FF3B; color: #1a1a1a; padding: 14px; border-radius: 14px; text-align: center; font-weight: 800; cursor: pointer;">
                 Kontakt Support
             </div>
         </div>
