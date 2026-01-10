@@ -183,39 +183,47 @@ section[data-testid="stSidebar"] { display: none; }
     border-top: 1px solid #f3f4f6;
 }
 
-/* Aksjekort klikkbar-knapp overlay */
+/* Aksjekort klikkbar-knapp overlay - HELT USYNLIG */
 [data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] {
     position: relative !important;
     z-index: 100 !important;
-    height: 480px !important;
-    margin-bottom: -480px !important;
+    height: 500px !important;
+    margin-bottom: -500px !important;
     background: transparent !important;
     border: none !important;
+    box-shadow: none !important;
     border-radius: 24px !important;
     overflow: hidden !important;
 }
 
-[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] > div {
-    height: 100% !important;
-    background: transparent !important;
-}
-
-[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] button {
-    width: 100% !important;
+[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] > div,
+[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] > div > div {
     height: 100% !important;
     background: transparent !important;
     border: none !important;
+    box-shadow: none !important;
+}
+
+[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] button,
+[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] button * {
+    width: 100% !important;
+    height: 100% !important;
+    opacity: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
     color: transparent !important;
     cursor: pointer !important;
 }
 
-[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] button:hover {
+[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] button:hover,
+[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] button:focus,
+[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] button:active {
+    opacity: 0 !important;
     background: transparent !important;
     border: none !important;
-}
-
-[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] button p {
-    display: none !important;
+    box-shadow: none !important;
+    outline: none !important;
 }
 
 /* Widget-bokser */
