@@ -43,8 +43,7 @@ section[data-testid="stSidebar"] { display: none; }
     top: 0;
     width: 80px;
     height: 100vh;
-    background: #ffffff;
-    border-right: 1px solid #e5e7eb;
+    background: #F8F7F4;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -65,8 +64,8 @@ section[data-testid="stSidebar"] { display: none; }
     color: #9ca3af;
 }
 
-.nav-item:hover { background: #f3f4f6; color: #1a1a1a; }
-.nav-item.active { background: #f3f4f6; color: #1a1a1a; border: 2px solid #e5e7eb; }
+.nav-item:hover { background: rgba(255,255,255,0.6); color: #1a1a1a; }
+.nav-item.active { background: #ffffff; color: #1a1a1a; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
 .nav-item svg { width: 24px; height: 24px; stroke: currentColor; stroke-width: 1.5; fill: none; }
 
 [data-testid="stAppViewContainer"] > div:first-child { margin-left: 90px; }
@@ -107,8 +106,9 @@ section[data-testid="stSidebar"] { display: none; }
     border-radius: 24px;
     overflow: hidden;
     border: 1px solid #e5e7eb;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     transition: all 0.2s ease;
+    cursor: pointer;
 }
 .stock-card:hover {
     transform: translateY(-6px);
@@ -184,18 +184,42 @@ section[data-testid="stSidebar"] { display: none; }
 /* Skjul knapp-tekst, gjør hele kortet klikkbart */
 .card-button-wrapper {
     position: relative;
-    margin-top: -20px;
+    margin-top: -450px;
+    height: 0;
+    overflow: visible;
+}
+
+.card-button-wrapper > div {
+    height: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
 }
 
 .card-button-wrapper button {
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    position: absolute;
-    top: -400px;
-    left: 0;
-    height: 450px;
-    cursor: pointer;
+    width: 100% !important;
+    height: 450px !important;
+    opacity: 0 !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    cursor: pointer !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.card-button-wrapper [data-testid="stButton"],
+.card-button-wrapper [data-testid="baseButton-secondary"],
+.card-button-wrapper .stButton {
+    height: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    overflow: visible !important;
 }
 
 /* Widget-bokser */
