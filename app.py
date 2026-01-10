@@ -221,59 +221,45 @@ def get_analysis(ticker):
         prev_close = float(df['Close'].iloc[-2]) if len(df) >= 2 else last_close
         change_pct = ((last_close - prev_close) / prev_close) * 100
         
-        # BREDERE SIGNAL-LOGIKK (mer generøs med BUY)
+        # Strammere BUY/SELL-logikk (unngå 30+ BUY):
         buy_signal = False
         sell_signal = False
-        
-        # BUY-kriterier (må oppfylle minst 2 av 4):
-        buy_conditions = 0
-        
-        # 1. RSI er i kjøpssone (under 55)
-        if last_rsi < 55:
-            buy_conditions += 1
-        
-        # 2. Pris over SMA20 (kortsiktig opptrend)
-        if last_close > last_sma20:
-            buy_conditions += 1
-        
-        # 3. EMA12 over EMA26 (MACD-lignende bullish)
-        if last_ema12 > last_ema26:
-            buy_conditions += 1
-        
-        # 4. Pris har steget siste 5 dager
-        if len(df) >= 5:
-            five_day_return = (last_close / float(df['Close'].iloc[-5])) - 1
-            if five_day_return > 0.01:  # Mer enn 1% opp
-                buy_conditions += 1
-        
-        # BUY hvis minst 2 kriterier er oppfylt OG pris er over SMA50
-        if buy_conditions >= 2 and last_close > last_sma50:
+
+        five_day_return = (last_close / float(df['Close'].iloc[-5])) - 1 if len(df) >= 5 else 0
+
+        # BUY krever alle: RSI < 55, pris > SMA20 og SMA50, EMA12 > EMA26, og positiv 5-dagers
+        if (
+            last_rsi < 55
+            and last_close > last_sma20
+            and last_close > last_sma50
+            and last_ema12 > last_ema26
+            and five_day_return > 0
+        ):
             buy_signal = True
-        
-        # SELL-kriterier
-        if last_rsi > 75:  # Kraftig overkjøpt
+
+        # SELL: kraftig overkjøpt eller under begge glidende
+        if last_rsi > 75 or (last_close < last_sma20 and last_close < last_sma50):
             sell_signal = True
-        elif last_close < last_sma20 and last_close < last_sma50:  # Under begge MA
-            sell_signal = True
-        
-        # K-Score beregning
+
+        # K-Score beregning (BUY belønnes, høy RSI straffes)
         if len(df) >= 60:
             old_price = float(df['Close'].iloc[-60])
             returns_3m = (last_close / old_price) - 1
         else:
             old_price = float(df['Close'].iloc[0])
             returns_3m = (last_close / old_price) - 1
-        
-        # Mer avansert score
+
         score = (returns_3m * 40)  # Momentum
-        if 30 < last_rsi < 60: 
-            score += 20  # RSI sweet spot
-        if last_close > last_sma50: 
-            score += 15  # Over 50 SMA
-        if last_ema12 > last_ema26: 
-            score += 10  # Bullish EMA
+        if 30 < last_rsi < 55:
+            score += 25  # RSI sweet spot, strammere tak enn før
+        if last_close > last_sma50:
+            score += 15
+        if last_ema12 > last_ema26:
+            score += 10
         if buy_signal:
-            score += 15  # Bonus for kjøpssignal
+            score += 25  # Bonus for kjøpssignal
+        if last_rsi > 65:
+            score -= 200  # Høyrisiko skal ikke toppe listen
         
         return {
             "df": df,
@@ -286,63 +272,6 @@ def get_analysis(ticker):
             "signal": "BUY" if buy_signal else "SELL" if sell_signal else "HOLD"
         }
     except Exception:
-        try:
-            ticker_obj = yf.Ticker(ticker)
-            df = ticker_obj.history(period="1y")
-            if df.empty or len(df) < 50:
-                return None
-            
-            df['RSI'] = ta.rsi(df['Close'], length=14)
-            df['SMA20'] = ta.sma(df['Close'], length=20)
-            df['SMA50'] = ta.sma(df['Close'], length=50)
-            df['EMA12'] = ta.ema(df['Close'], length=12)
-            df['EMA26'] = ta.ema(df['Close'], length=26)
-            
-            if pd.isna(df['RSI'].iloc[-1]) or pd.isna(df['SMA20'].iloc[-1]) or pd.isna(df['SMA50'].iloc[-1]):
-                return None
-            
-            last_close = float(df['Close'].iloc[-1])
-            last_rsi = float(df['RSI'].iloc[-1])
-            last_sma20 = float(df['SMA20'].iloc[-1])
-            last_sma50 = float(df['SMA50'].iloc[-1])
-            last_ema12 = float(df['EMA12'].iloc[-1])
-            last_ema26 = float(df['EMA26'].iloc[-1])
-            
-            prev_close = float(df['Close'].iloc[-2]) if len(df) >= 2 else last_close
-            change_pct = ((last_close - prev_close) / prev_close) * 100
-            
-            buy_conditions = 0
-            if last_rsi < 55: buy_conditions += 1
-            if last_close > last_sma20: buy_conditions += 1
-            if last_ema12 > last_ema26: buy_conditions += 1
-            if len(df) >= 5:
-                five_day_return = (last_close / float(df['Close'].iloc[-5])) - 1
-                if five_day_return > 0.01: buy_conditions += 1
-            
-            buy_signal = buy_conditions >= 2 and last_close > last_sma50
-            sell_signal = last_rsi > 75 or (last_close < last_sma20 and last_close < last_sma50)
-            
-            if len(df) >= 60:
-                returns_3m = (last_close / float(df['Close'].iloc[-60])) - 1
-            else:
-                returns_3m = (last_close / float(df['Close'].iloc[0])) - 1
-            
-            score = (returns_3m * 40)
-            if 30 < last_rsi < 60: score += 20
-            if last_close > last_sma50: score += 15
-            if last_ema12 > last_ema26: score += 10
-            if buy_signal: score += 15
-            
-            return {
-                "df": df,
-                "ticker": ticker,
-                "pris": last_close,
-                "change": change_pct,
-                "rsi": last_rsi,
-                "score": round(score, 1),
-                "trend": "UP" if last_close > last_sma50 else "DOWN",
-                "signal": "BUY" if buy_signal else "SELL" if sell_signal else "HOLD"
-            }
         except:
             return None
 
