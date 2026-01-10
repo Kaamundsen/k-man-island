@@ -358,11 +358,6 @@ section[data-testid="stSidebar"] {
     color: #64748b;
 }
 </style>
-<script>
-function navigateTo(page) {
-    window.location.href = '?nav=' + page;
-}
-</script>
 """, unsafe_allow_html=True)
 
 # 3. Skanner-motor med BREDERE signal-logikk
@@ -635,17 +630,27 @@ nav_html = '<div class="left-sidebar">'
 for item in nav_items:
     active_class = 'active' if st.session_state.selected_nav == item['id'] else ''
     nav_html += f'''
-    <div class="nav-icon {active_class}" onclick="navigateTo('{item['id']}')" title="{item['label']}" style="font-size: 1.5rem; cursor: pointer;">
-        {item['icon']}
-    </div>
+    <a href="?nav={item['id']}" style="text-decoration: none; color: inherit;">
+        <div class="nav-icon {active_class}" title="{item['label']}" style="font-size: 1.5rem; cursor: pointer;">
+            {item['icon']}
+        </div>
+    </a>
     '''
 nav_html += '<div class="toggle-switch">ON</div></div>'
 st.markdown(nav_html, unsafe_allow_html=True)
 
-# Håndter navigasjon
-nav_param = st.query_params.get('nav', None)
-if nav_param:
-    st.session_state.selected_nav = nav_param[0] if isinstance(nav_param, list) else nav_param
+# Håndter navigasjon - bruk try/except for kompatibilitet
+try:
+    if hasattr(st, 'query_params'):
+        nav_param = st.query_params.get('nav', None)
+        if nav_param:
+            if isinstance(nav_param, list) and len(nav_param) > 0:
+                st.session_state.selected_nav = nav_param[0]
+            elif isinstance(nav_param, str):
+                st.session_state.selected_nav = nav_param
+except Exception as e:
+    # Fallback hvis query_params ikke er tilgjengelig
+    pass
 
 # Top Header Bar - Forbedret design
 st.markdown("""
@@ -760,38 +765,46 @@ else:
 
 with quick_col1:
     st.markdown(f"""
-    <div class="quick-stat" onclick="window.location.href='?nav=dashboard'">
-        <div class="quick-stat-icon" style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);">📊</div>
-        <div class="quick-stat-value" style="color: #0ea5e9;">{buy_count + sell_count}</div>
-        <div class="quick-stat-label">Aktive Signaler</div>
-    </div>
+    <a href="?nav=dashboard" style="text-decoration: none; color: inherit;">
+        <div class="quick-stat">
+            <div class="quick-stat-icon" style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);">📊</div>
+            <div class="quick-stat-value" style="color: #0ea5e9;">{buy_count + sell_count}</div>
+            <div class="quick-stat-label">Aktive Signaler</div>
+        </div>
+    </a>
     """, unsafe_allow_html=True)
 
 with quick_col2:
     st.markdown(f"""
-    <div class="quick-stat" onclick="window.location.href='?nav=analytics'">
-        <div class="quick-stat-icon" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);">📈</div>
-        <div class="quick-stat-value" style="color: #22c55e;">{top_opportunities}</div>
-        <div class="quick-stat-label">Top Opportunities</div>
-    </div>
+    <a href="?nav=analytics" style="text-decoration: none; color: inherit;">
+        <div class="quick-stat">
+            <div class="quick-stat-icon" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);">📈</div>
+            <div class="quick-stat-value" style="color: #22c55e;">{top_opportunities}</div>
+            <div class="quick-stat-label">Top Opportunities</div>
+        </div>
+    </a>
     """, unsafe_allow_html=True)
 
 with quick_col3:
     st.markdown(f"""
-    <div class="quick-stat" onclick="window.location.href='?nav=watchlist'">
-        <div class="quick-stat-icon" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">📋</div>
-        <div class="quick-stat-value" style="color: #8b5cf6;">{len(watchlist)}</div>
-        <div class="quick-stat-label">Watchlist Aksjer</div>
-    </div>
+    <a href="?nav=watchlist" style="text-decoration: none; color: inherit;">
+        <div class="quick-stat">
+            <div class="quick-stat-icon" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">📋</div>
+            <div class="quick-stat-value" style="color: #8b5cf6;">{len(watchlist)}</div>
+            <div class="quick-stat-label">Watchlist Aksjer</div>
+        </div>
+    </a>
     """, unsafe_allow_html=True)
 
 with quick_col4:
     st.markdown("""
-    <div class="quick-stat" onclick="window.location.href='?nav=portfolio'">
-        <div class="quick-stat-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">💼</div>
-        <div class="quick-stat-value" style="color: #f59e0b;">-</div>
-        <div class="quick-stat-label">Portfolio Verdi</div>
-    </div>
+    <a href="?nav=portfolio" style="text-decoration: none; color: inherit;">
+        <div class="quick-stat">
+            <div class="quick-stat-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">💼</div>
+            <div class="quick-stat-value" style="color: #f59e0b;">-</div>
+            <div class="quick-stat-label">Portfolio Verdi</div>
+        </div>
+    </a>
     """, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
