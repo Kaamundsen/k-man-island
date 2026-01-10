@@ -106,7 +106,6 @@ section[data-testid="stSidebar"] { display: none; }
     border-radius: 24px;
     overflow: hidden;
     border: 1px solid #e5e7eb;
-    margin-bottom: 16px;
     transition: all 0.2s ease;
     cursor: pointer;
 }
@@ -181,45 +180,42 @@ section[data-testid="stSidebar"] { display: none; }
     border-top: 1px solid #f3f4f6;
 }
 
-/* Skjul knapp-tekst, gjør hele kortet klikkbart */
-.card-button-wrapper {
+/* Wrapper for aksjekort med relativ posisjon */
+.stock-card-container {
     position: relative;
-    margin-top: -450px;
-    height: 0;
-    overflow: visible;
+    margin-bottom: 20px;
 }
 
-.card-button-wrapper > div {
-    height: 0 !important;
-    min-height: 0 !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-}
-
-.card-button-wrapper button {
-    width: 100% !important;
-    height: 450px !important;
-    opacity: 0 !important;
+/* Skjul knapp-boks visuelt, men behold klikkfunksjon */
+[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] {
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
-    cursor: pointer !important;
-    border: none !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: 480px !important;
     background: transparent !important;
+    border: none !important;
     padding: 0 !important;
     margin: 0 !important;
+    z-index: 50 !important;
+    pointer-events: none !important;
 }
 
-.card-button-wrapper [data-testid="stButton"],
-.card-button-wrapper [data-testid="baseButton-secondary"],
-.card-button-wrapper .stButton {
-    height: 0 !important;
-    min-height: 0 !important;
-    padding: 0 !important;
-    margin: 0 !important;
+[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] > div {
+    height: 100% !important;
+    background: transparent !important;
     border: none !important;
-    overflow: visible !important;
+}
+
+[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] button {
+    width: 100% !important;
+    height: 100% !important;
+    opacity: 0 !important;
+    cursor: pointer !important;
+    background: transparent !important;
+    border: none !important;
+    pointer-events: auto !important;
 }
 
 /* Widget-bokser */
@@ -428,6 +424,7 @@ with c_main:
                 prob_color = "#E2FF3B" if stock['prob'] > 70 else "#A3E7D8" if stock['prob'] > 50 else "#FFB5B5"
                 
                 st.markdown(f"""
+                <div class="stock-card-container">
                 <div class="stock-card">
                     <div class="stock-header">
                         <span class="stock-badge {badge_class}">{badge_text}</span>
@@ -472,14 +469,13 @@ with c_main:
                         </div>
                     </div>
                 </div>
+                </div>
                 """, unsafe_allow_html=True)
                 
                 # Usynlig knapp som dekker kortet
-                st.markdown('<div class="card-button-wrapper">', unsafe_allow_html=True)
-                if st.button("", key=f"card_{stock['ticker']}", use_container_width=True):
+                if st.button(" ", key=f"card_{stock['ticker']}", use_container_width=True):
                     st.session_state.selected_ticker = stock['ticker']
                     st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
 
     # Analyse-visning
     elif st.session_state.selected_ticker:
