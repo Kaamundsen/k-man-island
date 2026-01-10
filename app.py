@@ -174,7 +174,14 @@ df_res = df_res.sort_values(by="score", ascending=False)
 with st.sidebar:
     st.markdown('<p style="font-size: 1.5rem; font-weight: 800; color: #0f172a; margin-bottom: 1.5rem;">🏝️ K-man Island</p>', unsafe_allow_html=True)
     
-    page = st.radio("Navigasjon", ["🏠 Dashboard", "🔍 Markedsskanner", "📈 Dypanalyse"], label_visibility="collapsed")
+    # Finn index for gjeldende side
+    page_options = ["🏠 Dashboard", "🔍 Markedsskanner", "📈 Dypanalyse"]
+    current_idx = 0
+    if st.session_state.current_page in page_options:
+        current_idx = page_options.index(st.session_state.current_page)
+    
+    page = st.radio("Navigasjon", page_options, index=current_idx, label_visibility="collapsed")
+    st.session_state.current_page = page
     
     st.markdown("---")
     st.markdown("### Hurtigvalg")
