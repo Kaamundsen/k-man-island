@@ -13,6 +13,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Initialize session state for navigation
+if 'page' not in st.session_state:
+    st.session_state.page = 'Oversikt'
+
 # 2. Lys, moderne stil
 st.markdown("""
 <style>
@@ -20,6 +24,14 @@ st.markdown("""
 
 .stApp {
     background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+[data-testid="stAppViewContainer"] {
+    margin-left: 80px;
+}
+
+[data-testid="stHeader"] {
+    margin-left: 80px;
 }
 
 /* Hide default elements */
@@ -127,10 +139,74 @@ h1, h2, h3, p, span, div, label {
     border-bottom: 1px solid #e2e8f0 !important;
 }
 
-/* Sidebar */
+/* Right Sidebar */
 section[data-testid="stSidebar"] {
     background: white;
     border-right: 1px solid #e2e8f0;
+}
+
+/* Left Navigation Sidebar */
+.left-sidebar {
+    background: #1e293b;
+    color: white;
+    padding: 1.5rem 1rem;
+    min-height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 80px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.nav-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #94a3b8;
+    font-size: 1.5rem;
+}
+
+.nav-icon:hover {
+    background: #334155;
+    color: white;
+}
+
+.nav-icon.active {
+    background: #0ea5e9;
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .left-sidebar {
+        width: 60px;
+    }
+    [data-testid="stAppViewContainer"] {
+        margin-left: 60px;
+    }
+    [data-testid="stHeader"] {
+        margin-left: 60px;
+    }
+}
+
+.toggle-switch {
+    margin-top: auto;
+    padding: 0.5rem;
+    background: #fbbf24;
+    border-radius: 20px;
+    color: #000;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-align: center;
+    cursor: pointer;
 }
 
 /* Tab styling */
@@ -446,7 +522,61 @@ watchlist = [
     "PRAWN.OL", "OKEA.OL", "HAFNI.OL", "BELCO.OL", "2020.OL", "KOA.OL", "BWE.OL"
 ]
 
-# 5. Header
+# 5. Left Navigation Sidebar
+st.markdown("""
+<div class="left-sidebar">
+    <div class="nav-icon active" style="font-size: 1.8rem;">🏝️</div>
+    <div class="nav-icon">📊</div>
+    <div class="nav-icon">📈</div>
+    <div class="nav-icon">📋</div>
+    <div class="nav-icon">👥</div>
+    <div class="nav-icon">⚙️</div>
+    <div class="toggle-switch">ON</div>
+</div>
+""", unsafe_allow_html=True)
+
+# Top Header Bar
+header_col1, header_col2, header_col3, header_col4 = st.columns([3, 1, 1, 1])
+with header_col1:
+    st.markdown(f"""
+    <div style="padding: 1rem 0;">
+        <input type="text" placeholder="Søk globalt..." style="
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            font-size: 0.9rem;
+        ">
+    </div>
+    """, unsafe_allow_html=True)
+
+with header_col2:
+    st.markdown("""
+    <div style="text-align: center; padding: 1rem 0;">
+        <span style="font-size: 1.5rem;">💬</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+with header_col3:
+    st.markdown("""
+    <div style="text-align: center; padding: 1rem 0;">
+        <span style="font-size: 1.5rem;">🔔</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+with header_col4:
+    st.markdown(f"""
+    <div style="display: flex; align-items: center; gap: 0.5rem; padding: 1rem 0;">
+        <div style="width: 40px; height: 40px; border-radius: 50%; background: #0ea5e9; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">KN</div>
+        <div>
+            <div style="font-weight: 600; font-size: 0.9rem;">K-man Island</div>
+            <div style="font-size: 0.75rem; color: #64748b;">Investor</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# Main Title Section
 col_title, col_live = st.columns([4, 1])
 with col_title:
     st.markdown("# 🏝️ K-man Island")
