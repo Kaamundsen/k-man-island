@@ -206,6 +206,7 @@ def get_analysis(ticker):
         df['SMA50'] = ta.sma(df['Close'], length=50)
         df['EMA12'] = ta.ema(df['Close'], length=12)
         df['EMA26'] = ta.ema(df['Close'], length=26)
+        df['ATR'] = ta.atr(df['High'], df['Low'], df['Close'], length=14)
         
         if pd.isna(df['RSI'].iloc[-1]) or pd.isna(df['SMA20'].iloc[-1]) or pd.isna(df['SMA50'].iloc[-1]):
             return None
@@ -216,10 +217,32 @@ def get_analysis(ticker):
         last_sma50 = float(df['SMA50'].iloc[-1])
         last_ema12 = float(df['EMA12'].iloc[-1])
         last_ema26 = float(df['EMA26'].iloc[-1])
+        last_atr = float(df['ATR'].iloc[-1]) if not pd.isna(df['ATR'].iloc[-1]) else last_close * 0.02
         
         # Beregn endring
         prev_close = float(df['Close'].iloc[-2]) if len(df) >= 2 else last_close
         change_pct = ((last_close - prev_close) / prev_close) * 100
+        
+        # Beregn motstandsnivåer (target) - finn lokale maksima
+        recent_highs = df['High'].tail(60).values
+        resistance_levels = []
+        for i in range(1, len(recent_highs) - 1):
+            if recent_highs[i] > recent_highs[i-1] and recent_highs[i] > recent_highs[i+1]:
+                resistance_levels.append(recent_highs[i])
+        
+        # Teknisk target: neste motstandsnivå over nåværende pris, eller 10% opp hvis ingen
+        if resistance_levels:
+            next_resistance = min([r for r in resistance_levels if r > last_close], default=last_close * 1.10)
+        else:
+            next_resistance = last_close * 1.10
+        
+        # Stop Loss: 2x ATR under nåværende pris
+        stop_loss = last_close - (2 * last_atr)
+        
+        # Risiko/Belønning ratio
+        risk = last_close - stop_loss
+        reward = next_resistance - last_close
+        rr_ratio = reward / risk if risk > 0 else 0
         
         # Strammere BUY/SELL-logikk (unngå 30+ BUY):
         buy_signal = False
@@ -261,6 +284,25 @@ def get_analysis(ticker):
         if last_rsi > 65:
             score -= 200  # Høyrisiko skal ikke toppe listen
         
+        # Generer forklarende tekst basert på signal
+        explanation = ""
+        if buy_signal:
+            reasons = []
+            if last_rsi < 55:
+                reasons.append("RSI er i kjøpssone")
+            if last_close > last_sma20 and last_close > last_sma50:
+                reasons.append("pris er over både SMA20 og SMA50")
+            if last_ema12 > last_ema26:
+                reasons.append("EMA12 over EMA26 viser bullish momentum")
+            if five_day_return > 0:
+                reasons.append("positiv 5-dagers avkastning")
+            
+            explanation = f"Trendstyrken er økende og støttes av: {', '.join(reasons)}. Tekniske indikatorer peker mot fortsatt oppside."
+        elif sell_signal:
+            explanation = "Tekniske indikatorer viser svakhet: RSI er overkjøpt eller pris har falt under viktige støttenivåer. Vurder gevinstsikring."
+        else:
+            explanation = "Aksjen konsoliderer eller mangler klar retning. Avvent bekreftet breakout eller nedbrytning før handel."
+        
         return {
             "df": df,
             "ticker": ticker,
@@ -269,7 +311,12 @@ def get_analysis(ticker):
             "rsi": last_rsi,
             "score": round(score, 1),
             "trend": "UP" if last_close > last_sma50 else "DOWN",
-            "signal": "BUY" if buy_signal else "SELL" if sell_signal else "HOLD"
+            "signal": "BUY" if buy_signal else "SELL" if sell_signal else "HOLD",
+            "atr": last_atr,
+            "stop_loss": round(stop_loss, 2),
+            "target": round(next_resistance, 2),
+            "rr_ratio": round(rr_ratio, 2),
+            "explanation": explanation
         }
     except Exception:
         return None
@@ -514,6 +561,127 @@ if results:
                 )
                 
                 st.plotly_chart(fig_rsi, use_container_width=True)
+            
+            # Handelsplan og analyse
+            st.markdown("---")
+            st.subheader("📋 Handelsplan")
+            
+            plan_col1, plan_col2, plan_col3 = st.columns(3)
+            
+            with plan_col1:
+                st.markdown("""
+                <div style="background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <h4 style="color: #64748b; margin-bottom: 0.5rem;">Anbefalt Inngang</h4>
+                    <p style="font-size: 1.5rem; font-weight: 700; color: #0f172a; margin: 0;">
+                        {:.2f} kr
+                    </p>
+                </div>
+                """.format(selected_data['pris']), unsafe_allow_html=True)
+            
+            with plan_col2:
+                current_price = selected_data.get('pris', 0)
+                atr_val = selected_data.get('atr', current_price * 0.02)
+                stop_loss_val = selected_data.get('stop_loss', current_price - (2 * atr_val))
+                st.markdown("""
+                <div style="background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <h4 style="color: #64748b; margin-bottom: 0.5rem;">Stop Loss</h4>
+                    <p style="font-size: 1.5rem; font-weight: 700; color: #ef4444; margin: 0;">
+                        {:.2f} kr
+                    </p>
+                    <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.25rem;">
+                        (2x ATR under)
+                    </p>
+                </div>
+                """.format(stop_loss_val), unsafe_allow_html=True)
+            
+            with plan_col3:
+                current_price = selected_data.get('pris', 0)
+                target_val = selected_data.get('target', current_price * 1.10)
+                st.markdown("""
+                <div style="background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <h4 style="color: #64748b; margin-bottom: 0.5rem;">Teknisk Target</h4>
+                    <p style="font-size: 1.5rem; font-weight: 700; color: #22c55e; margin: 0;">
+                        {:.2f} kr
+                    </p>
+                    <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.25rem;">
+                        (Neste motstandsnivå)
+                    </p>
+                </div>
+                """.format(target_val), unsafe_allow_html=True)
+            
+            # Risiko/Belønning og Tidsestimat
+            st.markdown("<br>", unsafe_allow_html=True)
+            rr_col1, rr_col2 = st.columns(2)
+            
+            with rr_col1:
+                current_price = selected_data.get('pris', 0)
+                stop_loss_val = selected_data.get('stop_loss', current_price * 0.95)
+                target_val = selected_data.get('target', current_price * 1.10)
+                
+                # Beregn R/R ratio hvis ikke allerede beregnet
+                if 'rr_ratio' in selected_data:
+                    rr_ratio = selected_data['rr_ratio']
+                else:
+                    risk = current_price - stop_loss_val
+                    reward = target_val - current_price
+                    rr_ratio = reward / risk if risk > 0 else 0
+                
+                rr_color = "#22c55e" if rr_ratio >= 2.0 else "#f59e0b" if rr_ratio >= 1.0 else "#ef4444"
+                rr_status = "✅ God" if rr_ratio >= 2.0 else "⚠️ Moderat" if rr_ratio >= 1.0 else "❌ Lav"
+                
+                st.markdown("""
+                <div style="background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <h4 style="color: #64748b; margin-bottom: 0.5rem;">Risiko/Belønning Ratio</h4>
+                    <p style="font-size: 2rem; font-weight: 700; color: {}; margin: 0;">
+                        {:.2f}
+                    </p>
+                    <p style="font-size: 0.9rem; color: #64748b; margin-top: 0.5rem;">
+                        {} • Anbefalt: over 2.0
+                    </p>
+                </div>
+                """.format(rr_color, rr_ratio, rr_status), unsafe_allow_html=True)
+            
+            with rr_col2:
+                st.markdown("""
+                <div style="background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <h4 style="color: #64748b; margin-bottom: 0.5rem;">Tidsestimat</h4>
+                    <p style="font-size: 1.5rem; font-weight: 700; color: #0f172a; margin: 0;">
+                        Swing: 3-6 uker
+                    </p>
+                    <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
+                        Basert på teknisk analyse og trendstyrke
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            # Forklarende tekst
+            st.markdown("<br>", unsafe_allow_html=True)
+            explanation_text = selected_data.get('explanation', 'Ingen forklaring tilgjengelig.')
+            
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); 
+                        padding: 1.5rem; border-radius: 12px; border: 1px solid #bae6fd; margin-top: 1rem;">
+                <h4 style="color: #0f172a; margin-bottom: 0.75rem;">📝 Signalanalyse</h4>
+                <p style="color: #0f172a; line-height: 1.6; margin: 0;">
+                    {}
+                </p>
+            </div>
+            """.format(explanation_text), unsafe_allow_html=True)
+            
+            # Innside-sjekk
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("""
+            <div style="background: #fef3c7; padding: 1.25rem; border-radius: 12px; border: 2px solid #fbbf24; margin-top: 1rem;">
+                <h4 style="color: #92400e; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    ⚠️ Innside-sjekk
+                </h4>
+                <p style="color: #78350f; line-height: 1.6; margin: 0;">
+                    <strong>Viktig:</strong> Sjekk siste meldinger på 
+                    <a href="https://www.newsweb.no" target="_blank" style="color: #92400e; text-decoration: underline;">Newsweb</a> 
+                    for økning i eierandel over 10%. Innsidehandel kan påvirke kursutviklingen betydelig.
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
     
     # Sidebar info
     with st.sidebar:
