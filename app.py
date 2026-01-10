@@ -23,7 +23,7 @@ if 'view' not in st.session_state:
     st.session_state.view = 'Dashboard'
 
 # ============================================
-# 2. KICK ARSE DESIGN (CSS)
+# 2. KICK ARSE DESIGN (CSS) - Apple Style + Vibrant
 # ============================================
 st.markdown("""
 <style>
@@ -46,99 +46,140 @@ section[data-testid="stSidebar"] {
     border-right: 1px solid #f0f0f0;
 }
 
-/* Clickable Card Hack */
-div[data-testid="stVerticalBlock"] div[style*="flex-direction: column"] > div[data-testid="stVerticalBlock"] {
-    gap: 0rem;
-}
-
+/* Content Cards - FETT DESIGN */
 .content-card {
     background: #ffffff;
-    border-radius: 24px;
+    border-radius: 28px;
     padding: 0;
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.04);
     margin-bottom: 24px;
-    transition: all 0.3s ease;
-    border: 1px solid transparent;
-}
-.content-card:hover { 
-    transform: translateY(-8px); 
-    box-shadow: 0 12px 30px rgba(0,0,0,0.08);
-    border: 1px solid #E2FF3B;
-}
-
-.card-image-placeholder {
-    height: 180px;
-    background: linear-gradient(135deg, #2d3436 0%, #000000 100%);
-    position: relative;
-}
-.card-badge {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-}
-.badge-ongoing { background-color: #E2FF3B; color: #1a1a1a; }
-.badge-completed { background-color: #A3E7D8; color: #1a1a1a; }
-
-.card-body { padding: 20px; }
-.card-title { font-size: 1.25rem; font-weight: 800; margin-bottom: 4px; }
-
-.progress-container { margin-top: 15px; }
-.progress-bar-bg { background-color: #f0f0f0; height: 8px; border-radius: 4px; overflow: hidden; }
-.progress-bar-fill { height: 100%; border-radius: 4px; transition: width 1s ease-in-out; }
-
-/* Analysis Page Styles */
-.analysis-header {
-    background: white;
-    padding: 30px;
-    border-radius: 24px;
-    margin-bottom: 30px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.02);
-}
-
-.news-card {
-    background: white;
-    padding: 15px;
-    border-radius: 16px;
-    margin-bottom: 10px;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     border: 1px solid #f0f0f0;
 }
-
-.insider-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px solid #f8f8f8;
+.content-card:hover { 
+    transform: translateY(-10px); 
+    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
 }
 
-/* Status Cards */
+.card-header-vibrant {
+    height: 140px;
+    background: linear-gradient(135deg, #1a1a1a 0%, #434343 100%);
+    padding: 25px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.card-badge {
+    padding: 6px 14px;
+    border-radius: 14px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    width: fit-content;
+}
+.badge-buy { background-color: #E2FF3B; color: #1a1a1a; }
+.badge-hold { background-color: #A3E7D8; color: #1a1a1a; }
+.badge-sell { background-color: #FFB5B5; color: #1a1a1a; }
+
+.card-ticker {
+    font-size: 2rem;
+    font-weight: 800;
+    color: white;
+    margin: 0;
+}
+
+.card-body {
+    padding: 25px;
+}
+
+.card-price {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    letter-spacing: -1px;
+}
+
+/* Info Grid - Gevinst/Risiko */
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #f5f5f7;
+}
+
+.info-item label {
+    display: block;
+    font-size: 0.8rem;
+    color: #86868b;
+    font-weight: 600;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+
+.info-item span {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.potential-up { color: #34c759; }
+.risk-down { color: #ff3b30; }
+
+/* Status Cards Row */
 .status-card {
     border-radius: 24px;
     padding: 30px;
     color: #1a1a1a;
-    position: relative;
-    overflow: hidden;
-    height: 180px;
+    height: 160px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    transition: transform 0.2s;
 }
 .card-lime { background-color: #E2FF3B; }
 .card-teal { background-color: #A3E7D8; }
 .card-pink { background-color: #FFB5B5; }
 
-.section-title { font-size: 1.75rem; font-weight: 800; margin: 30px 0 20px 0; }
+.status-number { font-size: 3rem; font-weight: 800; }
+.status-label { font-size: 1rem; font-weight: 700; opacity: 0.8; }
+
+/* Analysis Page */
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 20px;
+    background: white;
+    border-radius: 12px;
+    color: #1a1a1a;
+    font-weight: 700;
+    text-decoration: none;
+    border: 1px solid #f0f0f0;
+    margin-bottom: 20px;
+}
+
+.section-title { font-size: 2rem; font-weight: 800; margin: 40px 0 25px 0; }
+
+/* Override button to look like part of card */
+.stButton > button {
+    border-radius: 16px;
+    font-weight: 700;
+    padding: 12px;
+    background-color: #1a1a1a;
+    color: white;
+    border: none;
+}
+.stButton > button:hover {
+    background-color: #333;
+    color: #E2FF3B;
+}
 </style>
 """, unsafe_allow_html=True)
 
 # ============================================
-# 3. DATA MOTOR & MOCK DATA FOR EXTENDED INFO
+# 3. DATA MOTOR
 # ============================================
 watchlist = [
     "NOD.OL", "SATS.OL", "KID.OL", "VAR.OL", "PROT.OL", "AKSO.OL", "NEL.OL", 
@@ -146,22 +187,6 @@ watchlist = [
     "MOWI.OL", "SUBC.OL", "TGS.OL", "AKRBP.OL", "ADE.OL", "IDEX.OL", "AUTO.OL", 
     "LSG.OL", "SALM.OL", "BAKK.OL", "TOM.OL", "KOG.OL", "BORR.OL", "OKEA.OL"
 ]
-
-def get_mock_insiders(ticker):
-    names = ["Kjell Inge Røkke", "John Fredriksen", "Øystein Stray Spetalen", "Tor Olav Trøim", "Arne Fredly"]
-    insiders = []
-    for _ in range(random.randint(2, 4)):
-        insiders.append({
-            "navn": random.choice(names),
-            "endring": f"+{random.randint(1, 15)}%",
-            "type": "Kjøp",
-            "dato": "2024-05-15"
-        })
-    return insiders
-
-def get_mock_bjellesauer(ticker):
-    sauer = ["Folketrygdfondet", "Aker ASA", "Canica AS", "Geveran Trading", "Skagenfondene"]
-    return random.sample(sauer, random.randint(2, 4))
 
 @st.cache_data(ttl=1800)
 def fetch_and_analyze():
@@ -174,23 +199,23 @@ def fetch_and_analyze():
             
             df['RSI'] = ta.rsi(df['Close'], length=14)
             df['SMA20'] = ta.sma(df['Close'], length=20)
-            df['SMA50'] = ta.sma(df['Close'], length=50)
             
             last = df.iloc[-1]
             prev = df.iloc[-2]
             close = float(last['Close'])
             rsi = float(last['RSI'])
-            sma20 = float(last['SMA20'])
-            sma50 = float(last['SMA50'])
             
-            is_buy = (rsi < 55) and (close > sma20) and (prev['Close'] <= prev['SMA20'])
-            is_sell = (rsi > 70) or (close < sma20 and prev['Close'] >= prev['SMA20'])
+            is_buy = (rsi < 55) and (close > df['SMA20'].iloc[-1]) and (prev['Close'] <= df['SMA20'].iloc[-2])
+            is_sell = (rsi > 70) or (close < df['SMA20'].iloc[-1] and prev['Close'] >= df['SMA20'].iloc[-2])
             
             prob_score = 50
             if 35 < rsi < 50: prob_score += 20
-            if close > sma20: prob_score += 10
-            if close > sma50: prob_score += 10
-            prob_score = min(max(prob_score, 10), 95)
+            if close > df['SMA20'].iloc[-1]: prob_score += 10
+            prob_score = min(max(prob_score, 15), 95)
+            
+            # Beregninger (3.5% SL, 10.5% Target)
+            risk_kr = close * 0.035
+            pot_kr = close * 0.105
             
             results.append({
                 "ticker": t,
@@ -201,6 +226,8 @@ def fetch_and_analyze():
                 "prob_score": prob_score,
                 "stop_loss": round(close * 0.965, 2),
                 "target": round(close * 1.105, 2),
+                "risk_kr": round(risk_kr, 2),
+                "pot_kr": round(pot_kr, 2),
                 "df": df
             })
         except: continue
@@ -215,155 +242,126 @@ def fetch_and_analyze():
 # 4. SIDEBAR
 # ============================================
 with st.sidebar:
-    st.markdown("<div style='padding: 20px 0;'><h1 style='font-size: 1.5rem; font-weight: 800;'>🏝️ K-man</h1></div>", unsafe_allow_html=True)
+    st.markdown("<div style='padding: 20px 0;'><h1 style='font-size: 1.8rem; font-weight: 800;'>🏝️ K-man Island</h1></div>", unsafe_allow_html=True)
     if st.button("🏠  Oversikt", use_container_width=True):
         st.session_state.view = 'Dashboard'
         st.session_state.selected_ticker = None
         st.rerun()
-    if st.button("📊  Børsen", use_container_width=True):
+    if st.button("📊  Scanner", use_container_width=True):
         st.session_state.view = 'Scanner'
         st.rerun()
     st.markdown("---")
-    st.caption(f"Sist oppdatert: {datetime.now().strftime('%H:%M')}")
+    st.caption(f"Oppdatert: {datetime.now().strftime('%H:%M')}")
 
 # ============================================
 # 5. HOVEDINNHOLD
 # ============================================
 data = fetch_and_analyze()
 
-c_main, c_side = st.columns([3, 1])
+if st.session_state.view == 'Dashboard' and not st.session_state.selected_ticker:
+    st.markdown("<h1 style='font-size: 3rem; font-weight: 800; margin-bottom: 40px;'>Oversikt</h1>", unsafe_allow_html=True)
+    
+    # Stats Row
+    c1, c2, c3 = st.columns(3)
+    buys = len([d for d in data if d['signal'] == 'BUY'])
+    holds = len([d for d in data if d['signal'] == 'HOLD'])
+    sells = len([d for d in data if d['signal'] == 'SELL'])
 
-with c_main:
-    if st.session_state.view == 'Dashboard' and not st.session_state.selected_ticker:
-        st.markdown("<div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;'><h1 style='font-size: 2.5rem; font-weight: 800;'>Oversikt</h1><div style='background: #1a1a1a; color: white; padding: 12px 24px; border-radius: 12px; font-weight: 700;'>+ Ny Analyse</div></div>", unsafe_allow_html=True)
-        
-        # Stats
-        c1, c2, c3 = st.columns(3)
-        buys = len([d for d in data if d['signal'] == 'BUY'])
-        holds = len([d for d in data if d['signal'] == 'HOLD'])
-        sells = len([d for d in data if d['signal'] == 'SELL'])
+    with c1: st.markdown(f'<div class="status-card card-lime"><div class="status-number">{buys}</div><div class="status-label">Hot Kjøp</div></div>', unsafe_allow_html=True)
+    with c2: st.markdown(f'<div class="status-card card-teal"><div class="status-number">{holds}</div><div class="status-label">Stabile Hold</div></div>', unsafe_allow_html=True)
+    with c3: st.markdown(f'<div class="status-card card-pink"><div class="status-number">{sells}</div><div class="status-label">Salg / Risk</div></div>', unsafe_allow_html=True)
 
-        with c1: st.markdown(f'<div class="status-card card-lime"><div class="status-number">{buys}</div><div class="status-label">Hot Kjøp Nå</div></div>', unsafe_allow_html=True)
-        with c2: st.markdown(f'<div class="status-card card-teal"><div class="status-number">{holds}</div><div class="status-label">Stabile Hold</div></div>', unsafe_allow_html=True)
-        with c3: st.markdown(f'<div class="status-card card-pink"><div class="status-number">{sells}</div><div class="status-label">Salg / Advarsler</div></div>', unsafe_allow_html=True)
-
-        st.markdown("<h2 class='section-title'>Dagens Hotte Muligheter</h2>", unsafe_allow_html=True)
-        
-        display_picks = data[:4]
-        cols = st.columns(2)
-        for i, stock in enumerate(display_picks):
-            with cols[i % 2]:
-                badge_class = "badge-ongoing" if stock['signal'] == "BUY" else "badge-completed"
-                prog_color = "#E2FF3B" if stock['prob_score'] > 70 else "#A3E7D8" if stock['prob_score'] > 50 else "#FFB5B5"
-                
-                # Card UI
-                st.markdown(f"""
-                <div class="content-card">
-                    <div class="card-image-placeholder">
-                        <span class="card-badge {badge_class}">{stock['signal']}</span>
-                        <div style="position: absolute; bottom: 15px; left: 15px; color: white;">
-                            <h3 style="margin:0; font-size: 1.5rem; font-weight: 800;">{stock['ticker']}</h3>
-                            <span style="font-size: 0.8rem;">Oslo Børs · #{i+1} Hotlist</span>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div style="display: flex; justify-content: space-between; align-items: end; margin-bottom: 15px;">
-                            <div><div style="font-size: 0.75rem; color: #888; text-transform: uppercase;">Pris</div><div style="font-size: 1.25rem; font-weight: 800;">{stock['pris']} NOK</div></div>
-                            <div style="text-align: right;"><div style="font-size: 0.75rem; color: #888; text-transform: uppercase;">Sannsynlighet</div><div style="font-size: 1.25rem; font-weight: 800; color: #34c759;">{stock['prob_score']}%</div></div>
-                        </div>
-                    </div>
+    st.markdown("<h2 class='section-title'>Dagens Muligheter</h2>", unsafe_allow_html=True)
+    
+    # Grid med 2 kolonner for store, fete kort
+    display_picks = data[:6]
+    cols = st.columns(2)
+    for i, stock in enumerate(display_picks):
+        with cols[i % 2]:
+            badge_class = f"badge-{stock['signal'].lower()}"
+            
+            # Card UI - FETT DESIGN
+            st.markdown(f"""
+            <div class="content-card">
+                <div class="card-header-vibrant">
+                    <span class="card-badge {badge_class}">{stock['signal']}</span>
+                    <h3 class="card-ticker">{stock['ticker']}</h3>
                 </div>
-                """, unsafe_allow_html=True)
-                # Click logic via transparent button on top or just below
-                if st.button(f"Klikk for Analyse av {stock['ticker']}", key=f"card_{stock['ticker']}", use_container_width=True):
-                    st.session_state.selected_ticker = stock['ticker']
-                    st.rerun()
-
-    elif st.session_state.view == 'Scanner':
-        st.markdown("<h1 class='section-title'>📊 Full Børsoversikt</h1>", unsafe_allow_html=True)
-        for stock in data:
-            if st.button(f"{stock['ticker']} | {stock['signal']} | {stock['pris']} NOK | Prob: {stock['prob_score']}%", key=f"list_{stock['ticker']}", use_container_width=True):
-                st.session_state.selected_ticker = stock['ticker']
-                st.session_state.view = 'Dashboard'
-                st.rerun()
-
-    # DETALJERT ANALYSE VIEW
-    if st.session_state.selected_ticker:
-        stock = next(d for d in data if d['ticker'] == st.session_state.selected_ticker)
-        ticker_obj = yf.Ticker(stock['ticker'])
-        
-        # Header Area
-        st.markdown(f"""
-            <div class="analysis-header">
-                <div style="display: flex; justify-content: space-between; align-items: start;">
-                    <div>
-                        <h1 style="margin:0; font-size: 3rem; font-weight: 800;">{stock['ticker']}</h1>
-                        <p style="color:#888; font-size: 1.2rem;">{stock['pris']} NOK · <span style="color:{'#34c759' if stock['endring'] >= 0 else '#ff3b30'}">{'▲' if stock['endring'] >= 0 else '▼'} {abs(stock['endring'])}%</span></p>
+                <div class="card-body">
+                    <div style="display: flex; justify-content: space-between; align-items: end;">
+                        <div>
+                            <div class="card-price">{stock['pris']} NOK</div>
+                            <div style="color:{'#34c759' if stock['endring'] >= 0 else '#ff3b30'}; font-weight:700; font-size:1.1rem;">
+                                {'▲' if stock['endring'] >= 0 else '▼'} {abs(stock['endring'])}%
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 0.8rem; color: #888; text-transform: uppercase; font-weight:700;">Probability</div>
+                            <div style="font-size: 1.8rem; font-weight: 800; color: #1a1a1a;">{stock['prob_score']}%</div>
+                        </div>
                     </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 0.8rem; color: #888; text-transform: uppercase;">K-Score Sannsynlighet</div>
-                        <div style="font-size: 2.5rem; font-weight: 800; color: #E2FF3B;">{stock['prob_score']}%</div>
+                    
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Gevinstpotensial</label>
+                            <span class="potential-up">+{stock['pot_kr']} kr / 10.5%</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Risiko (3.5% SL)</label>
+                            <span class="risk-down">-{stock['risk_kr']} kr / 3.5%</span>
+                        </div>
                     </div>
                 </div>
             </div>
-        """, unsafe_allow_html=True)
-        
-        col_left, col_right = st.columns([2, 1])
-        
-        with col_left:
-            # Chart
-            st.markdown("### Teknisk Formasjon")
-            df_plot = stock['df'].tail(90)
-            fig = go.Figure()
-            fig.add_trace(go.Candlestick(x=df_plot.index, open=df_plot['Open'], high=df_plot['High'], low=df_plot['Low'], close=df_plot['Close'], name="Pris"))
-            fig.add_hline(y=stock['stop_loss'], line_dash="dash", line_color="#ff3b30", annotation_text="STOP LOSS")
-            fig.add_hline(y=stock['target'], line_dash="dash", line_color="#34c759", annotation_text="TARGET")
-            fig.update_layout(height=500, xaxis_rangeslider_visible=False, template="plotly_white", margin=dict(l=0, r=0, t=0, b=0))
-            st.plotly_chart(fig, use_container_width=True)
-            
-            # Nyheter
-            st.markdown("### Siste Nyheter")
-            try:
-                news = ticker_obj.news[:3]
-                for n in news:
-                    st.markdown(f"""<div class="news-card"><strong>{n['title']}</strong><br><small>{n['publisher']} · {datetime.fromtimestamp(n['providerPublishTime']).strftime('%d.%m %H:%M')}</small></div>""", unsafe_allow_html=True)
-            except: st.info("Ingen ferske nyheter funnet.")
-
-        with col_right:
-            # Innsidehandel
-            st.markdown("### Innsidehandel")
-            insiders = get_mock_insiders(stock['ticker'])
-            for i in insiders:
-                st.markdown(f"""<div class="insider-row"><span><strong>{i['navn']}</strong><br><small>{i['type']} · {i['dato']}</small></span><span style="color:#34c759; font-weight:800;">{i['endring']}</span></div>""", unsafe_allow_html=True)
-            
-            # Analytikere
-            st.markdown("### Analytiker-konsensus")
-            st.markdown("""
-                <div style="background:#f0f0f0; padding:20px; border-radius:16px; text-align:center;">
-                    <div style="font-size:0.8rem; color:#888;">ANBEFALING</div>
-                    <div style="font-size:1.5rem; font-weight:800; color:#1a1a1a;">OVERWEIGHT</div>
-                    <div style="font-size:0.8rem; color:#888; margin-top:10px;">Gjennomsnittlig kursmål: <strong>+12%</strong></div>
-                </div>
             """, unsafe_allow_html=True)
             
-            # Bjellesauer
-            st.markdown("### Bjellesauer & Storeiere")
-            bjellesauer = get_mock_bjellesauer(stock['ticker'])
-            for s in bjellesauer:
-                st.markdown(f"• {s}")
+            # Rent og pent knappe-valg
+            if st.button(f"Åpne Analyse for {stock['ticker']}", key=f"btn_{stock['ticker']}", use_container_width=True):
+                st.session_state.selected_ticker = stock['ticker']
+                st.rerun()
 
-with c_side:
-    st.markdown("<br><br><br>", unsafe_allow_html=True)
-    st.markdown("""
-        <div class="widget-card">
-            <h3 style="margin:0; font-size: 1rem; font-weight: 800; margin-bottom: 15px;">Min Strategi</h3>
-            <div style="padding: 15px; background: #E2FF3B; border-radius: 12px; font-weight: 800; text-align: center;">Høy Risiko / Høy Gevinst</div>
-        </div>
-        <div class="widget-card">
-            <h3 style="margin:0; font-size: 1rem; font-weight: 800; margin-bottom: 10px;">Bjellesau-alarm</h3>
-            <p style="font-size:0.8rem; color:#888;">Spetalen økte i 2 aksjer i dag.</p>
-        </div>
-    """, unsafe_allow_html=True)
+elif st.session_state.view == 'Scanner':
+    st.markdown("<h1 class='section-title'>Full Børsoversikt</h1>", unsafe_allow_html=True)
+    df_display = pd.DataFrame([{
+        "Ticker": d['ticker'], "Signal": d['signal'], "Pris": d['pris'], 
+        "RSI": d['rsi'], "Prob": f"{d['prob_score']}%"
+    } for d in data])
+    st.table(df_display)
+
+# DETALJERT ANALYSE VIEW
+if st.session_state.selected_ticker:
+    stock = next(d for d in data if d['ticker'] == st.session_state.selected_ticker)
+    
+    # Back Button
+    if st.button("⬅️ Tilbake til oversikt"):
+        st.session_state.selected_ticker = None
+        st.rerun()
+        
+    st.markdown(f"<h1 style='font-size: 3rem; font-weight: 800;'>{stock['ticker']} Analysis</h1>", unsafe_allow_html=True)
+    
+    col_l, col_r = st.columns([2, 1])
+    with col_l:
+        df_p = stock['df'].tail(90)
+        fig = go.Figure()
+        fig.add_trace(go.Candlestick(x=df_p.index, open=df_p['Open'], high=df_p['High'], low=df_p['Low'], close=df_p['Close'], name="Pris"))
+        fig.add_hline(y=stock['stop_loss'], line_dash="dash", line_color="#ff3b30", annotation_text="STOP LOSS")
+        fig.add_hline(y=stock['target'], line_dash="dash", line_color="#34c759", annotation_text="TARGET")
+        fig.update_layout(height=600, xaxis_rangeslider_visible=False, template="plotly_white")
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with col_r:
+        st.markdown(f"""
+            <div style="background:white; padding:30px; border-radius:24px; border:1px solid #f0f0f0;">
+                <h3 style="margin-top:0;">Handelsplan</h3>
+                <p>Status: <span class="badge-buy" style="padding:4px 10px; border-radius:8px;">{stock['signal']}</span></p>
+                <hr>
+                <p>Inngang: <strong>{stock['pris']} NOK</strong></p>
+                <p style="color:#34c759;">Target: <strong>{stock['target']} NOK</strong></p>
+                <p style="color:#ff3b30;">Stop Loss: <strong>{stock['stop_loss']} NOK</strong></p>
+                <hr>
+                <p>Sannsynlighet for gevinst: <strong>{stock['prob_score']}%</strong></p>
+            </div>
+        """, unsafe_allow_html=True)
 
 st.markdown("---")
-st.caption("K-man Island © 2026 | Kick Arse Intelligence.")
+st.caption("K-man Island © 2026 | Strategisk Intelligence.")
