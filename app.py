@@ -133,33 +133,36 @@ h1, h2, h3, p, span, div, label {
 
 /* Signal badges */
 .signal-buy {
-    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
-    color: #166534;
+    background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%);
+    color: #ffffff;
     padding: 0.5rem 1rem;
-    border-radius: 20px;
+    border-radius: 8px;
     font-weight: 600;
     font-size: 0.85rem;
     display: inline-block;
+    box-shadow: 0 2px 4px rgba(132, 204, 22, 0.3);
 }
 
 .signal-sell {
-    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-    color: #991b1b;
+    background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+    color: #ffffff;
     padding: 0.5rem 1rem;
-    border-radius: 20px;
+    border-radius: 8px;
     font-weight: 600;
     font-size: 0.85rem;
     display: inline-block;
+    box-shadow: 0 2px 4px rgba(20, 184, 166, 0.3);
 }
 
 .signal-hold {
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    color: #92400e;
+    background: linear-gradient(135deg, #f472b6 0%, #ec4899 100%);
+    color: #ffffff;
     padding: 0.5rem 1rem;
-    border-radius: 20px;
+    border-radius: 8px;
     font-weight: 600;
     font-size: 0.85rem;
     display: inline-block;
+    box-shadow: 0 2px 4px rgba(244, 114, 182, 0.3);
 }
 
 /* Trend badges */
@@ -334,7 +337,7 @@ section[data-testid="stSidebar"] {
     50% { opacity: 0.5; transform: scale(0.9); }
 }
 
-/* Quick stats cards */
+/* Quick stats cards - Samme farger som referanse-designet */
 .quick-stat {
     background: white;
     border-radius: 16px;
@@ -347,7 +350,6 @@ section[data-testid="stSidebar"] {
 .quick-stat:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    border-color: #0ea5e9;
 }
 
 .quick-stat-icon {
@@ -711,16 +713,20 @@ active_signals = buy_count + sell_count if results else 0
 watchlist_count = len(watchlist)
 
 with quick_col1:
-    st.markdown(f'<a href="?nav=dashboard" style="text-decoration:none;color:inherit;"><div class="quick-stat" style="background:linear-gradient(135deg,#dcfce7 0%,#bbf7d0 100%);border-color:#84cc16;"><div class="quick-stat-icon" style="background:#84cc16;">📊</div><div class="quick-stat-value" style="color:#166534;font-size:2rem;">{active_signals}</div><div class="quick-stat-label" style="color:#166534;font-weight:600;">Aktive Signaler</div></div></a>', unsafe_allow_html=True)
+    # Neon grønn som "Aktive Oppdrag"
+    st.markdown(f'<a href="?nav=dashboard" style="text-decoration:none;color:inherit;"><div class="quick-stat" style="background:linear-gradient(135deg,#a3e635 0%,#84cc16 100%);border:none;"><div class="quick-stat-icon" style="background:rgba(255,255,255,0.2);">📊</div><div class="quick-stat-value" style="color:#ffffff;font-size:2rem;">{active_signals}</div><div class="quick-stat-label" style="color:rgba(255,255,255,0.9);font-weight:600;">Aktive Signaler</div></div></a>', unsafe_allow_html=True)
 
 with quick_col2:
-    st.markdown(f'<a href="?nav=analytics" style="text-decoration:none;color:inherit;"><div class="quick-stat" style="background:linear-gradient(135deg,#ccfbf1 0%,#99f6e4 100%);border-color:#14b8a6;"><div class="quick-stat-icon" style="background:#14b8a6;">📈</div><div class="quick-stat-value" style="color:#134e4a;font-size:2rem;">{top_opportunities}</div><div class="quick-stat-label" style="color:#134e4a;font-weight:600;">Top Opportunities</div></div></a>', unsafe_allow_html=True)
+    # Teal som "Fullførte Rapporter"
+    st.markdown(f'<a href="?nav=analytics" style="text-decoration:none;color:inherit;"><div class="quick-stat" style="background:linear-gradient(135deg,#2dd4bf 0%,#14b8a6 100%);border:none;"><div class="quick-stat-icon" style="background:rgba(255,255,255,0.2);">📈</div><div class="quick-stat-value" style="color:#ffffff;font-size:2rem;">{top_opportunities}</div><div class="quick-stat-label" style="color:rgba(255,255,255,0.9);font-weight:600;">Top Opportunities</div></div></a>', unsafe_allow_html=True)
 
 with quick_col3:
-    st.markdown(f'<a href="?nav=watchlist" style="text-decoration:none;color:inherit;"><div class="quick-stat" style="background:linear-gradient(135deg,#fce7f3 0%,#fbcfe8 100%);border-color:#ec4899;"><div class="quick-stat-icon" style="background:#ec4899;">📋</div><div class="quick-stat-value" style="color:#9f1239;font-size:2rem;">{watchlist_count}</div><div class="quick-stat-label" style="color:#9f1239;font-weight:600;">Watchlist Aksjer</div></div></a>', unsafe_allow_html=True)
+    # Rosa som "Kladd / Utkast"
+    st.markdown(f'<a href="?nav=watchlist" style="text-decoration:none;color:inherit;"><div class="quick-stat" style="background:linear-gradient(135deg,#f472b6 0%,#ec4899 100%);border:none;"><div class="quick-stat-icon" style="background:rgba(255,255,255,0.2);">📋</div><div class="quick-stat-value" style="color:#ffffff;font-size:2rem;">{watchlist_count}</div><div class="quick-stat-label" style="color:rgba(255,255,255,0.9);font-weight:600;">Watchlist Aksjer</div></div></a>', unsafe_allow_html=True)
 
 with quick_col4:
-    st.markdown('<a href="?nav=portfolio" style="text-decoration:none;color:inherit;"><div class="quick-stat" style="background:linear-gradient(135deg,#fef3c7 0%,#fde68a 100%);border-color:#fbbf24;"><div class="quick-stat-icon" style="background:#fbbf24;">💼</div><div class="quick-stat-value" style="color:#92400e;font-size:2rem;">-</div><div class="quick-stat-label" style="color:#92400e;font-weight:600;">Portfolio Verdi</div></div></a>', unsafe_allow_html=True)
+    # Mørk blå som "Trenger du hjelp?" kortet
+    st.markdown('<a href="?nav=portfolio" style="text-decoration:none;color:inherit;"><div class="quick-stat" style="background:linear-gradient(135deg,#3b82f6 0%,#1e40af 100%);border:none;"><div class="quick-stat-icon" style="background:rgba(255,255,255,0.2);">💼</div><div class="quick-stat-value" style="color:#ffffff;font-size:2rem;">-</div><div class="quick-stat-label" style="color:rgba(255,255,255,0.9);font-weight:600;">Portfolio Verdi</div></div></a>', unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -741,34 +747,38 @@ if results:
     c1, c2, c3, c4 = st.columns(4)
     
     with c1:
+        # Neon grønn
         st.markdown(f"""
-        <div class="stat-card" style="background:linear-gradient(135deg,#dcfce7 0%,#bbf7d0 100%);border-color:#84cc16;">
-            <p class="stat-value" style="color: #166534;font-size:2.5rem;">{len(results)}</p>
-            <p class="stat-label" style="color: #166534;font-weight:600;">Aksjer analysert</p>
+        <div class="stat-card" style="background:linear-gradient(135deg,#a3e635 0%,#84cc16 100%);border:none;">
+            <p class="stat-value" style="color: #ffffff;font-size:2.5rem;">{len(results)}</p>
+            <p class="stat-label" style="color:rgba(255,255,255,0.9);font-weight:600;">Aksjer analysert</p>
         </div>
         """, unsafe_allow_html=True)
     
     with c2:
+        # Teal
         st.markdown(f"""
-        <div class="stat-card" style="background:linear-gradient(135deg,#ccfbf1 0%,#99f6e4 100%);border-color:#14b8a6;">
-            <p class="stat-value" style="color: #134e4a;font-size:2.5rem;">{buy_count}</p>
-            <p class="stat-label" style="color: #134e4a;font-weight:600;">Kjøpssignaler</p>
+        <div class="stat-card" style="background:linear-gradient(135deg,#2dd4bf 0%,#14b8a6 100%);border:none;">
+            <p class="stat-value" style="color: #ffffff;font-size:2.5rem;">{buy_count}</p>
+            <p class="stat-label" style="color:rgba(255,255,255,0.9);font-weight:600;">Kjøpssignaler</p>
         </div>
         """, unsafe_allow_html=True)
     
     with c3:
+        # Rosa
         st.markdown(f"""
-        <div class="stat-card" style="background:linear-gradient(135deg,#fce7f3 0%,#fbcfe8 100%);border-color:#ec4899;">
-            <p class="stat-value" style="color: #9f1239;font-size:2.5rem;">{sell_count}</p>
-            <p class="stat-label" style="color: #9f1239;font-weight:600;">Salgssignaler</p>
+        <div class="stat-card" style="background:linear-gradient(135deg,#f472b6 0%,#ec4899 100%);border:none;">
+            <p class="stat-value" style="color: #ffffff;font-size:2.5rem;">{sell_count}</p>
+            <p class="stat-label" style="color:rgba(255,255,255,0.9);font-weight:600;">Salgssignaler</p>
         </div>
         """, unsafe_allow_html=True)
     
     with c4:
+        # Mørk blå
         st.markdown(f"""
-        <div class="stat-card" style="background:linear-gradient(135deg,#fef3c7 0%,#fde68a 100%);border-color:#fbbf24;">
-            <p class="stat-value" style="color: #92400e;font-size:2.5rem;">{up_count}</p>
-            <p class="stat-label" style="color: #92400e;font-weight:600;">I opptrend</p>
+        <div class="stat-card" style="background:linear-gradient(135deg,#3b82f6 0%,#1e40af 100%);border:none;">
+            <p class="stat-value" style="color: #ffffff;font-size:2.5rem;">{up_count}</p>
+            <p class="stat-label" style="color:rgba(255,255,255,0.9);font-weight:600;">I opptrend</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -820,26 +830,14 @@ if results:
         filtered_df = df_res[df_res['signal'].isin(signal_filter)].copy()
         filtered_df['Ticker'] = filtered_df['ticker'].str.replace('.OL', '')
         filtered_df['Pris'] = filtered_df['pris'].apply(lambda x: f"{x:.2f} kr")
-        
-        # Beregn gevinstpotensial og risiko
-        def format_potential_all(row):
-            potential_kr = row['target'] - row['pris']
-            potential_pct = (potential_kr / row['pris']) * 100
-            return f"+{potential_kr:.1f} kr / +{potential_pct:.1f}%"
-        
-        def format_risk_all(row):
-            risk_kr = row['pris'] - row['stop_loss']
-            risk_pct = (risk_kr / row['pris']) * 100
-            return f"-{risk_kr:.1f} kr / -{risk_pct:.1f}%"
-        
-        filtered_df['Gevinstpotensial'] = filtered_df.apply(format_potential_all, axis=1)
-        filtered_df['Risiko'] = filtered_df.apply(format_risk_all, axis=1)
-        filtered_df['Signal'] = filtered_df['signal'].apply(lambda x: "🟢 KJØP" if x == "BUY" else "🔴 SELG" if x == "SELL" else "🟡 HOLD")
+        filtered_df['Endring'] = filtered_df['change'].apply(lambda x: f"+{x:.2f}%" if x >= 0 else f"{x:.2f}%")
         filtered_df['RSI'] = filtered_df['rsi'].apply(lambda x: f"{x:.1f}")
+        filtered_df['K-Score'] = filtered_df['score']
         filtered_df['Trend'] = filtered_df['trend'].apply(lambda x: "📈 UP" if x == "UP" else "📉 DOWN")
+        filtered_df['Signal'] = filtered_df['signal'].apply(lambda x: "🟢 KJØP" if x == "BUY" else "🔴 SELG" if x == "SELL" else "🟡 HOLD")
         
         st.dataframe(
-            filtered_df[['Ticker', 'Pris', 'Signal', 'Gevinstpotensial', 'Risiko', 'RSI', 'Trend']],
+            filtered_df[['Ticker', 'Pris', 'Endring', 'RSI', 'K-Score', 'Trend', 'Signal']],
             hide_index=True,
             use_container_width=True,
             height=400
