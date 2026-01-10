@@ -41,6 +41,19 @@ st.markdown("""
     z-index: 100;
 }
 
+/* Search input styling */
+.stTextInput > div > div > input {
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+}
+
+.stTextInput > div > div > input:focus {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
 [data-testid="stAppViewContainer"] {
     margin-left: 80px;
 }
@@ -189,7 +202,7 @@ section[data-testid="stSidebar"] {
 .left-sidebar {
     background: #1e293b;
     color: white;
-    padding: 1.5rem 1rem;
+    padding: 2rem 1rem;
     min-height: 100vh;
     position: fixed;
     left: 0;
@@ -200,6 +213,7 @@ section[data-testid="stSidebar"] {
     flex-direction: column;
     align-items: center;
     gap: 1.5rem;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
 }
 
 .nav-icon {
@@ -626,18 +640,15 @@ nav_items = [
     {'icon': '⚙️', 'id': 'settings', 'label': 'Innstillinger'}
 ]
 
-nav_html = '<div class="left-sidebar">'
+# Bygg navigasjons-HTML på en trygg måte
+nav_html_parts = ['<div class="left-sidebar">']
 for item in nav_items:
     active_class = 'active' if st.session_state.selected_nav == item['id'] else ''
-    nav_html += f'''
-    <a href="?nav={item['id']}" style="text-decoration: none; color: inherit;">
-        <div class="nav-icon {active_class}" title="{item['label']}" style="font-size: 1.5rem; cursor: pointer;">
-            {item['icon']}
-        </div>
-    </a>
-    '''
-nav_html += '<div class="toggle-switch">ON</div></div>'
-st.markdown(nav_html, unsafe_allow_html=True)
+    nav_html_parts.append(f'<a href="?nav={item["id"]}" style="text-decoration:none;color:inherit;">')
+    nav_html_parts.append(f'<div class="nav-icon {active_class}" title="{item["label"]}" style="font-size:1.5rem;cursor:pointer;">{item["icon"]}</div>')
+    nav_html_parts.append('</a>')
+nav_html_parts.append('<div class="toggle-switch">ON</div></div>')
+st.markdown(''.join(nav_html_parts), unsafe_allow_html=True)
 
 # Håndter navigasjon - bruk try/except for kompatibilitet
 try:
@@ -652,93 +663,26 @@ except Exception as e:
     # Fallback hvis query_params ikke er tilgjengelig
     pass
 
-# Top Header Bar - Forbedret design
-st.markdown("""
-<div class="top-header">
-    <div style="display: flex; align-items: center; justify-content: space-between; gap: 2rem;">
-        <div style="flex: 1; max-width: 500px;">
-            <div style="position: relative;">
-                <input type="text" placeholder="🔍 Søk aksjer, tickers eller signaler..." style="
-                    width: 100%;
-                    padding: 0.75rem 1rem 0.75rem 2.5rem;
-                    border-radius: 12px;
-                    border: 1px solid #e2e8f0;
-                    background: rgba(255, 255, 255, 0.9);
-                    font-size: 0.9rem;
-                    transition: all 0.3s ease;
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-                " onfocus="this.style.borderColor='#0ea5e9'; this.style.boxShadow='0 0 0 3px rgba(14, 165, 233, 0.1)'" 
-                onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'">
-            </div>
-        </div>
-        <div style="display: flex; align-items: center; gap: 1.5rem;">
-            <div style="position: relative; cursor: pointer;">
-                <span style="font-size: 1.5rem;">💬</span>
-                <span style="position: absolute; top: -4px; right: -4px; background: #ef4444; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600;">3</span>
-            </div>
-            <div style="position: relative; cursor: pointer;">
-                <span style="font-size: 1.5rem;">🔔</span>
-                <span style="position: absolute; top: -4px; right: -4px; background: #f59e0b; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600;">5</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 1rem; background: rgba(255, 255, 255, 0.9); border-radius: 12px; cursor: pointer; transition: all 0.3s ease; border: 1px solid #e2e8f0;" 
-                 onmouseover="this.style.background='white'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.1)'" 
-                 onmouseout="this.style.background='rgba(255, 255, 255, 0.9)'; this.style.boxShadow='none'">
-                <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1rem; box-shadow: 0 2px 4px rgba(14, 165, 233, 0.3);">KN</div>
-                <div>
-                    <div style="font-weight: 600; font-size: 0.9rem; color: #0f172a;">K-man Island</div>
-                    <div style="font-size: 0.75rem; color: #64748b;">Premium Investor</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-""", unsafe_allow_html=True)
+# Top Header Bar - Ren og kompakt design
+header_col1, header_col2, header_col3, header_col4, header_col5 = st.columns([3, 0.8, 0.8, 1.2, 1])
+with header_col1:
+    search_query = st.text_input("", placeholder="🔍 Søk globalt...", label_visibility="collapsed", key="global_search")
 
-# Main Title Section - Forbedret
-col_title, col_live, col_action = st.columns([3, 1, 1])
-with col_title:
-    st.markdown("""
-    <div style="margin-bottom: 1rem;">
-        <h1 style="margin: 0; font-size: 2.5rem; font-weight: 800; background: linear-gradient(135deg, #0ea5e9 0%, #8b5cf6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-            🏝️ K-man Island
-        </h1>
-        <p style="margin: 0.5rem 0 0 0; color: #64748b; font-size: 1rem;">
-            Tactical Portfolio Intelligence • Oslo Børs Scanner
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+with header_col2:
+    st.markdown(f'<div style="text-align:center;padding-top:0.5rem;position:relative;"><span style="font-size:1.5rem;">💬</span><span style="position:absolute;top:2px;right:2px;background:#ef4444;color:white;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:600;">3</span></div>', unsafe_allow_html=True)
 
-with col_live:
-    st.markdown(f"""
-    <div style="text-align: right; padding-top: 1rem;">
-        <span class="live-badge">
-            <span class="live-dot"></span>
-            {datetime.now().strftime('%H:%M')}
-        </span>
-    </div>
-    """, unsafe_allow_html=True)
+with header_col3:
+    st.markdown(f'<div style="text-align:center;padding-top:0.5rem;position:relative;"><span style="font-size:1.5rem;">🔔</span><span style="position:absolute;top:2px;right:2px;background:#f59e0b;color:white;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:600;">5</span></div>', unsafe_allow_html=True)
 
-with col_action:
-    st.markdown("""
-    <div style="text-align: right; padding-top: 1rem;">
-        <button style="
-            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(14, 165, 233, 0.3);
-            transition: all 0.3s ease;
-        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 12px rgba(14, 165, 233, 0.4)'" 
-        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(14, 165, 233, 0.3)'">
-            🔄 Oppdater Data
-        </button>
-    </div>
-    """, unsafe_allow_html=True)
+with header_col4:
+    st.markdown(f'<div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 1rem;"><div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9 0%,#0284c7 100%);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:1rem;">KN</div><div><div style="font-weight:600;font-size:0.9rem;color:#0f172a;">K-man Island</div><div style="font-size:0.75rem;color:#64748b;">Premium Investor</div></div></div>', unsafe_allow_html=True)
 
+with header_col5:
+    if st.button("🔄 Oppdater Data", use_container_width=True):
+        st.rerun()
+
+# Main Title
+st.markdown("## Oversikt")
 st.markdown("<br>", unsafe_allow_html=True)
 
 # 6. Data Loading
@@ -763,49 +707,20 @@ else:
     sell_count = 0
     top_opportunities = 0
 
+active_signals = buy_count + sell_count if results else 0
+watchlist_count = len(watchlist)
+
 with quick_col1:
-    st.markdown(f"""
-    <a href="?nav=dashboard" style="text-decoration: none; color: inherit;">
-        <div class="quick-stat">
-            <div class="quick-stat-icon" style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);">📊</div>
-            <div class="quick-stat-value" style="color: #0ea5e9;">{buy_count + sell_count}</div>
-            <div class="quick-stat-label">Aktive Signaler</div>
-        </div>
-    </a>
-    """, unsafe_allow_html=True)
+    st.markdown(f'<a href="?nav=dashboard" style="text-decoration:none;color:inherit;"><div class="quick-stat"><div class="quick-stat-icon" style="background:linear-gradient(135deg,#0ea5e9 0%,#0284c7 100%);">📊</div><div class="quick-stat-value" style="color:#0ea5e9;">{active_signals}</div><div class="quick-stat-label">Aktive Signaler</div></div></a>', unsafe_allow_html=True)
 
 with quick_col2:
-    st.markdown(f"""
-    <a href="?nav=analytics" style="text-decoration: none; color: inherit;">
-        <div class="quick-stat">
-            <div class="quick-stat-icon" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);">📈</div>
-            <div class="quick-stat-value" style="color: #22c55e;">{top_opportunities}</div>
-            <div class="quick-stat-label">Top Opportunities</div>
-        </div>
-    </a>
-    """, unsafe_allow_html=True)
+    st.markdown(f'<a href="?nav=analytics" style="text-decoration:none;color:inherit;"><div class="quick-stat"><div class="quick-stat-icon" style="background:linear-gradient(135deg,#22c55e 0%,#16a34a 100%);">📈</div><div class="quick-stat-value" style="color:#22c55e;">{top_opportunities}</div><div class="quick-stat-label">Top Opportunities</div></div></a>', unsafe_allow_html=True)
 
 with quick_col3:
-    st.markdown(f"""
-    <a href="?nav=watchlist" style="text-decoration: none; color: inherit;">
-        <div class="quick-stat">
-            <div class="quick-stat-icon" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">📋</div>
-            <div class="quick-stat-value" style="color: #8b5cf6;">{len(watchlist)}</div>
-            <div class="quick-stat-label">Watchlist Aksjer</div>
-        </div>
-    </a>
-    """, unsafe_allow_html=True)
+    st.markdown(f'<a href="?nav=watchlist" style="text-decoration:none;color:inherit;"><div class="quick-stat"><div class="quick-stat-icon" style="background:linear-gradient(135deg,#8b5cf6 0%,#7c3aed 100%);">📋</div><div class="quick-stat-value" style="color:#8b5cf6;">{watchlist_count}</div><div class="quick-stat-label">Watchlist Aksjer</div></div></a>', unsafe_allow_html=True)
 
 with quick_col4:
-    st.markdown("""
-    <a href="?nav=portfolio" style="text-decoration: none; color: inherit;">
-        <div class="quick-stat">
-            <div class="quick-stat-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">💼</div>
-            <div class="quick-stat-value" style="color: #f59e0b;">-</div>
-            <div class="quick-stat-label">Portfolio Verdi</div>
-        </div>
-    </a>
-    """, unsafe_allow_html=True)
+    st.markdown('<a href="?nav=portfolio" style="text-decoration:none;color:inherit;"><div class="quick-stat"><div class="quick-stat-icon" style="background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);">💼</div><div class="quick-stat-value" style="color:#f59e0b;">-</div><div class="quick-stat-label">Portfolio Verdi</div></div></a>', unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
