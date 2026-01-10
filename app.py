@@ -214,6 +214,33 @@ section[data-testid="stSidebar"] { display: none; }
     position: relative !important;
 }
 
+/* Tilbake-knapp - IKKE i kolonne, så reset styles */
+[data-testid="stVerticalBlock"] > div:not([data-testid="stColumn"]) [data-testid="stVerticalBlockBorderWrapper"],
+[data-testid="stVerticalBlock"] > div:not([data-testid="stColumn"]) [data-testid="stVerticalBlockBorderWrapper"] * {
+    position: relative !important;
+    height: auto !important;
+    width: auto !important;
+    background: white !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 12px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    opacity: 1 !important;
+    color: #1a1a1a !important;
+    z-index: auto !important;
+}
+
+[data-testid="stVerticalBlock"] > div:not([data-testid="stColumn"]) button {
+    padding: 12px 24px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.2s !important;
+}
+
+[data-testid="stVerticalBlock"] > div:not([data-testid="stColumn"]) button:hover {
+    background: #f3f4f6 !important;
+}
+
 /* Widget-bokser */
 .widget-box {
     background: white;
@@ -478,7 +505,8 @@ with c_main:
             st.error("Fant ikke aksjen")
             st.stop()
         
-        if st.button("← Tilbake til oversikt"):
+        # Tilbake-knapp
+        if st.button("← Tilbake til oversikt", key="back_btn"):
             st.session_state.selected_ticker = None
             st.rerun()
         
