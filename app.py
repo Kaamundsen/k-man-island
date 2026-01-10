@@ -34,10 +34,9 @@ html, body, [class*="css"] {
 
 .stApp { background-color: #F8F7F4; }
 
-/* Skjul standard sidebar */
 section[data-testid="stSidebar"] { display: none; }
 
-/* Venstre navigasjonsmeny - lys design */
+/* Venstre navigasjonsmeny */
 .left-nav {
     position: fixed;
     left: 0;
@@ -66,29 +65,11 @@ section[data-testid="stSidebar"] { display: none; }
     color: #9ca3af;
 }
 
-.nav-item:hover {
-    background: #f3f4f6;
-    color: #1a1a1a;
-}
+.nav-item:hover { background: #f3f4f6; color: #1a1a1a; }
+.nav-item.active { background: #f3f4f6; color: #1a1a1a; border: 2px solid #e5e7eb; }
+.nav-item svg { width: 24px; height: 24px; stroke: currentColor; stroke-width: 1.5; fill: none; }
 
-.nav-item.active {
-    background: #f3f4f6;
-    color: #1a1a1a;
-    border: 2px solid #e5e7eb;
-}
-
-.nav-item svg {
-    width: 24px;
-    height: 24px;
-    stroke: currentColor;
-    stroke-width: 1.5;
-    fill: none;
-}
-
-/* Hovedinnhold margin */
-[data-testid="stAppViewContainer"] > div:first-child {
-    margin-left: 90px;
-}
+[data-testid="stAppViewContainer"] > div:first-child { margin-left: 90px; }
 
 /* Profilkort */
 .profile-card {
@@ -112,7 +93,6 @@ section[data-testid="stSidebar"] { display: none; }
     flex-direction: column;
     justify-content: space-between;
     transition: transform 0.2s;
-    position: relative;
 }
 .status-card:hover { transform: translateY(-4px); }
 .card-lime { background: #E2FF3B; }
@@ -121,7 +101,7 @@ section[data-testid="stSidebar"] { display: none; }
 .status-number { font-size: 3rem; font-weight: 800; line-height: 1; }
 .status-label { font-size: 1rem; font-weight: 700; }
 
-/* Aksjekort - Klikkbart */
+/* Aksjekort */
 .stock-card {
     background: white;
     border-radius: 24px;
@@ -129,7 +109,6 @@ section[data-testid="stSidebar"] { display: none; }
     border: 1px solid #e5e7eb;
     margin-bottom: 20px;
     transition: all 0.2s ease;
-    cursor: pointer;
 }
 .stock-card:hover {
     transform: translateY(-6px);
@@ -140,7 +119,6 @@ section[data-testid="stSidebar"] { display: none; }
     background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
     padding: 24px;
     color: white;
-    position: relative;
 }
 
 .stock-badge {
@@ -155,21 +133,10 @@ section[data-testid="stSidebar"] { display: none; }
 .badge-hold { background: #A3E7D8; color: #1a1a1a; }
 .badge-sell { background: #FFB5B5; color: #1a1a1a; }
 
-.stock-ticker {
-    font-size: 1.6rem;
-    font-weight: 800;
-    margin: 0;
-}
+.stock-ticker { font-size: 1.6rem; font-weight: 800; margin: 0; }
+.stock-subtitle { font-size: 0.85rem; opacity: 0.7; margin-top: 4px; }
 
-.stock-subtitle {
-    font-size: 0.85rem;
-    opacity: 0.7;
-    margin-top: 4px;
-}
-
-.stock-body {
-    padding: 24px;
-}
+.stock-body { padding: 24px; }
 
 .stock-price-row {
     display: flex;
@@ -186,43 +153,23 @@ section[data-testid="stSidebar"] { display: none; }
     letter-spacing: 0.5px;
 }
 
-.price-value {
-    font-size: 1.4rem;
-    font-weight: 800;
-    color: #1a1a1a;
-}
+.price-value { font-size: 1.4rem; font-weight: 800; color: #1a1a1a; }
 
-.stock-metrics {
-    border-top: 1px solid #f3f4f6;
-    padding-top: 20px;
-}
+.stock-metrics { border-top: 1px solid #f3f4f6; padding-top: 20px; }
 
-.metric-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 12px;
-}
-
-.metric-item {
-    flex: 1;
-}
-
-.metric-label {
-    font-size: 0.65rem;
-    color: #9ca3af;
-    text-transform: uppercase;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    margin-bottom: 4px;
-}
-
-.metric-value {
-    font-size: 1rem;
-    font-weight: 700;
-}
+.metric-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
+.metric-item { flex: 1; }
+.metric-label { font-size: 0.65rem; color: #9ca3af; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 4px; }
+.metric-value { font-size: 1rem; font-weight: 700; }
 
 .positive { color: #16a34a; }
 .negative { color: #dc2626; }
+
+/* Sannsynlighet progress bar */
+.prob-container { margin-top: 16px; }
+.prob-header { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; margin-bottom: 8px; }
+.prob-bar-bg { background: #f0f0f0; height: 8px; border-radius: 4px; overflow: hidden; }
+.prob-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
 
 .stock-footer {
     display: flex;
@@ -232,6 +179,23 @@ section[data-testid="stSidebar"] { display: none; }
     margin-top: 16px;
     padding-top: 16px;
     border-top: 1px solid #f3f4f6;
+}
+
+/* Skjul knapp-tekst, gjør hele kortet klikkbart */
+.card-button-wrapper {
+    position: relative;
+    margin-top: -20px;
+}
+
+.card-button-wrapper button {
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    position: absolute;
+    top: -400px;
+    left: 0;
+    height: 450px;
+    cursor: pointer;
 }
 
 /* Widget-bokser */
@@ -250,13 +214,8 @@ section[data-testid="stSidebar"] { display: none; }
     color: white;
 }
 
-/* Analyse-visning */
-.big-ticker {
-    font-size: 3.5rem;
-    font-weight: 800;
-    letter-spacing: -2px;
-    margin-bottom: 24px;
-}
+/* Analyse */
+.big-ticker { font-size: 3.5rem; font-weight: 800; letter-spacing: -2px; margin-bottom: 24px; }
 
 .info-box {
     background: white;
@@ -265,22 +224,12 @@ section[data-testid="stSidebar"] { display: none; }
     border: 1px solid #e5e7eb;
     text-align: center;
 }
-
-.info-value {
-    font-size: 1.4rem;
-    font-weight: 800;
-}
-
-.info-label {
-    font-size: 0.75rem;
-    color: #6b7280;
-    text-transform: uppercase;
-    margin-top: 4px;
-}
+.info-value { font-size: 1.4rem; font-weight: 800; }
+.info-label { font-size: 0.75rem; color: #6b7280; text-transform: uppercase; margin-top: 4px; }
 </style>
 """, unsafe_allow_html=True)
 
-# Venstre navigasjonsmeny (SVG ikoner som i vedlegget)
+# Venstre navigasjonsmeny
 st.markdown("""
 <div class="left-nav">
     <div class="nav-item active" title="Hjem">
@@ -290,10 +239,10 @@ st.markdown("""
         <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
     </div>
     <div class="nav-item" title="Portefølje">
-        <svg viewBox="0 0 24 24"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z"/><path d="M3 9V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2"/><path d="M9 5V3"/><path d="M15 5V3"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z"/><path d="M3 9V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2"/></svg>
     </div>
     <div class="nav-item" title="Dokumenter">
-        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
     </div>
     <div class="nav-item" title="Profil">
         <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -349,6 +298,9 @@ def fetch_and_analyze():
             risk_kr = close - stop_loss
             risk_pct = (risk_kr / close) * 100
             
+            # Sannsynlighet beregning
+            prob = min(max(int((100 - rsi) * 1.3), 15), 95)
+            
             five_day = (close / float(df['Close'].iloc[-5])) - 1 if len(df) >= 5 else 0
             is_buy = (rsi < 55 and close > sma20 and close > sma50 and ema12 > ema26 and five_day > 0)
             is_sell = rsi > 75 or (close < sma20 and close < sma50)
@@ -359,11 +311,13 @@ def fetch_and_analyze():
                 "pris": round(close, 2), "endring": round(change_pct, 2), "rsi": round(rsi, 1),
                 "signal": signal, "target": round(target, 2), "stop_loss": round(stop_loss, 2),
                 "pot_kr": round(pot_kr, 2), "pot_pct": round(pot_pct, 1),
-                "risk_kr": round(risk_kr, 2), "risk_pct": round(risk_pct, 1), "df": df
+                "risk_kr": round(risk_kr, 2), "risk_pct": round(risk_pct, 1),
+                "prob": prob, "df": df
             })
         except: continue
     
-    return sorted(results, key=lambda x: (0 if x['signal'] == 'BUY' else 1 if x['signal'] == 'HOLD' else 2, -x['pot_pct']))
+    # Sorter etter sannsynlighet (høyest først), prioriter BUY
+    return sorted(results, key=lambda x: (0 if x['signal'] == 'BUY' else 1 if x['signal'] == 'HOLD' else 2, -x['prob']))
 
 # ============================================
 # 4. HOVEDINNHOLD
@@ -379,7 +333,6 @@ c_main, c_side = st.columns([3, 1])
 with c_main:
     if st.session_state.view == 'Dashboard' and not st.session_state.selected_ticker:
         
-        # Header
         h1, h2 = st.columns([3, 1])
         with h1:
             st.markdown("<h1 style='font-size: 2.2rem; font-weight: 800; margin-bottom: 8px;'>Oversikt</h1>", unsafe_allow_html=True)
@@ -416,60 +369,69 @@ with c_main:
         
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("<h2 style='font-size: 1.5rem; font-weight: 800;'>🎯 Dagens Muligheter</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='color: #6b7280; margin-bottom: 24px;'>Sortert etter høyest gevinstpotensial</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color: #6b7280; margin-bottom: 24px;'>Sortert etter høyest sannsynlighet</p>", unsafe_allow_html=True)
         
-        # Aksjekort - klikkbare
+        # Aksjekort
         cols = st.columns(2)
         for i, stock in enumerate(data[:6]):
             with cols[i % 2]:
                 badge_class = "badge-buy" if stock['signal'] == "BUY" else "badge-sell" if stock['signal'] == "SELL" else "badge-hold"
                 badge_text = "KJØP" if stock['signal'] == "BUY" else "SELG" if stock['signal'] == "SELL" else "HOLD"
+                prob_color = "#E2FF3B" if stock['prob'] > 70 else "#A3E7D8" if stock['prob'] > 50 else "#FFB5B5"
                 
-                # Bruk st.container med on_click for å gjøre hele kortet klikkbart
-                card_clicked = st.container()
-                with card_clicked:
-                    st.markdown(f"""
-                    <div class="stock-card" onclick="window.location.reload()">
-                        <div class="stock-header">
-                            <span class="stock-badge {badge_class}">{badge_text}</span>
-                            <h3 class="stock-ticker">{stock['ticker_short']}</h3>
-                            <div class="stock-subtitle">Oslo Børs · #{i+1}</div>
+                st.markdown(f"""
+                <div class="stock-card">
+                    <div class="stock-header">
+                        <span class="stock-badge {badge_class}">{badge_text}</span>
+                        <h3 class="stock-ticker">{stock['ticker_short']}</h3>
+                        <div class="stock-subtitle">Oslo Børs · #{i+1}</div>
+                    </div>
+                    <div class="stock-body">
+                        <div class="stock-price-row">
+                            <div>
+                                <div class="price-label">Pris</div>
+                                <div class="price-value">{stock['pris']:.2f} NOK</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div class="price-label">RSI</div>
+                                <div class="price-value">{stock['rsi']:.1f}</div>
+                            </div>
                         </div>
-                        <div class="stock-body">
-                            <div class="stock-price-row">
-                                <div>
-                                    <div class="price-label">Pris</div>
-                                    <div class="price-value">{stock['pris']:.2f} NOK</div>
+                        <div class="stock-metrics">
+                            <div class="metric-row">
+                                <div class="metric-item">
+                                    <div class="metric-label">Gevinstpotensial</div>
+                                    <div class="metric-value positive">+{stock['pot_kr']:.2f} kr / +{stock['pot_pct']:.1f}%</div>
                                 </div>
-                                <div style="text-align:right;">
-                                    <div class="price-label">RSI</div>
-                                    <div class="price-value">{stock['rsi']:.1f}</div>
-                                </div>
-                            </div>
-                            <div class="stock-metrics">
-                                <div class="metric-row">
-                                    <div class="metric-item">
-                                        <div class="metric-label">Gevinstpotensial</div>
-                                        <div class="metric-value positive">+{stock['pot_kr']:.2f} kr / +{stock['pot_pct']:.1f}%</div>
-                                    </div>
-                                    <div class="metric-item" style="text-align:right;">
-                                        <div class="metric-label">Risiko</div>
-                                        <div class="metric-value negative">-{stock['risk_kr']:.2f} kr / -{stock['risk_pct']:.1f}%</div>
-                                    </div>
+                                <div class="metric-item" style="text-align:right;">
+                                    <div class="metric-label">Risiko</div>
+                                    <div class="metric-value negative">-{stock['risk_kr']:.2f} kr / -{stock['risk_pct']:.1f}%</div>
                                 </div>
                             </div>
-                            <div class="stock-footer">
-                                <span>Target: <strong>{stock['target']:.2f}</strong></span>
-                                <span>Stop: <strong>{stock['stop_loss']:.2f}</strong></span>
+                        </div>
+                        <div class="prob-container">
+                            <div class="prob-header">
+                                <span>Sannsynlighet</span>
+                                <span>{stock['prob']}%</span>
                             </div>
+                            <div class="prob-bar-bg">
+                                <div class="prob-bar-fill" style="width: {stock['prob']}%; background-color: {prob_color};"></div>
+                            </div>
+                        </div>
+                        <div class="stock-footer">
+                            <span>Target: <strong>{stock['target']:.2f}</strong></span>
+                            <span>Stop: <strong>{stock['stop_loss']:.2f}</strong></span>
                         </div>
                     </div>
-                    """, unsafe_allow_html=True)
-                    
-                    # Usynlig knapp over kortet
-                    if st.button(f"Velg {stock['ticker_short']}", key=f"card_{stock['ticker']}", use_container_width=True, type="secondary"):
-                        st.session_state.selected_ticker = stock['ticker']
-                        st.rerun()
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Usynlig knapp som dekker kortet
+                st.markdown('<div class="card-button-wrapper">', unsafe_allow_html=True)
+                if st.button("", key=f"card_{stock['ticker']}", use_container_width=True):
+                    st.session_state.selected_ticker = stock['ticker']
+                    st.rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
 
     # Analyse-visning
     elif st.session_state.selected_ticker:
@@ -498,7 +460,7 @@ with c_main:
         with i4:
             st.markdown(f'<div class="info-box"><div class="info-value negative">-{stock["risk_pct"]:.1f}%</div><div class="info-label">Risiko</div></div>', unsafe_allow_html=True)
         with i5:
-            st.markdown(f'<div class="info-box"><div class="info-value">{stock["rsi"]:.1f}</div><div class="info-label">RSI</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="info-box"><div class="info-value">{stock["prob"]}%</div><div class="info-label">Sannsynlighet</div></div>', unsafe_allow_html=True)
         
         # Graf
         df_p = stock['df'].tail(90)
