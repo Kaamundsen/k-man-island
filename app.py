@@ -711,16 +711,16 @@ active_signals = buy_count + sell_count if results else 0
 watchlist_count = len(watchlist)
 
 with quick_col1:
-    st.markdown(f'<a href="?nav=dashboard" style="text-decoration:none;color:inherit;"><div class="quick-stat"><div class="quick-stat-icon" style="background:linear-gradient(135deg,#0ea5e9 0%,#0284c7 100%);">📊</div><div class="quick-stat-value" style="color:#0ea5e9;">{active_signals}</div><div class="quick-stat-label">Aktive Signaler</div></div></a>', unsafe_allow_html=True)
+    st.markdown(f'<a href="?nav=dashboard" style="text-decoration:none;color:inherit;"><div class="quick-stat" style="background:linear-gradient(135deg,#dcfce7 0%,#bbf7d0 100%);border-color:#84cc16;"><div class="quick-stat-icon" style="background:#84cc16;">📊</div><div class="quick-stat-value" style="color:#166534;font-size:2rem;">{active_signals}</div><div class="quick-stat-label" style="color:#166534;font-weight:600;">Aktive Signaler</div></div></a>', unsafe_allow_html=True)
 
 with quick_col2:
-    st.markdown(f'<a href="?nav=analytics" style="text-decoration:none;color:inherit;"><div class="quick-stat"><div class="quick-stat-icon" style="background:linear-gradient(135deg,#22c55e 0%,#16a34a 100%);">📈</div><div class="quick-stat-value" style="color:#22c55e;">{top_opportunities}</div><div class="quick-stat-label">Top Opportunities</div></div></a>', unsafe_allow_html=True)
+    st.markdown(f'<a href="?nav=analytics" style="text-decoration:none;color:inherit;"><div class="quick-stat" style="background:linear-gradient(135deg,#ccfbf1 0%,#99f6e4 100%);border-color:#14b8a6;"><div class="quick-stat-icon" style="background:#14b8a6;">📈</div><div class="quick-stat-value" style="color:#134e4a;font-size:2rem;">{top_opportunities}</div><div class="quick-stat-label" style="color:#134e4a;font-weight:600;">Top Opportunities</div></div></a>', unsafe_allow_html=True)
 
 with quick_col3:
-    st.markdown(f'<a href="?nav=watchlist" style="text-decoration:none;color:inherit;"><div class="quick-stat"><div class="quick-stat-icon" style="background:linear-gradient(135deg,#8b5cf6 0%,#7c3aed 100%);">📋</div><div class="quick-stat-value" style="color:#8b5cf6;">{watchlist_count}</div><div class="quick-stat-label">Watchlist Aksjer</div></div></a>', unsafe_allow_html=True)
+    st.markdown(f'<a href="?nav=watchlist" style="text-decoration:none;color:inherit;"><div class="quick-stat" style="background:linear-gradient(135deg,#fce7f3 0%,#fbcfe8 100%);border-color:#ec4899;"><div class="quick-stat-icon" style="background:#ec4899;">📋</div><div class="quick-stat-value" style="color:#9f1239;font-size:2rem;">{watchlist_count}</div><div class="quick-stat-label" style="color:#9f1239;font-weight:600;">Watchlist Aksjer</div></div></a>', unsafe_allow_html=True)
 
 with quick_col4:
-    st.markdown('<a href="?nav=portfolio" style="text-decoration:none;color:inherit;"><div class="quick-stat"><div class="quick-stat-icon" style="background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);">💼</div><div class="quick-stat-value" style="color:#f59e0b;">-</div><div class="quick-stat-label">Portfolio Verdi</div></div></a>', unsafe_allow_html=True)
+    st.markdown('<a href="?nav=portfolio" style="text-decoration:none;color:inherit;"><div class="quick-stat" style="background:linear-gradient(135deg,#fef3c7 0%,#fde68a 100%);border-color:#fbbf24;"><div class="quick-stat-icon" style="background:#fbbf24;">💼</div><div class="quick-stat-value" style="color:#92400e;font-size:2rem;">-</div><div class="quick-stat-label" style="color:#92400e;font-weight:600;">Portfolio Verdi</div></div></a>', unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -742,33 +742,33 @@ if results:
     
     with c1:
         st.markdown(f"""
-        <div class="stat-card">
-            <p class="stat-value" style="color: #0ea5e9;">{len(results)}</p>
-            <p class="stat-label">Aksjer analysert</p>
+        <div class="stat-card" style="background:linear-gradient(135deg,#dcfce7 0%,#bbf7d0 100%);border-color:#84cc16;">
+            <p class="stat-value" style="color: #166534;font-size:2.5rem;">{len(results)}</p>
+            <p class="stat-label" style="color: #166534;font-weight:600;">Aksjer analysert</p>
         </div>
         """, unsafe_allow_html=True)
     
     with c2:
         st.markdown(f"""
-        <div class="stat-card">
-            <p class="stat-value" style="color: #22c55e;">{buy_count}</p>
-            <p class="stat-label">Kjøpssignaler</p>
+        <div class="stat-card" style="background:linear-gradient(135deg,#ccfbf1 0%,#99f6e4 100%);border-color:#14b8a6;">
+            <p class="stat-value" style="color: #134e4a;font-size:2.5rem;">{buy_count}</p>
+            <p class="stat-label" style="color: #134e4a;font-weight:600;">Kjøpssignaler</p>
         </div>
         """, unsafe_allow_html=True)
     
     with c3:
         st.markdown(f"""
-        <div class="stat-card">
-            <p class="stat-value" style="color: #ef4444;">{sell_count}</p>
-            <p class="stat-label">Salgssignaler</p>
+        <div class="stat-card" style="background:linear-gradient(135deg,#fce7f3 0%,#fbcfe8 100%);border-color:#ec4899;">
+            <p class="stat-value" style="color: #9f1239;font-size:2.5rem;">{sell_count}</p>
+            <p class="stat-label" style="color: #9f1239;font-weight:600;">Salgssignaler</p>
         </div>
         """, unsafe_allow_html=True)
     
     with c4:
         st.markdown(f"""
-        <div class="stat-card">
-            <p class="stat-value" style="color: #8b5cf6;">{up_count}</p>
-            <p class="stat-label">I opptrend</p>
+        <div class="stat-card" style="background:linear-gradient(135deg,#fef3c7 0%,#fde68a 100%);border-color:#fbbf24;">
+            <p class="stat-value" style="color: #92400e;font-size:2.5rem;">{up_count}</p>
+            <p class="stat-label" style="color: #92400e;font-weight:600;">I opptrend</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -784,14 +784,25 @@ if results:
         display_df = df_res.head(10).copy()
         display_df['Ticker'] = display_df['ticker'].str.replace('.OL', '')
         display_df['Pris'] = display_df['pris'].apply(lambda x: f"{x:.2f} kr")
-        display_df['Endring'] = display_df['change'].apply(lambda x: f"+{x:.2f}%" if x >= 0 else f"{x:.2f}%")
-        display_df['RSI'] = display_df['rsi'].apply(lambda x: f"{x:.1f}")
-        display_df['K-Score'] = display_df['score']
-        display_df['Trend'] = display_df['trend'].apply(lambda x: "📈 UP" if x == "UP" else "📉 DOWN")
+        
+        # Beregn gevinstpotensial og risiko
+        def format_potential(row):
+            potential_kr = row['target'] - row['pris']
+            potential_pct = (potential_kr / row['pris']) * 100
+            return f"+{potential_kr:.1f} kr / +{potential_pct:.1f}%"
+        
+        def format_risk(row):
+            risk_kr = row['pris'] - row['stop_loss']
+            risk_pct = (risk_kr / row['pris']) * 100
+            return f"-{risk_kr:.1f} kr / -{risk_pct:.1f}%"
+        
+        display_df['Gevinstpotensial'] = display_df.apply(format_potential, axis=1)
+        display_df['Risiko'] = display_df.apply(format_risk, axis=1)
         display_df['Signal'] = display_df['signal'].apply(lambda x: "🟢 KJØP" if x == "BUY" else "🔴 SELG" if x == "SELL" else "🟡 HOLD")
+        display_df['RSI'] = display_df['rsi'].apply(lambda x: f"{x:.1f}")
         
         st.dataframe(
-            display_df[['Ticker', 'Pris', 'Endring', 'RSI', 'K-Score', 'Trend', 'Signal']],
+            display_df[['Ticker', 'Pris', 'Signal', 'Gevinstpotensial', 'Risiko', 'RSI']],
             hide_index=True,
             use_container_width=True
         )
@@ -809,14 +820,26 @@ if results:
         filtered_df = df_res[df_res['signal'].isin(signal_filter)].copy()
         filtered_df['Ticker'] = filtered_df['ticker'].str.replace('.OL', '')
         filtered_df['Pris'] = filtered_df['pris'].apply(lambda x: f"{x:.2f} kr")
-        filtered_df['Endring'] = filtered_df['change'].apply(lambda x: f"+{x:.2f}%" if x >= 0 else f"{x:.2f}%")
-        filtered_df['RSI'] = filtered_df['rsi'].apply(lambda x: f"{x:.1f}")
-        filtered_df['K-Score'] = filtered_df['score']
-        filtered_df['Trend'] = filtered_df['trend'].apply(lambda x: "📈 UP" if x == "UP" else "📉 DOWN")
+        
+        # Beregn gevinstpotensial og risiko
+        def format_potential_all(row):
+            potential_kr = row['target'] - row['pris']
+            potential_pct = (potential_kr / row['pris']) * 100
+            return f"+{potential_kr:.1f} kr / +{potential_pct:.1f}%"
+        
+        def format_risk_all(row):
+            risk_kr = row['pris'] - row['stop_loss']
+            risk_pct = (risk_kr / row['pris']) * 100
+            return f"-{risk_kr:.1f} kr / -{risk_pct:.1f}%"
+        
+        filtered_df['Gevinstpotensial'] = filtered_df.apply(format_potential_all, axis=1)
+        filtered_df['Risiko'] = filtered_df.apply(format_risk_all, axis=1)
         filtered_df['Signal'] = filtered_df['signal'].apply(lambda x: "🟢 KJØP" if x == "BUY" else "🔴 SELG" if x == "SELL" else "🟡 HOLD")
+        filtered_df['RSI'] = filtered_df['rsi'].apply(lambda x: f"{x:.1f}")
+        filtered_df['Trend'] = filtered_df['trend'].apply(lambda x: "📈 UP" if x == "UP" else "📉 DOWN")
         
         st.dataframe(
-            filtered_df[['Ticker', 'Pris', 'Endring', 'RSI', 'K-Score', 'Trend', 'Signal']],
+            filtered_df[['Ticker', 'Pris', 'Signal', 'Gevinstpotensial', 'Risiko', 'RSI', 'Trend']],
             hide_index=True,
             use_container_width=True,
             height=400
