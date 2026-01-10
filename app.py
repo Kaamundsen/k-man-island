@@ -272,8 +272,7 @@ def get_analysis(ticker):
             "signal": "BUY" if buy_signal else "SELL" if sell_signal else "HOLD"
         }
     except Exception:
-        except:
-            return None
+        return None
 
 # 4. Watchlist
 watchlist = [
