@@ -16,6 +16,8 @@ st.set_page_config(
 # Initialize session state for navigation
 if 'page' not in st.session_state:
     st.session_state.page = 'Oversikt'
+if 'selected_nav' not in st.session_state:
+    st.session_state.selected_nav = 'home'
 
 # 2. Lys, moderne stil
 st.markdown("""
@@ -24,6 +26,19 @@ st.markdown("""
 
 .stApp {
     background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+/* Modern glassmorphism header */
+.top-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+    padding: 1rem 2rem;
+    margin: -1rem -1rem 2rem -1rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 [data-testid="stAppViewContainer"] {
@@ -58,12 +73,37 @@ h1, h2, h3, p, span, div, label {
 
 /* Cards */
 .stat-card {
-    background: white;
-    border-radius: 16px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 20px;
     padding: 1.5rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(226, 232, 240, 0.8);
     text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #0ea5e9, #22c55e, #8b5cf6, #ef4444);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.stat-card:hover::before {
+    opacity: 1;
 }
 
 .stat-value {
@@ -163,26 +203,42 @@ section[data-testid="stSidebar"] {
 }
 
 .nav-icon {
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 10px;
+    border-radius: 12px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     color: #94a3b8;
     font-size: 1.5rem;
+    position: relative;
 }
 
 .nav-icon:hover {
-    background: #334155;
+    background: linear-gradient(135deg, #334155 0%, #475569 100%);
     color: white;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
 }
 
 .nav-icon.active {
-    background: #0ea5e9;
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
     color: white;
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+}
+
+.nav-icon.active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 24px;
+    background: white;
+    border-radius: 0 2px 2px 0;
 }
 
 @media (max-width: 768px) {
@@ -263,7 +319,50 @@ section[data-testid="stSidebar"] {
     0%, 100% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.5; transform: scale(0.9); }
 }
+
+/* Quick stats cards */
+.quick-stat {
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.quick-stat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: #0ea5e9;
+}
+
+.quick-stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.quick-stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0.5rem 0;
+}
+
+.quick-stat-label {
+    font-size: 0.85rem;
+    color: #64748b;
+}
 </style>
+<script>
+function navigateTo(page) {
+    window.location.href = '?nav=' + page;
+}
+</script>
 """, unsafe_allow_html=True)
 
 # 3. Skanner-motor med BREDERE signal-logikk
@@ -522,65 +621,87 @@ watchlist = [
     "PRAWN.OL", "OKEA.OL", "HAFNI.OL", "BELCO.OL", "2020.OL", "KOA.OL", "BWE.OL"
 ]
 
-# 5. Left Navigation Sidebar
+# 5. Left Navigation Sidebar med klikkbar funksjonalitet
+nav_items = [
+    {'icon': '🏝️', 'id': 'home', 'label': 'Oversikt'},
+    {'icon': '📊', 'id': 'dashboard', 'label': 'Dashboard'},
+    {'icon': '📈', 'id': 'analytics', 'label': 'Analytics'},
+    {'icon': '📋', 'id': 'watchlist', 'label': 'Watchlist'},
+    {'icon': '👥', 'id': 'portfolio', 'label': 'Portfolio'},
+    {'icon': '⚙️', 'id': 'settings', 'label': 'Innstillinger'}
+]
+
+nav_html = '<div class="left-sidebar">'
+for item in nav_items:
+    active_class = 'active' if st.session_state.selected_nav == item['id'] else ''
+    nav_html += f'''
+    <div class="nav-icon {active_class}" onclick="navigateTo('{item['id']}')" title="{item['label']}" style="font-size: 1.5rem; cursor: pointer;">
+        {item['icon']}
+    </div>
+    '''
+nav_html += '<div class="toggle-switch">ON</div></div>'
+st.markdown(nav_html, unsafe_allow_html=True)
+
+# Håndter navigasjon
+nav_param = st.query_params.get('nav', None)
+if nav_param:
+    st.session_state.selected_nav = nav_param[0] if isinstance(nav_param, list) else nav_param
+
+# Top Header Bar - Forbedret design
 st.markdown("""
-<div class="left-sidebar">
-    <div class="nav-icon active" style="font-size: 1.8rem;">🏝️</div>
-    <div class="nav-icon">📊</div>
-    <div class="nav-icon">📈</div>
-    <div class="nav-icon">📋</div>
-    <div class="nav-icon">👥</div>
-    <div class="nav-icon">⚙️</div>
-    <div class="toggle-switch">ON</div>
+<div class="top-header">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 2rem;">
+        <div style="flex: 1; max-width: 500px;">
+            <div style="position: relative;">
+                <input type="text" placeholder="🔍 Søk aksjer, tickers eller signaler..." style="
+                    width: 100%;
+                    padding: 0.75rem 1rem 0.75rem 2.5rem;
+                    border-radius: 12px;
+                    border: 1px solid #e2e8f0;
+                    background: rgba(255, 255, 255, 0.9);
+                    font-size: 0.9rem;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+                " onfocus="this.style.borderColor='#0ea5e9'; this.style.boxShadow='0 0 0 3px rgba(14, 165, 233, 0.1)'" 
+                onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'">
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <div style="position: relative; cursor: pointer;">
+                <span style="font-size: 1.5rem;">💬</span>
+                <span style="position: absolute; top: -4px; right: -4px; background: #ef4444; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600;">3</span>
+            </div>
+            <div style="position: relative; cursor: pointer;">
+                <span style="font-size: 1.5rem;">🔔</span>
+                <span style="position: absolute; top: -4px; right: -4px; background: #f59e0b; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600;">5</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 1rem; background: rgba(255, 255, 255, 0.9); border-radius: 12px; cursor: pointer; transition: all 0.3s ease; border: 1px solid #e2e8f0;" 
+                 onmouseover="this.style.background='white'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.1)'" 
+                 onmouseout="this.style.background='rgba(255, 255, 255, 0.9)'; this.style.boxShadow='none'">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1rem; box-shadow: 0 2px 4px rgba(14, 165, 233, 0.3);">KN</div>
+                <div>
+                    <div style="font-weight: 600; font-size: 0.9rem; color: #0f172a;">K-man Island</div>
+                    <div style="font-size: 0.75rem; color: #64748b;">Premium Investor</div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
-# Top Header Bar
-header_col1, header_col2, header_col3, header_col4 = st.columns([3, 1, 1, 1])
-with header_col1:
-    st.markdown(f"""
-    <div style="padding: 1rem 0;">
-        <input type="text" placeholder="Søk globalt..." style="
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-            background: white;
-            font-size: 0.9rem;
-        ">
-    </div>
-    """, unsafe_allow_html=True)
-
-with header_col2:
-    st.markdown("""
-    <div style="text-align: center; padding: 1rem 0;">
-        <span style="font-size: 1.5rem;">💬</span>
-    </div>
-    """, unsafe_allow_html=True)
-
-with header_col3:
-    st.markdown("""
-    <div style="text-align: center; padding: 1rem 0;">
-        <span style="font-size: 1.5rem;">🔔</span>
-    </div>
-    """, unsafe_allow_html=True)
-
-with header_col4:
-    st.markdown(f"""
-    <div style="display: flex; align-items: center; gap: 0.5rem; padding: 1rem 0;">
-        <div style="width: 40px; height: 40px; border-radius: 50%; background: #0ea5e9; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">KN</div>
-        <div>
-            <div style="font-weight: 600; font-size: 0.9rem;">K-man Island</div>
-            <div style="font-size: 0.75rem; color: #64748b;">Investor</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-# Main Title Section
-col_title, col_live = st.columns([4, 1])
+# Main Title Section - Forbedret
+col_title, col_live, col_action = st.columns([3, 1, 1])
 with col_title:
-    st.markdown("# 🏝️ K-man Island")
-    st.markdown("**Tactical Portfolio Intelligence** • Oslo Børs Scanner")
+    st.markdown("""
+    <div style="margin-bottom: 1rem;">
+        <h1 style="margin: 0; font-size: 2.5rem; font-weight: 800; background: linear-gradient(135deg, #0ea5e9 0%, #8b5cf6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+            🏝️ K-man Island
+        </h1>
+        <p style="margin: 0.5rem 0 0 0; color: #64748b; font-size: 1rem;">
+            Tactical Portfolio Intelligence • Oslo Børs Scanner
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 with col_live:
     st.markdown(f"""
@@ -592,7 +713,28 @@ with col_live:
     </div>
     """, unsafe_allow_html=True)
 
-st.markdown("---")
+with col_action:
+    st.markdown("""
+    <div style="text-align: right; padding-top: 1rem;">
+        <button style="
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(14, 165, 233, 0.3);
+            transition: all 0.3s ease;
+        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 12px rgba(14, 165, 233, 0.4)'" 
+        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(14, 165, 233, 0.3)'">
+            🔄 Oppdater Data
+        </button>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
 
 # 6. Data Loading
 results = []
@@ -602,6 +744,58 @@ with st.spinner('🔍 Skanner Oslo Børs...'):
         if data: 
             results.append(data)
 
+# Quick Stats Overview - Klikkbare kort (oppdateres med faktiske data)
+st.markdown("### 📊 Rask Oversikt")
+quick_col1, quick_col2, quick_col3, quick_col4 = st.columns(4)
+
+if results:
+    df_res = pd.DataFrame([{k: v for k, v in r.items() if k != 'df'} for r in results])
+    buy_count = len([r for r in results if r['signal'] == 'BUY'])
+    sell_count = len([r for r in results if r['signal'] == 'SELL'])
+    top_opportunities = len(df_res[df_res['score'] > 20])
+else:
+    buy_count = 0
+    sell_count = 0
+    top_opportunities = 0
+
+with quick_col1:
+    st.markdown(f"""
+    <div class="quick-stat" onclick="window.location.href='?nav=dashboard'">
+        <div class="quick-stat-icon" style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);">📊</div>
+        <div class="quick-stat-value" style="color: #0ea5e9;">{buy_count + sell_count}</div>
+        <div class="quick-stat-label">Aktive Signaler</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with quick_col2:
+    st.markdown(f"""
+    <div class="quick-stat" onclick="window.location.href='?nav=analytics'">
+        <div class="quick-stat-icon" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);">📈</div>
+        <div class="quick-stat-value" style="color: #22c55e;">{top_opportunities}</div>
+        <div class="quick-stat-label">Top Opportunities</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with quick_col3:
+    st.markdown(f"""
+    <div class="quick-stat" onclick="window.location.href='?nav=watchlist'">
+        <div class="quick-stat-icon" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">📋</div>
+        <div class="quick-stat-value" style="color: #8b5cf6;">{len(watchlist)}</div>
+        <div class="quick-stat-label">Watchlist Aksjer</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with quick_col4:
+    st.markdown("""
+    <div class="quick-stat" onclick="window.location.href='?nav=portfolio'">
+        <div class="quick-stat-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">💼</div>
+        <div class="quick-stat-value" style="color: #f59e0b;">-</div>
+        <div class="quick-stat-label">Portfolio Verdi</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
 if results:
     df_res = pd.DataFrame([{k: v for k, v in r.items() if k != 'df'} for r in results])
     df_res = df_res.sort_values(by="score", ascending=False)
@@ -610,6 +804,10 @@ if results:
     buy_count = len([r for r in results if r['signal'] == 'BUY'])
     sell_count = len([r for r in results if r['signal'] == 'SELL'])
     up_count = len([r for r in results if r['trend'] == 'UP'])
+    
+    # Oppdater quick stats hvis de ikke allerede er satt
+    if 'quick_stats_updated' not in st.session_state:
+        st.session_state.quick_stats_updated = True
     
     # Metrics row
     c1, c2, c3, c4 = st.columns(4)
