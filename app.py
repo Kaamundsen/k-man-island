@@ -183,47 +183,26 @@ section[data-testid="stSidebar"] { display: none; }
     border-top: 1px solid #f3f4f6;
 }
 
-/* Aksjekort klikkbar-knapp overlay - HELT USYNLIG */
-[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] {
+/* SKJUL KNAPP HELT - USYNLIG MEN KLIKKBAR */
+[data-testid="stColumn"] > div > div {
     position: relative !important;
-    z-index: 100 !important;
-    height: 500px !important;
-    margin-bottom: -500px !important;
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    border-radius: 24px !important;
-    overflow: hidden !important;
 }
 
-[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] > div,
-[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] > div > div {
-    height: 100% !important;
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-}
-
-[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] button,
-[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] button * {
+[data-testid="stColumn"] > div > div > div:first-child,
+[data-testid="stColumn"] > div > div > div:first-child *,
+[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"],
+[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] * {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
     width: 100% !important;
-    height: 100% !important;
+    height: 500px !important;
+    z-index: 999 !important;
     opacity: 0 !important;
-    background: transparent !important;
+    background: none !important;
     border: none !important;
     box-shadow: none !important;
-    color: transparent !important;
     cursor: pointer !important;
-}
-
-[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] button:hover,
-[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] button:focus,
-[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] button:active {
-    opacity: 0 !important;
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    outline: none !important;
 }
 
 /* Widget-bokser */
