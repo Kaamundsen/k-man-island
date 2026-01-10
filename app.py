@@ -2,1108 +2,383 @@ import streamlit as st
 import yfinance as yf
 import pandas_ta as ta
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import pandas as pd
 from datetime import datetime
+import random
 
-# 1. Konfigurasjon
+# ============================================
+# 1. KONFIGURASJON & APP SETUP
+# ============================================
 st.set_page_config(
-    page_title="K-man Island", 
-    page_icon="🏝️",
+    page_title="K-man Island | Intelligence",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Initialize session state for navigation
+# Session State for interaktivitet
+if 'selected_ticker' not in st.session_state:
+    st.session_state.selected_ticker = None
 if 'page' not in st.session_state:
-    st.session_state.page = 'Oversikt'
-if 'selected_nav' not in st.session_state:
-    st.session_state.selected_nav = 'home'
+    st.session_state.page = 'Dashboard'
 
-# 2. Lys, moderne stil
+# ============================================
+# 2. DESIGN (Inspirert av det nye designet)
+# ============================================
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+/* Main Overrides */
+html, body, [class*="css"] {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: #1a1a1a;
+    background-color: #F8F7F4;
+}
 
 .stApp {
-    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    background-color: #F8F7F4;
 }
 
-/* Modern glassmorphism header */
+/* Sidebar Styling - Minimalist */
+section[data-testid="stSidebar"] {
+    background-color: #ffffff !important;
+    border-right: 1px solid #f0f0f0;
+    min-width: 80px !important;
+}
+
+/* Sidebar Nav Buttons as Icons */
+.stSidebar button {
+    background: transparent !important;
+    border: none !important;
+    font-size: 1.5rem !important;
+    margin-bottom: 20px !important;
+    color: #888 !important;
+}
+.stSidebar button:hover {
+    color: #1a1a1a !important;
+}
+
+/* Header */
 .top-header {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-    padding: 1rem 2rem;
-    margin: -1rem -1rem 2rem -1rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
 }
 
-/* Search input styling */
-.stTextInput > div > div > input {
+.search-bar {
+    background: white;
     border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    padding: 0.75rem 1rem;
+    padding: 8px 15px;
+    border: 1px solid #eee;
+    width: 300px;
+    color: #888;
     font-size: 0.9rem;
 }
 
-.stTextInput > div > div > input:focus {
-    border-color: #0ea5e9;
-    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
-}
-
-[data-testid="stAppViewContainer"] {
-    margin-left: 80px;
-}
-
-[data-testid="stHeader"] {
-    margin-left: 80px;
-}
-
-/* Hide default elements */
-#MainMenu, footer, header {visibility: hidden;}
-
-/* Typography */
-h1, h2, h3, p, span, div, label {
-    font-family: 'DM Sans', sans-serif !important;
-}
-
-/* Main title styling */
-.main-title {
-    font-size: 2.8rem;
-    font-weight: 700;
-    color: #0f172a;
-    margin-bottom: 0.5rem;
-}
-
-.subtitle {
-    color: #64748b;
-    font-size: 1.1rem;
-    margin-bottom: 2rem;
-}
-
-/* Cards */
-.stat-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border-radius: 20px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    border: 1px solid rgba(226, 232, 240, 0.8);
-    text-align: center;
-    transition: all 0.3s ease;
-    cursor: pointer;
+/* Status Cards - Vibrant Colors */
+.status-card {
+    border-radius: 24px;
+    padding: 30px;
+    color: #1a1a1a;
     position: relative;
     overflow: hidden;
-}
-
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #0ea5e9, #22c55e, #8b5cf6, #ef4444);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-
-.stat-card:hover::before {
-    opacity: 1;
-}
-
-.stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-    margin: 0;
-}
-
-.stat-label {
-    color: #64748b;
-    font-size: 0.85rem;
-    margin-top: 0.25rem;
-}
-
-/* Signal badges */
-.signal-buy {
-    background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%);
-    color: #ffffff;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.85rem;
-    display: inline-block;
-    box-shadow: 0 2px 4px rgba(132, 204, 22, 0.3);
-}
-
-.signal-sell {
-    background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
-    color: #ffffff;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.85rem;
-    display: inline-block;
-    box-shadow: 0 2px 4px rgba(20, 184, 166, 0.3);
-}
-
-.signal-hold {
-    background: linear-gradient(135deg, #f472b6 0%, #ec4899 100%);
-    color: #ffffff;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.85rem;
-    display: inline-block;
-    box-shadow: 0 2px 4px rgba(244, 114, 182, 0.3);
-}
-
-/* Trend badges */
-.trend-up {
-    color: #16a34a;
-    font-weight: 600;
-}
-
-.trend-down {
-    color: #dc2626;
-    font-weight: 600;
-}
-
-/* Table styling */
-.dataframe {
-    border: none !important;
-}
-
-.dataframe th {
-    background: #f1f5f9 !important;
-    color: #475569 !important;
-    font-weight: 600 !important;
-    text-transform: uppercase;
-    font-size: 0.75rem !important;
-    letter-spacing: 0.5px;
-}
-
-.dataframe td {
-    background: white !important;
-    border-bottom: 1px solid #e2e8f0 !important;
-}
-
-/* Right Sidebar */
-section[data-testid="stSidebar"] {
-    background: white;
-    border-right: 1px solid #e2e8f0;
-}
-
-/* Left Navigation Sidebar */
-.left-sidebar {
-    background: #1e293b;
-    color: white;
-    padding: 2rem 1rem;
-    min-height: 100vh;
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 80px;
-    z-index: 1000;
+    height: 160px;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 1.5rem;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+    justify-content: space-between;
+    transition: transform 0.2s;
 }
+.card-lime { background-color: #E2FF3B; }
+.card-teal { background-color: #A3E7D8; }
+.card-pink { background-color: #FFB5B5; }
 
-.nav-icon {
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    color: #94a3b8;
-    font-size: 1.5rem;
+.status-number { font-size: 3rem; font-weight: 800; line-height: 1; }
+.status-label { font-size: 1rem; font-weight: 600; color: #444; }
+.status-icon { position: absolute; top: 20px; right: 20px; font-size: 1.5rem; opacity: 0.6; }
+
+/* Content Cards (Stock Opportunities) */
+.stock-card {
+    background: #ffffff;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    margin-bottom: 24px;
+    transition: all 0.3s ease;
+    border: 1px solid #f0f0f0;
+}
+.stock-card:hover { transform: translateY(-8px); box-shadow: 0 12px 30px rgba(0,0,0,0.08); }
+
+.card-image-section {
+    height: 180px;
+    background: linear-gradient(135deg, #2d3436 0%, #000000 100%);
     position: relative;
 }
-
-.nav-icon:hover {
-    background: linear-gradient(135deg, #334155 0%, #475569 100%);
-    color: white;
-    transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
-}
-
-.nav-icon.active {
-    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-    color: white;
-    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
-}
-
-.nav-icon.active::after {
-    content: '';
+.card-badge {
     position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 3px;
-    height: 24px;
-    background: white;
-    border-radius: 0 2px 2px 0;
-}
-
-@media (max-width: 768px) {
-    .left-sidebar {
-        width: 60px;
-    }
-    [data-testid="stAppViewContainer"] {
-        margin-left: 60px;
-    }
-    [data-testid="stHeader"] {
-        margin-left: 60px;
-    }
-}
-
-.toggle-switch {
-    margin-top: auto;
-    padding: 0.5rem;
-    background: #fbbf24;
-    border-radius: 20px;
-    color: #000;
-    font-weight: 600;
+    top: 15px;
+    left: 15px;
+    padding: 4px 12px;
+    border-radius: 12px;
     font-size: 0.75rem;
-    text-align: center;
-    cursor: pointer;
-}
-
-/* Tab styling */
-.stTabs [data-baseweb="tab-list"] {
-    gap: 8px;
-    background: white;
-    padding: 0.5rem;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-}
-
-.stTabs [data-baseweb="tab"] {
-    border-radius: 8px;
-    padding: 0.75rem 1.5rem;
-    font-weight: 500;
-}
-
-.stTabs [aria-selected="true"] {
-    background: #0ea5e9 !important;
-    color: white !important;
-}
-
-/* Info card in sidebar */
-.info-card {
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-    border: 1px solid #bae6fd;
-    border-radius: 12px;
-    padding: 1rem;
-    margin-top: 1rem;
-}
-
-/* Live indicator */
-.live-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: #dcfce7;
-    color: #166534;
-    padding: 0.4rem 0.8rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 500;
-}
-
-.live-dot {
-    width: 8px;
-    height: 8px;
-    background: #22c55e;
-    border-radius: 50%;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(0.9); }
-}
-
-/* Quick stats cards - Samme farger som referanse-designet */
-.quick-stat {
-    background: white;
-    border-radius: 16px;
-    padding: 1.25rem;
-    border: 1px solid #e2e8f0;
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-.quick-stat:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.quick-stat-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    margin-bottom: 0.75rem;
-}
-
-.quick-stat-value {
-    font-size: 1.75rem;
     font-weight: 700;
-    margin: 0.5rem 0;
+    text-transform: uppercase;
+}
+.badge-buy { background-color: #E2FF3B; color: #1a1a1a; }
+.badge-hold { background-color: #A3E7D8; color: #1a1a1a; }
+
+.card-title-area {
+    position: absolute;
+    bottom: 15px;
+    left: 15px;
+    color: white;
 }
 
-.quick-stat-label {
-    font-size: 0.85rem;
-    color: #64748b;
+.card-body { padding: 20px; }
+
+.progress-container { margin-top: 15px; }
+.progress-bar-bg { background-color: #f0f0f0; height: 8px; border-radius: 4px; overflow: hidden; }
+.progress-bar-fill { height: 100%; border-radius: 4px; transition: width 1s ease-in-out; }
+
+/* Widget Styles */
+.widget-box {
+    background: white;
+    border-radius: 24px;
+    padding: 25px;
+    margin-bottom: 20px;
+    border: 1px solid #f0f0f0;
+}
+
+/* Clicking Hack */
+.card-wrapper { position: relative; }
+.card-wrapper .stButton > button {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    opacity: 0 !important;
+    z-index: 10 !important;
+}
+
+/* Analysis Massive Header */
+.massive-header {
+    font-size: 5rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -3px;
+    line-height: 0.9;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# 3. Skanner-motor med BREDERE signal-logikk
-def get_analysis(ticker):
-    try:
-        df = yf.download(ticker, period="1y", interval="1d", progress=False, auto_adjust=True)
-        
-        if isinstance(df.columns, pd.MultiIndex):
-            df.columns = df.columns.droplevel(1)
-        
-        if df.empty or len(df) < 50: 
-            # Prøv alternativ metode
-            ticker_obj = yf.Ticker(ticker)
-            df = ticker_obj.history(period="1y")
-            if df.empty or len(df) < 50:
-                return None
-        
-        # Håndter kolonner
-        if 'Close' not in df.columns:
-            if 'Adj Close' in df.columns:
-                df = df.rename(columns={'Adj Close': 'Close'})
-            else:
-                return None
-        
-        # Indikatorer
-        df['RSI'] = ta.rsi(df['Close'], length=14)
-        df['SMA20'] = ta.sma(df['Close'], length=20)
-        df['SMA50'] = ta.sma(df['Close'], length=50)
-        df['EMA12'] = ta.ema(df['Close'], length=12)
-        df['EMA26'] = ta.ema(df['Close'], length=26)
-        df['ATR'] = ta.atr(df['High'], df['Low'], df['Close'], length=14)
-        
-        if pd.isna(df['RSI'].iloc[-1]) or pd.isna(df['SMA20'].iloc[-1]) or pd.isna(df['SMA50'].iloc[-1]):
-            return None
-        
-        last_close = float(df['Close'].iloc[-1])
-        last_rsi = float(df['RSI'].iloc[-1])
-        last_sma20 = float(df['SMA20'].iloc[-1])
-        last_sma50 = float(df['SMA50'].iloc[-1])
-        last_ema12 = float(df['EMA12'].iloc[-1])
-        last_ema26 = float(df['EMA26'].iloc[-1])
-        last_atr = float(df['ATR'].iloc[-1]) if not pd.isna(df['ATR'].iloc[-1]) else last_close * 0.02
-        
-        # Beregn endring
-        prev_close = float(df['Close'].iloc[-2]) if len(df) >= 2 else last_close
-        change_pct = ((last_close - prev_close) / prev_close) * 100
-        
-        # Beregn motstandsnivåer (target) - finn lokale maksima
-        recent_highs = df['High'].tail(60).values
-        resistance_levels = []
-        for i in range(1, len(recent_highs) - 1):
-            if recent_highs[i] > recent_highs[i-1] and recent_highs[i] > recent_highs[i+1]:
-                resistance_levels.append(recent_highs[i])
-        
-        # Teknisk target: neste motstandsnivå over nåværende pris, eller 10% opp hvis ingen
-        if resistance_levels:
-            next_resistance = min([r for r in resistance_levels if r > last_close], default=last_close * 1.10)
-        else:
-            next_resistance = last_close * 1.10
-        
-        # Stop Loss: 2x ATR under nåværende pris
-        stop_loss = last_close - (2 * last_atr)
-        
-        # Risiko/Belønning ratio
-        risk = last_close - stop_loss
-        reward = next_resistance - last_close
-        rr_ratio = reward / risk if risk > 0 else 0
-        
-        # Strammere BUY/SELL-logikk (unngå 30+ BUY):
-        buy_signal = False
-        sell_signal = False
-
-        five_day_return = (last_close / float(df['Close'].iloc[-5])) - 1 if len(df) >= 5 else 0
-
-        # BUY krever alle: RSI < 55, pris > SMA20 og SMA50, EMA12 > EMA26, og positiv 5-dagers
-        if (
-            last_rsi < 55
-            and last_close > last_sma20
-            and last_close > last_sma50
-            and last_ema12 > last_ema26
-            and five_day_return > 0
-        ):
-            buy_signal = True
-
-        # SELL: kraftig overkjøpt eller under begge glidende
-        if last_rsi > 75 or (last_close < last_sma20 and last_close < last_sma50):
-            sell_signal = True
-
-        # K-Score beregning (BUY belønnes, høy RSI straffes)
-        if len(df) >= 60:
-            old_price = float(df['Close'].iloc[-60])
-            returns_3m = (last_close / old_price) - 1
-        else:
-            old_price = float(df['Close'].iloc[0])
-            returns_3m = (last_close / old_price) - 1
-
-        score = (returns_3m * 40)  # Momentum
-        if 30 < last_rsi < 55:
-            score += 25  # RSI sweet spot, strammere tak enn før
-        if last_close > last_sma50:
-            score += 15
-        if last_ema12 > last_ema26:
-            score += 10
-        if buy_signal:
-            score += 25  # Bonus for kjøpssignal
-        if last_rsi > 65:
-            score -= 200  # Høyrisiko skal ikke toppe listen
-        
-        # Generer forklarende tekst basert på signal
-        explanation = ""
-        if buy_signal:
-            reasons = []
-            if last_rsi < 55:
-                reasons.append("RSI er i kjøpssone")
-            if last_close > last_sma20 and last_close > last_sma50:
-                reasons.append("pris er over både SMA20 og SMA50")
-            if last_ema12 > last_ema26:
-                reasons.append("EMA12 over EMA26 viser bullish momentum")
-            if five_day_return > 0:
-                reasons.append("positiv 5-dagers avkastning")
-            
-            explanation = f"Trendstyrken er økende og støttes av: {', '.join(reasons)}. Tekniske indikatorer peker mot fortsatt oppside."
-        elif sell_signal:
-            explanation = "Tekniske indikatorer viser svakhet: RSI er overkjøpt eller pris har falt under viktige støttenivåer. Vurder gevinstsikring."
-        else:
-            explanation = "Aksjen konsoliderer eller mangler klar retning. Avvent bekreftet breakout eller nedbrytning før handel."
-        
-        return {
-            "df": df,
-            "ticker": ticker,
-            "pris": last_close,
-            "change": change_pct,
-            "rsi": last_rsi,
-            "score": round(score, 1),
-            "trend": "UP" if last_close > last_sma50 else "DOWN",
-            "signal": "BUY" if buy_signal else "SELL" if sell_signal else "HOLD",
-            "atr": last_atr,
-            "stop_loss": round(stop_loss, 2),
-            "target": round(next_resistance, 2),
-            "rr_ratio": round(rr_ratio, 2),
-            "explanation": explanation
-        }
-    except Exception as e:
-        # Prøv alternativ metode
-        try:
-            ticker_obj = yf.Ticker(ticker)
-            hist = ticker_obj.history(period="1y")
-            if not hist.empty and len(hist) >= 50:
-                hist['RSI'] = ta.rsi(hist['Close'], length=14)
-                hist['SMA20'] = ta.sma(hist['Close'], length=20)
-                hist['SMA50'] = ta.sma(hist['Close'], length=50)
-                hist['EMA12'] = ta.ema(hist['Close'], length=12)
-                hist['EMA26'] = ta.ema(hist['Close'], length=26)
-                hist['ATR'] = ta.atr(hist['High'], hist['Low'], hist['Close'], length=14)
-                
-                last_close = float(hist['Close'].iloc[-1])
-                last_rsi = float(hist['RSI'].iloc[-1])
-                last_sma20 = float(hist['SMA20'].iloc[-1])
-                last_sma50 = float(hist['SMA50'].iloc[-1])
-                last_ema12 = float(hist['EMA12'].iloc[-1])
-                last_ema26 = float(hist['EMA26'].iloc[-1])
-                last_atr = float(hist['ATR'].iloc[-1]) if not pd.isna(hist['ATR'].iloc[-1]) else last_close * 0.02
-                
-                prev_close = float(hist['Close'].iloc[-2]) if len(hist) >= 2 else last_close
-                change_pct = ((last_close - prev_close) / prev_close) * 100
-                
-                recent_highs = hist['High'].tail(60).values
-                resistance_levels = []
-                for i in range(1, len(recent_highs) - 1):
-                    if recent_highs[i] > recent_highs[i-1] and recent_highs[i] > recent_highs[i+1]:
-                        resistance_levels.append(recent_highs[i])
-                
-                if resistance_levels:
-                    next_resistance = min([r for r in resistance_levels if r > last_close], default=last_close * 1.10)
-                else:
-                    next_resistance = last_close * 1.10
-                
-                stop_loss = last_close - (2 * last_atr)
-                risk = last_close - stop_loss
-                reward = next_resistance - last_close
-                rr_ratio = reward / risk if risk > 0 else 0
-                
-                buy_signal = False
-                sell_signal = False
-                five_day_return = (last_close / float(hist['Close'].iloc[-5])) - 1 if len(hist) >= 5 else 0
-                
-                if (last_rsi < 55 and last_close > last_sma20 and last_close > last_sma50 and last_ema12 > last_ema26 and five_day_return > 0):
-                    buy_signal = True
-                
-                if last_rsi > 75 or (last_close < last_sma20 and last_close < last_sma50):
-                    sell_signal = True
-                
-                if len(hist) >= 60:
-                    old_price = float(hist['Close'].iloc[-60])
-                    returns_3m = (last_close / old_price) - 1
-                else:
-                    old_price = float(hist['Close'].iloc[0])
-                    returns_3m = (last_close / old_price) - 1
-                
-                score = (returns_3m * 40)
-                if 30 < last_rsi < 55:
-                    score += 25
-                if last_close > last_sma50:
-                    score += 15
-                if last_ema12 > last_ema26:
-                    score += 10
-                if buy_signal:
-                    score += 25
-                if last_rsi > 65:
-                    score -= 200
-                
-                explanation = ""
-                if buy_signal:
-                    reasons = []
-                    if last_rsi < 55:
-                        reasons.append("RSI er i kjøpssone")
-                    if last_close > last_sma20 and last_close > last_sma50:
-                        reasons.append("pris er over både SMA20 og SMA50")
-                    if last_ema12 > last_ema26:
-                        reasons.append("EMA12 over EMA26 viser bullish momentum")
-                    if five_day_return > 0:
-                        reasons.append("positiv 5-dagers avkastning")
-                    explanation = f"Trendstyrken er økende og støttes av: {', '.join(reasons)}. Tekniske indikatorer peker mot fortsatt oppside."
-                elif sell_signal:
-                    explanation = "Tekniske indikatorer viser svakhet: RSI er overkjøpt eller pris har falt under viktige støttenivåer. Vurder gevinstsikring."
-                else:
-                    explanation = "Aksjen konsoliderer eller mangler klar retning. Avvent bekreftet breakout eller nedbrytning før handel."
-                
-                return {
-                    "df": hist,
-                    "ticker": ticker,
-                    "pris": last_close,
-                    "change": change_pct,
-                    "rsi": last_rsi,
-                    "score": round(score, 1),
-                    "trend": "UP" if last_close > last_sma50 else "DOWN",
-                    "signal": "BUY" if buy_signal else "SELL" if sell_signal else "HOLD",
-                    "atr": last_atr,
-                    "stop_loss": round(stop_loss, 2),
-                    "target": round(next_resistance, 2),
-                    "rr_ratio": round(rr_ratio, 2),
-                    "explanation": explanation
-                }
-        except:
-            pass
-        return None
-
-# 4. Watchlist
+# ============================================
+# 3. DATA MOTOR
+# ============================================
 watchlist = [
     "NOD.OL", "SATS.OL", "KID.OL", "VAR.OL", "PROT.OL", "AKSO.OL", "NEL.OL", 
-    "BGBIO.OL", "TEL.OL", "ORK.OL", "FRO.OL", "GOGL.OL", "NAS.OL", "DNB.OL", 
-    "EQNR.OL", "YAR.OL", "NHY.OL", "MOWI.OL", "SUBC.OL", "TGS.OL", "AKRBP.OL", 
-    "PGS.OL", "ADE.OL", "IDEX.OL", "AUTO.OL", "ACSB.OL", "LSG.OL", "SALM.OL", 
-    "BAKK.OL", "TOM.OL", "GRIEG.OL", "SBANK.OL", "HREC.OL", "ELK.OL", "MPCC.OL",
-    "KOG.OL", "BORR.OL", "RANA.OL", "SCATC.OL", "AZT.OL", "VOW.OL", "ACC.OL",
-    "PRAWN.OL", "OKEA.OL", "HAFNI.OL", "BELCO.OL", "2020.OL", "KOA.OL", "BWE.OL"
+    "FRO.OL", "GOGL.OL", "NAS.OL", "DNB.OL", "EQNR.OL", "YAR.OL", "NHY.OL", 
+    "MOWI.OL", "SUBC.OL", "TGS.OL", "AKRBP.OL", "ADE.OL", "IDEX.OL", "AUTO.OL", 
+    "LSG.OL", "SALM.OL", "BAKK.OL", "TOM.OL", "KOG.OL", "BORR.OL", "OKEA.OL"
 ]
 
-# 5. Left Navigation Sidebar med klikkbar funksjonalitet
-nav_items = [
-    {'icon': '🏝️', 'id': 'home', 'label': 'Oversikt'},
-    {'icon': '📊', 'id': 'dashboard', 'label': 'Dashboard'},
-    {'icon': '📈', 'id': 'analytics', 'label': 'Analytics'},
-    {'icon': '📋', 'id': 'watchlist', 'label': 'Watchlist'},
-    {'icon': '👥', 'id': 'portfolio', 'label': 'Portfolio'},
-    {'icon': '⚙️', 'id': 'settings', 'label': 'Innstillinger'}
-]
-
-# Bygg navigasjons-HTML på en trygg måte
-nav_html_parts = ['<div class="left-sidebar">']
-for item in nav_items:
-    active_class = 'active' if st.session_state.selected_nav == item['id'] else ''
-    nav_html_parts.append(f'<a href="?nav={item["id"]}" style="text-decoration:none;color:inherit;">')
-    nav_html_parts.append(f'<div class="nav-icon {active_class}" title="{item["label"]}" style="font-size:1.5rem;cursor:pointer;">{item["icon"]}</div>')
-    nav_html_parts.append('</a>')
-nav_html_parts.append('<div class="toggle-switch">ON</div></div>')
-st.markdown(''.join(nav_html_parts), unsafe_allow_html=True)
-
-# Håndter navigasjon - bruk try/except for kompatibilitet
-try:
-    if hasattr(st, 'query_params'):
-        nav_param = st.query_params.get('nav', None)
-        if nav_param:
-            if isinstance(nav_param, list) and len(nav_param) > 0:
-                st.session_state.selected_nav = nav_param[0]
-            elif isinstance(nav_param, str):
-                st.session_state.selected_nav = nav_param
-except Exception as e:
-    # Fallback hvis query_params ikke er tilgjengelig
-    pass
-
-# Top Header Bar - Ren og kompakt design
-header_col1, header_col2, header_col3, header_col4, header_col5 = st.columns([3, 0.8, 0.8, 1.2, 1])
-with header_col1:
-    search_query = st.text_input("", placeholder="🔍 Søk globalt...", label_visibility="collapsed", key="global_search")
-
-with header_col2:
-    st.markdown(f'<div style="text-align:center;padding-top:0.5rem;position:relative;"><span style="font-size:1.5rem;">💬</span><span style="position:absolute;top:2px;right:2px;background:#ef4444;color:white;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:600;">3</span></div>', unsafe_allow_html=True)
-
-with header_col3:
-    st.markdown(f'<div style="text-align:center;padding-top:0.5rem;position:relative;"><span style="font-size:1.5rem;">🔔</span><span style="position:absolute;top:2px;right:2px;background:#f59e0b;color:white;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:600;">5</span></div>', unsafe_allow_html=True)
-
-with header_col4:
-    st.markdown(f'<div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 1rem;"><div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#0ea5e9 0%,#0284c7 100%);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:1rem;">KN</div><div><div style="font-weight:600;font-size:0.9rem;color:#0f172a;">K-man Island</div><div style="font-size:0.75rem;color:#64748b;">Premium Investor</div></div></div>', unsafe_allow_html=True)
-
-with header_col5:
-    if st.button("🔄 Oppdater Data", use_container_width=True):
-        st.rerun()
-
-# Main Title
-st.markdown("## Oversikt")
-st.markdown("<br>", unsafe_allow_html=True)
-
-# 6. Data Loading
-results = []
-with st.spinner('🔍 Skanner Oslo Børs...'):
+@st.cache_data(ttl=1800)
+def fetch_and_analyze():
+    results = []
     for t in watchlist:
-        data = get_analysis(t)
-        if data: 
-            results.append(data)
+        try:
+            df = yf.download(t, period="1y", interval="1d", progress=False)
+            if df.empty or len(df) < 60: continue
+            if isinstance(df.columns, pd.MultiIndex): df.columns = df.columns.droplevel(1)
+            
+            close = float(df['Close'].iloc[-1])
+            rsi = ta.rsi(df['Close'], length=14).iloc[-1]
+            sma20 = ta.sma(df['Close'], length=20).iloc[-1]
+            
+            is_buy = (rsi < 55) and (close > sma20)
+            prob = min(max(int((100 - rsi) * 1.3), 10), 95)
+            
+            results.append({
+                "ticker": t,
+                "pris": round(close, 2),
+                "endring": round(((close - df['Close'].iloc[-2]) / df['Close'].iloc[-2]) * 100, 2),
+                "signal": "BUY" if is_buy else "HOLD",
+                "prob": prob,
+                "stop_loss": round(close * 0.965, 2),
+                "target": round(close * 1.105, 2),
+                "df": df
+            })
+        except: continue
+    return sorted(results, key=lambda x: (x['signal'] != 'BUY', -x['prob']))
 
-# Quick Stats Overview - Klikkbare kort (oppdateres med faktiske data)
-st.markdown("### 📊 Rask Oversikt")
-quick_col1, quick_col2, quick_col3, quick_col4 = st.columns(4)
+# ============================================
+# 4. SIDEBAR (Ikon-basert)
+# ============================================
+with st.sidebar:
+    st.markdown("<div style='text-align: center; padding: 20px 0;'>🏝️</div>", unsafe_allow_html=True)
+    if st.button("🏠"):
+        st.session_state.page = 'Dashboard'
+        st.session_state.selected_ticker = None
+        st.rerun()
+    if st.button("📊"):
+        st.session_state.page = 'Overview'
+        st.rerun()
+    if st.button("📁"): pass
+    if st.button("👤"): pass
+    if st.button("⚙️"): pass
 
-if results:
-    df_res = pd.DataFrame([{k: v for k, v in r.items() if k != 'df'} for r in results])
-    buy_count = len([r for r in results if r['signal'] == 'BUY'])
-    sell_count = len([r for r in results if r['signal'] == 'SELL'])
-    top_opportunities = len(df_res[df_res['score'] > 20])
-else:
-    buy_count = 0
-    sell_count = 0
-    top_opportunities = 0
+# ============================================
+# 5. DATA LASTING
+# ============================================
+data = fetch_and_analyze()
 
-active_signals = buy_count + sell_count if results else 0
-watchlist_count = len(watchlist)
+# Layout: Main Content | Widgets
+c_main, c_side = st.columns([3, 1])
 
-with quick_col1:
-    # Neon grønn som "Aktive Oppdrag"
-    st.markdown(f'<a href="?nav=dashboard" style="text-decoration:none;color:inherit;"><div class="quick-stat" style="background:linear-gradient(135deg,#a3e635 0%,#84cc16 100%);border:none;"><div class="quick-stat-icon" style="background:rgba(255,255,255,0.2);">📊</div><div class="quick-stat-value" style="color:#ffffff;font-size:2rem;">{active_signals}</div><div class="quick-stat-label" style="color:rgba(255,255,255,0.9);font-weight:600;">Aktive Signaler</div></div></a>', unsafe_allow_html=True)
-
-with quick_col2:
-    # Teal som "Fullførte Rapporter"
-    st.markdown(f'<a href="?nav=analytics" style="text-decoration:none;color:inherit;"><div class="quick-stat" style="background:linear-gradient(135deg,#2dd4bf 0%,#14b8a6 100%);border:none;"><div class="quick-stat-icon" style="background:rgba(255,255,255,0.2);">📈</div><div class="quick-stat-value" style="color:#ffffff;font-size:2rem;">{top_opportunities}</div><div class="quick-stat-label" style="color:rgba(255,255,255,0.9);font-weight:600;">Top Opportunities</div></div></a>', unsafe_allow_html=True)
-
-with quick_col3:
-    # Rosa som "Kladd / Utkast"
-    st.markdown(f'<a href="?nav=watchlist" style="text-decoration:none;color:inherit;"><div class="quick-stat" style="background:linear-gradient(135deg,#f472b6 0%,#ec4899 100%);border:none;"><div class="quick-stat-icon" style="background:rgba(255,255,255,0.2);">📋</div><div class="quick-stat-value" style="color:#ffffff;font-size:2rem;">{watchlist_count}</div><div class="quick-stat-label" style="color:rgba(255,255,255,0.9);font-weight:600;">Watchlist Aksjer</div></div></a>', unsafe_allow_html=True)
-
-with quick_col4:
-    # Mørk blå som "Trenger du hjelp?" kortet
-    st.markdown('<a href="?nav=portfolio" style="text-decoration:none;color:inherit;"><div class="quick-stat" style="background:linear-gradient(135deg,#3b82f6 0%,#1e40af 100%);border:none;"><div class="quick-stat-icon" style="background:rgba(255,255,255,0.2);">💼</div><div class="quick-stat-value" style="color:#ffffff;font-size:2rem;">-</div><div class="quick-stat-label" style="color:rgba(255,255,255,0.9);font-weight:600;">Portfolio Verdi</div></div></a>', unsafe_allow_html=True)
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-if results:
-    df_res = pd.DataFrame([{k: v for k, v in r.items() if k != 'df'} for r in results])
-    df_res = df_res.sort_values(by="score", ascending=False)
-    
-    # Stats
-    buy_count = len([r for r in results if r['signal'] == 'BUY'])
-    sell_count = len([r for r in results if r['signal'] == 'SELL'])
-    up_count = len([r for r in results if r['trend'] == 'UP'])
-    
-    # Oppdater quick stats hvis de ikke allerede er satt
-    if 'quick_stats_updated' not in st.session_state:
-        st.session_state.quick_stats_updated = True
-    
-    # Metrics row
-    c1, c2, c3, c4 = st.columns(4)
-    
-    with c1:
-        # Neon grønn
-        st.markdown(f"""
-        <div class="stat-card" style="background:linear-gradient(135deg,#a3e635 0%,#84cc16 100%);border:none;">
-            <p class="stat-value" style="color: #ffffff;font-size:2.5rem;">{len(results)}</p>
-            <p class="stat-label" style="color:rgba(255,255,255,0.9);font-weight:600;">Aksjer analysert</p>
+with c_main:
+    # --- Top Header ---
+    st.markdown("""
+        <div class="top-header">
+            <div class="search-bar">🔍 Søk aksjer, trender...</div>
+            <div style="background: black; color: white; padding: 10px 20px; border-radius: 12px; font-weight: 700; cursor: pointer;">
+                + Ny Analyse
+            </div>
         </div>
-        """, unsafe_allow_html=True)
-    
-    with c2:
-        # Teal
-        st.markdown(f"""
-        <div class="stat-card" style="background:linear-gradient(135deg,#2dd4bf 0%,#14b8a6 100%);border:none;">
-            <p class="stat-value" style="color: #ffffff;font-size:2.5rem;">{buy_count}</p>
-            <p class="stat-label" style="color:rgba(255,255,255,0.9);font-weight:600;">Kjøpssignaler</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with c3:
-        # Rosa
-        st.markdown(f"""
-        <div class="stat-card" style="background:linear-gradient(135deg,#f472b6 0%,#ec4899 100%);border:none;">
-            <p class="stat-value" style="color: #ffffff;font-size:2.5rem;">{sell_count}</p>
-            <p class="stat-label" style="color:rgba(255,255,255,0.9);font-weight:600;">Salgssignaler</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with c4:
-        # Mørk blå
-        st.markdown(f"""
-        <div class="stat-card" style="background:linear-gradient(135deg,#3b82f6 0%,#1e40af 100%);border:none;">
-            <p class="stat-value" style="color: #ffffff;font-size:2.5rem;">{up_count}</p>
-            <p class="stat-label" style="color:rgba(255,255,255,0.9);font-weight:600;">I opptrend</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # TABS
-    tab1, tab2, tab3 = st.tabs(["🎯 Top 10", "📊 Alle signaler", "📈 Analyse"])
-    
-    with tab1:
-        st.subheader("Top 10 Opportunities")
+    """, unsafe_allow_html=True)
+
+    # --- Dashbord Oversikt ---
+    if st.session_state.page == 'Dashboard' and not st.session_state.selected_ticker:
+        st.markdown("<h1 style='font-size: 2.5rem; font-weight: 800; margin-bottom: 30px;'>Oversikt</h1>", unsafe_allow_html=True)
         
-        # Formater dataframe for visning
-        display_df = df_res.head(10).copy()
-        display_df['Ticker'] = display_df['ticker'].str.replace('.OL', '')
-        display_df['Pris'] = display_df['pris'].apply(lambda x: f"{x:.2f} kr")
-        
-        # Beregn gevinstpotensial og risiko
-        def format_potential(row):
-            potential_kr = row['target'] - row['pris']
-            potential_pct = (potential_kr / row['pris']) * 100
-            return f"+{potential_kr:.1f} kr / +{potential_pct:.1f}%"
-        
-        def format_risk(row):
-            risk_kr = row['pris'] - row['stop_loss']
-            risk_pct = (risk_kr / row['pris']) * 100
-            return f"-{risk_kr:.1f} kr / -{risk_pct:.1f}%"
-        
-        display_df['Gevinstpotensial'] = display_df.apply(format_potential, axis=1)
-        display_df['Risiko'] = display_df.apply(format_risk, axis=1)
-        display_df['Signal'] = display_df['signal'].apply(lambda x: "🟢 KJØP" if x == "BUY" else "🔴 SELG" if x == "SELL" else "🟡 HOLD")
-        display_df['RSI'] = display_df['rsi'].apply(lambda x: f"{x:.1f}")
-        
-        st.dataframe(
-            display_df[['Ticker', 'Pris', 'Signal', 'Gevinstpotensial', 'Risiko', 'RSI']],
-            hide_index=True,
-            use_container_width=True
-        )
-    
-    with tab2:
-        st.subheader("Alle signaler")
-        
-        # Filter options
-        signal_filter = st.multiselect(
-            "Filtrer på signal:",
-            ["BUY", "SELL", "HOLD"],
-            default=["BUY", "SELL", "HOLD"]
-        )
-        
-        filtered_df = df_res[df_res['signal'].isin(signal_filter)].copy()
-        filtered_df['Ticker'] = filtered_df['ticker'].str.replace('.OL', '')
-        filtered_df['Pris'] = filtered_df['pris'].apply(lambda x: f"{x:.2f} kr")
-        filtered_df['Endring'] = filtered_df['change'].apply(lambda x: f"+{x:.2f}%" if x >= 0 else f"{x:.2f}%")
-        filtered_df['RSI'] = filtered_df['rsi'].apply(lambda x: f"{x:.1f}")
-        filtered_df['K-Score'] = filtered_df['score']
-        filtered_df['Trend'] = filtered_df['trend'].apply(lambda x: "📈 UP" if x == "UP" else "📉 DOWN")
-        filtered_df['Signal'] = filtered_df['signal'].apply(lambda x: "🟢 KJØP" if x == "BUY" else "🔴 SELG" if x == "SELL" else "🟡 HOLD")
-        
-        st.dataframe(
-            filtered_df[['Ticker', 'Pris', 'Endring', 'RSI', 'K-Score', 'Trend', 'Signal']],
-            hide_index=True,
-            use_container_width=True,
-            height=400
-        )
-    
-    with tab3:
-        st.subheader("Detaljert analyse")
-        
-        # Velg aksje
-        selected_ticker = st.selectbox(
-            "Velg aksje for analyse:",
-            df_res['ticker'].tolist(),
-            format_func=lambda x: x.replace('.OL', '')
-        )
-        
-        selected_data = next((item for item in results if item["ticker"] == selected_ticker), None)
-        
-        if selected_data:
-            # Info cards
-            info_col1, info_col2, info_col3, info_col4 = st.columns(4)
-            
-            with info_col1:
-                signal_class = "signal-buy" if selected_data['signal'] == "BUY" else "signal-sell" if selected_data['signal'] == "SELL" else "signal-hold"
-                signal_text = "🟢 KJØP" if selected_data['signal'] == "BUY" else "🔴 SELG" if selected_data['signal'] == "SELL" else "🟡 HOLD"
-                st.markdown(f'<div class="{signal_class}">{signal_text}</div>', unsafe_allow_html=True)
-                st.caption("Signal")
-            
-            with info_col2:
-                st.metric("Pris", f"{selected_data['pris']:.2f} kr")
-            
-            with info_col3:
-                st.metric("RSI", f"{selected_data['rsi']:.1f}")
-            
-            with info_col4:
-                st.metric("K-Score", f"{selected_data['score']}")
-            
-            # Chart
-            plot_df = selected_data['df'].tail(100)
-            
-            if not plot_df.empty:
-                fig = go.Figure()
-                
-                # Candlestick
-                fig.add_trace(go.Candlestick(
-                    x=plot_df.index,
-                    open=plot_df['Open'],
-                    high=plot_df['High'],
-                    low=plot_df['Low'],
-                    close=plot_df['Close'],
-                    name="Pris",
-                    increasing_line_color='#22c55e',
-                    decreasing_line_color='#ef4444',
-                    increasing_fillcolor='#22c55e',
-                    decreasing_fillcolor='#ef4444'
-                ))
-                
-                # SMA lines
-                fig.add_trace(go.Scatter(
-                    x=plot_df.index,
-                    y=plot_df['SMA20'],
-                    mode='lines',
-                    name='SMA 20',
-                    line=dict(color='#0ea5e9', width=1.5)
-                ))
-                
-                fig.add_trace(go.Scatter(
-                    x=plot_df.index,
-                    y=plot_df['SMA50'],
-                    mode='lines',
-                    name='SMA 50',
-                    line=dict(color='#f59e0b', width=1.5)
-                ))
-                
-                fig.update_layout(
-                    title=f"{selected_ticker.replace('.OL', '')} - Siste 100 dager",
-                    plot_bgcolor='white',
-                    paper_bgcolor='white',
-                    xaxis=dict(gridcolor='#f1f5f9', showgrid=True),
-                    yaxis=dict(gridcolor='#f1f5f9', showgrid=True, side='right'),
-                    xaxis_rangeslider_visible=False,
-                    height=500,
-                    legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
-                    hovermode='x unified'
-                )
-                
-                st.plotly_chart(fig, use_container_width=True)
-                
-                # RSI Chart
-                fig_rsi = go.Figure()
-                
-                fig_rsi.add_trace(go.Scatter(
-                    x=plot_df.index,
-                    y=plot_df['RSI'],
-                    mode='lines',
-                    name='RSI',
-                    line=dict(color='#8b5cf6', width=2),
-                    fill='tozeroy',
-                    fillcolor='rgba(139,92,246,0.1)'
-                ))
-                
-                fig_rsi.add_hline(y=70, line_dash="dash", line_color="#ef4444", opacity=0.7)
-                fig_rsi.add_hline(y=30, line_dash="dash", line_color="#22c55e", opacity=0.7)
-                
-                fig_rsi.update_layout(
-                    title="RSI Indikator",
-                    plot_bgcolor='white',
-                    paper_bgcolor='white',
-                    xaxis=dict(gridcolor='#f1f5f9', showgrid=True),
-                    yaxis=dict(gridcolor='#f1f5f9', showgrid=True, range=[0, 100]),
-                    height=200,
-                    showlegend=False
-                )
-                
-                st.plotly_chart(fig_rsi, use_container_width=True)
-                
-                # Handelsplan og analyse
-                st.markdown("---")
-                st.subheader("📋 Handelsplan")
-                
-                plan_col1, plan_col2, plan_col3 = st.columns(3)
-                
-                with plan_col1:
-                    st.markdown("""
-                    <div style="background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
-                        <h4 style="color: #64748b; margin-bottom: 0.5rem;">Anbefalt Inngang</h4>
-                        <p style="font-size: 1.5rem; font-weight: 700; color: #0f172a; margin: 0;">
-                            {:.2f} kr
-                        </p>
-                    </div>
-                    """.format(selected_data['pris']), unsafe_allow_html=True)
-                
-                with plan_col2:
-                    st.markdown("""
-                    <div style="background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
-                        <h4 style="color: #64748b; margin-bottom: 0.5rem;">Stop Loss</h4>
-                        <p style="font-size: 1.5rem; font-weight: 700; color: #ef4444; margin: 0;">
-                            {:.2f} kr
-                        </p>
-                        <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.25rem;">
-                            (2x ATR under)
-                        </p>
-                    </div>
-                    """.format(selected_data['stop_loss']), unsafe_allow_html=True)
-                
-                with plan_col3:
-                    st.markdown("""
-                    <div style="background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
-                        <h4 style="color: #64748b; margin-bottom: 0.5rem;">Teknisk Target</h4>
-                        <p style="font-size: 1.5rem; font-weight: 700; color: #22c55e; margin: 0;">
-                            {:.2f} kr
-                        </p>
-                        <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.25rem;">
-                            (Neste motstandsnivå)
-                        </p>
-                    </div>
-                    """.format(selected_data['target']), unsafe_allow_html=True)
-                
-                # Risiko/Belønning og Tidsestimat
-                st.markdown("<br>", unsafe_allow_html=True)
-                rr_col1, rr_col2 = st.columns(2)
-                
-                with rr_col1:
-                    rr_ratio = selected_data['rr_ratio']
-                    rr_color = "#22c55e" if rr_ratio >= 2.0 else "#f59e0b" if rr_ratio >= 1.0 else "#ef4444"
-                    rr_status = "✅ God" if rr_ratio >= 2.0 else "⚠️ Moderat" if rr_ratio >= 1.0 else "❌ Lav"
-                    
-                    st.markdown("""
-                    <div style="background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
-                        <h4 style="color: #64748b; margin-bottom: 0.5rem;">Risiko/Belønning Ratio</h4>
-                        <p style="font-size: 2rem; font-weight: 700; color: {}; margin: 0;">
-                            {:.2f}
-                        </p>
-                        <p style="font-size: 0.9rem; color: #64748b; margin-top: 0.5rem;">
-                            {} • Anbefalt: over 2.0
-                        </p>
-                    </div>
-                    """.format(rr_color, rr_ratio, rr_status), unsafe_allow_html=True)
-                
-                with rr_col2:
-                    st.markdown("""
-                    <div style="background: white; padding: 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
-                        <h4 style="color: #64748b; margin-bottom: 0.5rem;">Tidsestimat</h4>
-                        <p style="font-size: 1.5rem; font-weight: 700; color: #0f172a; margin: 0;">
-                            Swing: 3-6 uker
-                        </p>
-                        <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
-                            Basert på teknisk analyse og trendstyrke
-                        </p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
-                # Forklarende tekst
-                st.markdown("<br>", unsafe_allow_html=True)
-                explanation_text = selected_data.get('explanation', 'Ingen forklaring tilgjengelig.')
-                
-                st.markdown("""
-                <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); 
-                            padding: 1.5rem; border-radius: 12px; border: 1px solid #bae6fd; margin-top: 1rem;">
-                    <h4 style="color: #0f172a; margin-bottom: 0.75rem;">📝 Signalanalyse</h4>
-                    <p style="color: #0f172a; line-height: 1.6; margin: 0;">
-                        {}
-                    </p>
+        # User Card
+        st.markdown("""
+            <div style="background: white; border-radius: 24px; padding: 30px; display: flex; align-items: center; gap: 20px; border: 1px solid #f0f0f0; margin-bottom: 30px;">
+                <div style="width: 80px; height: 80px; background: #ddd; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem;">👤</div>
+                <div>
+                    <h2 style="margin:0; font-size: 1.5rem;">K-man Trader</h2>
+                    <p style="margin:0; color: #888;">Strategisk Portefølje · Oslo & Viken</p>
                 </div>
-                """.format(explanation_text), unsafe_allow_html=True)
+            </div>
+        """, unsafe_allow_html=True)
+
+        # Status Cards
+        c1, c2, c3 = st.columns(3)
+        buys = len([d for d in data if d['signal'] == 'BUY'])
+        with c1: st.markdown(f'<div class="status-card card-lime"><span class="status-icon">🕒</span><div class="status-number">{buys}</div><div class="status-label">Hot Kjøp Nå</div></div>', unsafe_allow_html=True)
+        with c2: st.markdown(f'<div class="status-card card-teal"><span class="status-icon">✔️</span><div class="status-number">{len(data)-buys}</div><div class="status-label">Stabile Hold</div></div>', unsafe_allow_html=True)
+        with c3: st.markdown(f'<div class="status-card card-pink"><span class="status-icon">📝</span><div class="status-number">0</div><div class="status-label">Salg / Risk</div></div>', unsafe_allow_html=True)
+
+        st.markdown("<h2 style='font-size: 1.5rem; font-weight: 800; margin: 40px 0 20px 0;'>Dagens Muligheter</h2>", unsafe_allow_html=True)
+        
+        # Grid med aksjer (Kick-arse cards)
+        cols = st.columns(2)
+        for i, stock in enumerate(data[:4]):
+            with cols[i % 2]:
+                badge_class = "badge-buy" if stock['signal'] == "BUY" else "badge-hold"
+                prog_color = "#E2FF3B" if stock['prob'] > 70 else "#A3E7D8"
                 
-                # Innside-sjekk
-                st.markdown("<br>", unsafe_allow_html=True)
-                st.markdown("""
-                <div style="background: #fef3c7; padding: 1.25rem; border-radius: 12px; border: 2px solid #fbbf24; margin-top: 1rem;">
-                    <h4 style="color: #92400e; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                        ⚠️ Innside-sjekk
-                    </h4>
-                    <p style="color: #78350f; line-height: 1.6; margin: 0;">
-                        <strong>Viktig:</strong> Sjekk siste meldinger på 
-                        <a href="https://www.newsweb.no" target="_blank" style="color: #92400e; text-decoration: underline;">Newsweb</a> 
-                        for økning i eierandel over 10%. Innsidehandel kan påvirke kursutviklingen betydelig.
-                    </p>
-                </div>
+                st.markdown(f"""
+                <div class="card-wrapper">
+                    <div class="stock-card">
+                        <div class="card-image-section">
+                            <span class="card-badge {badge_class}">{stock['signal']}</span>
+                            <div class="card-title-area">
+                                <h3 style="margin:0; font-size: 1.5rem; font-weight: 800;">{stock['ticker']}</h3>
+                                <span style="font-size: 0.8rem;">Oslo Børs · #{i+1} Hotlist</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div style="display: flex; justify-content: space-between; align-items: end;">
+                                <div>
+                                    <div style="font-size: 0.7rem; color: #888; text-transform: uppercase;">Pris</div>
+                                    <div style="font-size: 1.25rem; font-weight: 800;">{stock['pris']} NOK</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 0.7rem; color: #888; text-transform: uppercase;">Potensial</div>
+                                    <div style="font-size: 1.25rem; font-weight: 800; color: #34c759;">+10.5%</div>
+                                </div>
+                            </div>
+                            <div class="progress-container">
+                                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 700; margin-bottom: 5px;">
+                                    <span>Gevinst-sannsynlighet</span>
+                                    <span>{stock['prob']}%</span>
+                                </div>
+                                <div class="progress-bar-bg">
+                                    <div class="progress-bar-fill" style="width: {stock['prob']}%; background-color: {prog_color};"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 """, unsafe_allow_html=True)
-    
-    # Sidebar info
-    with st.sidebar:
-        st.markdown("### 📋 Signal Guide")
-        
-        st.markdown("""
-        <div class="info-card">
-            <p><strong>🟢 KJØP</strong></p>
-            <p style="font-size: 0.85rem; color: #64748b;">RSI under 55, pris over SMA20/50, positiv momentum</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("""
-        <div class="info-card" style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-color: #fecaca;">
-            <p><strong>🔴 SELG</strong></p>
-            <p style="font-size: 0.85rem; color: #64748b;">RSI over 75 eller pris under begge MA</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("""
-        <div class="info-card" style="background: linear-gradient(135deg, #fefce8 0%, #fef3c7 100%); border-color: #fde68a;">
-            <p><strong>🟡 HOLD</strong></p>
-            <p style="font-size: 0.85rem; color: #64748b;">Ingen klar retning, avvent</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("---")
-        
-        st.markdown("### 📊 K-Score")
-        st.caption("Kombinerer momentum, RSI og trendstyrke. Høyere = bedre mulighet.")
-        
-        st.markdown("---")
-        
-        st.info("ℹ️ Viser data fra siste handelsdag. Data kan være fra forrige handelsdag hvis børsen er stengt (helg/etter stengetid).")
+                if st.button("", key=f"btn_{stock['ticker']}"):
+                    st.session_state.selected_ticker = stock['ticker']
+                    st.rerun()
+                st.markdown("</div>", unsafe_allow_html=True)
 
-else:
-    st.warning("⚠️ **Kunne ikke hente markedsdata**")
-    st.info("""
-    **Mulige årsaker:**
-    - Børsen er stengt (helg, kveld eller helligdag)
-    - Tidsavhengig API-rate limiting
-    - Midlertidig nettverksproblem
-    
-    **Løsning:** Prøv å oppdatere siden om noen minutter eller sjekk at internettforbindelsen fungerer.
-    Data vises fra siste handelsdag når børsen er stengt.
-    """)
+    # --- Dypanalyse ---
+    elif st.session_state.selected_ticker:
+        stock = next(d for d in data if d['ticker'] == st.session_state.selected_ticker)
+        if st.button("⬅️ Tilbake"):
+            st.session_state.selected_ticker = None
+            st.rerun()
+        
+        st.markdown(f"<h1 class='massive-header'>{stock['ticker']}</h1>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-size: 2rem; color: #888;'>{stock['pris']} NOK · <span style='color: #34c759;'>{stock['prob']}% Prob.</span></p>", unsafe_allow_html=True)
+        
+        df_p = stock['df'].tail(90)
+        fig = go.Figure(data=[go.Candlestick(x=df_p.index, open=df_p['Open'], high=df_p['High'], low=df_p['Low'], close=df_p['Close'])])
+        fig.add_hline(y=stock['stop_loss'], line_dash="dash", line_color="#ff3b30", annotation_text="STOP LOSS")
+        fig.add_hline(y=stock['target'], line_dash="dash", line_color="#34c759", annotation_text="TARGET")
+        fig.update_layout(height=600, xaxis_rangeslider_visible=False, template="plotly_white")
+        st.plotly_chart(fig, use_container_width=True)
 
-# Footer
-st.markdown("---")
-st.caption("Data fra yfinance • K-Score er en taktisk indikator, ikke finansiell rådgivning")
+    # --- Full Oversikt ---
+    elif st.session_state.page == 'Overview':
+        st.markdown("<h1 style='font-size: 2.5rem; font-weight: 800;'>Børsoversikt</h1>", unsafe_allow_html=True)
+        df_disp = pd.DataFrame([{ "Ticker": d['ticker'], "Signal": d['signal'], "Pris": d['pris'], "Sannsynlighet": f"{d['prob']}%" } for d in data])
+        st.table(df_disp)
+
+with c_side:
+    st.markdown("<br><br><br><br>", unsafe_allow_html=True)
+    # Agenda Widget
+    st.markdown("""
+        <div class="widget-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin:0; font-size: 1rem; font-weight: 800;">Min Agenda</h3>
+                <span style="font-size: 0.7rem; color: #888;">☀️ 14°C Oslo</span>
+            </div>
+            <div style="padding: 15px; background: #F8F7F4; border-radius: 12px; margin-bottom: 10px; border-left: 4px solid #1a1a1a;">
+                <div style="font-size: 0.7rem; color: #888;">NESTE TRADE</div>
+                <div style="font-weight: 800;">Åpne Oslo Børs</div>
+                <div style="font-size: 0.8rem; color: #555;">09:00 Mandag</div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Lagringsplass/Portefølje Widget
+    st.markdown("""
+        <div class="widget-box">
+            <h3 style="margin:0; font-size: 1rem; font-weight: 800; margin-bottom: 15px;">Portefølje</h3>
+            <div style="font-size: 0.8rem; color: #888; display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <span>Eksponering</span>
+                <span>100% Totalt</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" style="width: 75%; background-color: #1a1a1a;"></div>
+            </div>
+            <div style="text-align: center; margin-top: 15px; font-size: 0.8rem; font-weight: 700; color: #2563EB;">Oppgrader Plan</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Help Widget
+    st.markdown("""
+        <div style="background: linear-gradient(135deg, #2563EB, #1E40AF); border-radius: 24px; padding: 25px; color: white;">
+            <h3 style="margin:0; font-size: 1.1rem; font-weight: 800; margin-bottom: 10px;">Trenger du hjelp?</h3>
+            <p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 20px;">Få support med AI-generering eller analyser.</p>
+            <div style="background: #E2FF3B; color: #1a1a1a; padding: 12px; border-radius: 12px; text-align: center; font-weight: 800;">
+                Kontakt Support
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+st.caption("K-man Island © 2026 | Strategisk Intelligence Center.")
