@@ -108,6 +108,9 @@ section[data-testid="stSidebar"] { display: none; }
     border: 1px solid #e5e7eb;
     transition: all 0.2s ease;
     cursor: pointer;
+    position: relative;
+    z-index: 1;
+    margin-bottom: 20px;
 }
 .stock-card:hover {
     transform: translateY(-6px);
@@ -180,42 +183,39 @@ section[data-testid="stSidebar"] { display: none; }
     border-top: 1px solid #f3f4f6;
 }
 
-/* Wrapper for aksjekort med relativ posisjon */
-.stock-card-container {
-    position: relative;
-    margin-bottom: 20px;
-}
-
-/* Skjul knapp-boks visuelt, men behold klikkfunksjon */
+/* Aksjekort klikkbar-knapp overlay */
 [data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
+    position: relative !important;
+    z-index: 100 !important;
     height: 480px !important;
+    margin-bottom: -480px !important;
     background: transparent !important;
     border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    z-index: 50 !important;
-    pointer-events: none !important;
+    border-radius: 24px !important;
+    overflow: hidden !important;
 }
 
 [data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] > div {
     height: 100% !important;
     background: transparent !important;
-    border: none !important;
 }
 
 [data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] button {
     width: 100% !important;
     height: 100% !important;
-    opacity: 0 !important;
-    cursor: pointer !important;
     background: transparent !important;
     border: none !important;
-    pointer-events: auto !important;
+    color: transparent !important;
+    cursor: pointer !important;
+}
+
+[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] button:hover {
+    background: transparent !important;
+    border: none !important;
+}
+
+[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] button p {
+    display: none !important;
 }
 
 /* Widget-bokser */
@@ -423,9 +423,13 @@ with c_main:
                 badge_text = "KJØP" if stock['signal'] == "BUY" else "SELG" if stock['signal'] == "SELL" else "HOLD"
                 prob_color = "#E2FF3B" if stock['prob'] > 70 else "#A3E7D8" if stock['prob'] > 50 else "#FFB5B5"
                 
+                # Knapp først (vil bli posisjonert over kortet med CSS)
+                if st.button("⠀", key=f"btn_{stock['ticker']}", use_container_width=True):
+                    st.session_state.selected_ticker = stock['ticker']
+                    st.rerun()
+                
                 st.markdown(f"""
-                <div class="stock-card-container">
-                <div class="stock-card">
+                <div class="stock-card" data-ticker="{stock['ticker']}">
                     <div class="stock-header">
                         <span class="stock-badge {badge_class}">{badge_text}</span>
                         <h3 class="stock-ticker">{stock['ticker_short']}</h3>
@@ -469,13 +473,7 @@ with c_main:
                         </div>
                     </div>
                 </div>
-                </div>
                 """, unsafe_allow_html=True)
-                
-                # Usynlig knapp som dekker kortet
-                if st.button(" ", key=f"card_{stock['ticker']}", use_container_width=True):
-                    st.session_state.selected_ticker = stock['ticker']
-                    st.rerun()
 
     # Analyse-visning
     elif st.session_state.selected_ticker:
