@@ -464,7 +464,7 @@ with c_main:
             st.error("Fant ikke aksjen")
             st.stop()
         
-        if st.button("← Tilbake"):
+        if st.button("← Tilbake til oversikt"):
             st.session_state.selected_ticker = None
             st.rerun()
         
@@ -486,26 +486,170 @@ with c_main:
         with i5:
             st.markdown(f'<div class="info-box"><div class="info-value">{stock["prob"]}%</div><div class="info-label">Sannsynlighet</div></div>', unsafe_allow_html=True)
         
-        # Graf
-        df_p = stock['df'].tail(90)
-        fig = go.Figure(data=[go.Candlestick(
-            x=df_p.index, open=df_p['Open'], high=df_p['High'], low=df_p['Low'], close=df_p['Close'],
-            increasing_line_color='#22c55e', decreasing_line_color='#ef4444'
-        )])
-        fig.add_hline(y=stock['stop_loss'], line_dash="dash", line_color="#ef4444", annotation_text=f"Stop: {stock['stop_loss']:.2f}")
-        fig.add_hline(y=stock['target'], line_dash="dash", line_color="#22c55e", annotation_text=f"Target: {stock['target']:.2f}")
-        fig.update_layout(height=450, xaxis_rangeslider_visible=False, template="plotly_white", margin=dict(l=0,r=0,t=20,b=0))
-        st.plotly_chart(fig, use_container_width=True)
+        # Tabs for ulike seksjoner
+        tab1, tab2, tab3, tab4 = st.tabs(["📈 Graf & Analyse", "📋 Handelsplan", "👤 Innsidehandel", "📰 Nyheter"])
         
-        # Handelsplan
-        st.markdown("### 📋 Handelsplan")
-        p1, p2, p3 = st.columns(3)
-        with p1:
-            st.markdown(f'<div class="info-box"><div class="info-value">{stock["pris"]:.2f} kr</div><div class="info-label">Inngang</div></div>', unsafe_allow_html=True)
-        with p2:
-            st.markdown(f'<div class="info-box"><div class="info-value negative">{stock["stop_loss"]:.2f} kr</div><div class="info-label">Stop Loss</div></div>', unsafe_allow_html=True)
-        with p3:
-            st.markdown(f'<div class="info-box"><div class="info-value positive">{stock["target"]:.2f} kr</div><div class="info-label">Target</div></div>', unsafe_allow_html=True)
+        with tab1:
+            # Graf
+            df_p = stock['df'].tail(90)
+            fig = go.Figure(data=[go.Candlestick(
+                x=df_p.index, open=df_p['Open'], high=df_p['High'], low=df_p['Low'], close=df_p['Close'],
+                increasing_line_color='#22c55e', decreasing_line_color='#ef4444'
+            )])
+            fig.add_hline(y=stock['stop_loss'], line_dash="dash", line_color="#ef4444", annotation_text=f"Stop: {stock['stop_loss']:.2f}")
+            fig.add_hline(y=stock['target'], line_dash="dash", line_color="#22c55e", annotation_text=f"Target: {stock['target']:.2f}")
+            fig.update_layout(height=450, xaxis_rangeslider_visible=False, template="plotly_white", margin=dict(l=0,r=0,t=20,b=0))
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Teknisk analyse forklaring
+            st.markdown("### 🔍 Teknisk Analyse")
+            
+            if stock['signal'] == "BUY":
+                st.success(f"""
+                **Kjøpssignal identifisert** for {stock['ticker_short']}
+                
+                Aksjen oppfyller alle kriterier for et kjøpssignal:
+                - ✅ RSI ({stock['rsi']:.1f}) er under 55 - ikke overkjøpt
+                - ✅ Pris er over SMA20 og SMA50 - positiv trend
+                - ✅ EMA12 er over EMA26 - bullish momentum
+                - ✅ Positiv utvikling siste 5 dager
+                """)
+            elif stock['signal'] == "SELL":
+                st.error(f"""
+                **Salgssignal identifisert** for {stock['ticker_short']}
+                
+                Tekniske indikatorer viser svakhet:
+                - ⚠️ RSI kan være overkjøpt (>{stock['rsi']:.1f})
+                - ⚠️ Pris kan være under viktige støttenivåer
+                """)
+            else:
+                st.warning(f"""
+                **Hold/Avvent** for {stock['ticker_short']}
+                
+                Aksjen mangler klar retning. Noen, men ikke alle kriterier er oppfylt.
+                Avvent bekreftet breakout før du handler.
+                """)
+        
+        with tab2:
+            st.markdown("### 📋 Handelsplan")
+            
+            p1, p2, p3 = st.columns(3)
+            with p1:
+                st.markdown(f'<div class="info-box"><div class="info-value">{stock["pris"]:.2f} kr</div><div class="info-label">Anbefalt Inngang</div></div>', unsafe_allow_html=True)
+            with p2:
+                st.markdown(f'<div class="info-box"><div class="info-value negative">{stock["stop_loss"]:.2f} kr</div><div class="info-label">Stop Loss (2x ATR)</div></div>', unsafe_allow_html=True)
+            with p3:
+                st.markdown(f'<div class="info-box"><div class="info-value positive">{stock["target"]:.2f} kr</div><div class="info-label">Teknisk Target</div></div>', unsafe_allow_html=True)
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            # R:R Ratio
+            rr_ratio = stock['pot_kr'] / stock['risk_kr'] if stock['risk_kr'] > 0 else 0
+            rr_color = "#22c55e" if rr_ratio >= 2 else "#f59e0b" if rr_ratio >= 1 else "#ef4444"
+            rr_status = "✅ God" if rr_ratio >= 2 else "⚠️ Moderat" if rr_ratio >= 1 else "❌ Lav"
+            
+            r1, r2 = st.columns(2)
+            with r1:
+                st.markdown(f"""
+                <div class="info-box">
+                    <div class="info-value" style="color: {rr_color};">{rr_ratio:.2f}</div>
+                    <div class="info-label">Risiko/Belønning Ratio</div>
+                    <div style="font-size: 0.8rem; color: #6b7280; margin-top: 4px;">{rr_status} · Anbefalt: over 2.0</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with r2:
+                st.markdown(f"""
+                <div class="info-box">
+                    <div class="info-value">3-6 uker</div>
+                    <div class="info-label">Tidsestimat (Swing)</div>
+                </div>
+                """, unsafe_allow_html=True)
+        
+        with tab3:
+            st.markdown("### 👤 Innsidehandel & Eierskap")
+            
+            # Hent innsidehandel data fra yfinance
+            try:
+                ticker_obj = yf.Ticker(stock['ticker'])
+                
+                # Insider transactions
+                insider_trades = ticker_obj.insider_transactions
+                if insider_trades is not None and not insider_trades.empty:
+                    st.markdown("**Siste innsidehandler:**")
+                    # Vis de siste 10 transaksjonene
+                    display_insider = insider_trades.head(10).copy()
+                    st.dataframe(display_insider, use_container_width=True, hide_index=True)
+                else:
+                    st.info("Ingen innsidehandler tilgjengelig fra yfinance for denne aksjen.")
+                
+                # Major holders
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.markdown("**Største eiere:**")
+                major_holders = ticker_obj.major_holders
+                if major_holders is not None and not major_holders.empty:
+                    st.dataframe(major_holders, use_container_width=True, hide_index=True)
+                else:
+                    st.info("Eierskapsdata ikke tilgjengelig.")
+                    
+            except Exception as e:
+                st.info("Kunne ikke hente innsidedata. Prøv å sjekke Newsweb direkte.")
+            
+            # Link til Newsweb
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown(f"""
+            <div style="background: #fef3c7; padding: 16px; border-radius: 12px; border: 2px solid #fbbf24;">
+                <h4 style="margin: 0 0 8px 0; color: #92400e;">⚠️ Sjekk Newsweb</h4>
+                <p style="margin: 0 0 12px 0; color: #78350f; font-size: 0.9rem;">
+                    For fullstendig oversikt over meldepliktige handler og flaggemeldinger, 
+                    sjekk alltid Newsweb før du handler.
+                </p>
+                <a href="https://newsweb.oslobors.no/search?category=1&issuer={stock['ticker_short']}" 
+                   target="_blank" 
+                   style="display: inline-block; background: #1a1a1a; color: white; padding: 10px 20px; 
+                          border-radius: 8px; text-decoration: none; font-weight: 700;">
+                    🔗 Åpne Newsweb for {stock['ticker_short']}
+                </a>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with tab4:
+            st.markdown("### 📰 Siste Nyheter")
+            
+            # Hent nyheter fra yfinance
+            try:
+                ticker_obj = yf.Ticker(stock['ticker'])
+                news = ticker_obj.news
+                
+                if news and len(news) > 0:
+                    for article in news[:8]:
+                        pub_date = datetime.fromtimestamp(article.get('providerPublishTime', 0)).strftime('%d.%m.%Y')
+                        st.markdown(f"""
+                        <div style="background: white; padding: 16px; border-radius: 12px; border: 1px solid #e5e7eb; margin-bottom: 12px;">
+                            <a href="{article.get('link', '#')}" target="_blank" style="text-decoration: none;">
+                                <h4 style="margin: 0 0 8px 0; color: #1a1a1a; font-size: 1rem;">{article.get('title', 'Ingen tittel')}</h4>
+                            </a>
+                            <div style="display: flex; gap: 16px; font-size: 0.8rem; color: #6b7280;">
+                                <span>📅 {pub_date}</span>
+                                <span>📰 {article.get('publisher', 'Ukjent kilde')}</span>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    st.info("Ingen nyheter tilgjengelig fra yfinance.")
+                    
+            except Exception as e:
+                st.info("Kunne ikke hente nyheter.")
+            
+            # Eksterne kilder
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("**🔗 Eksterne kilder:**")
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.markdown(f"[📊 Yahoo Finance](https://finance.yahoo.com/quote/{stock['ticker']})")
+            with col2:
+                st.markdown(f"[📈 TradingView](https://www.tradingview.com/symbols/OSL-{stock['ticker_short']}/)")
+            with col3:
+                st.markdown(f"[📰 Google News](https://news.google.com/search?q={stock['ticker_short']}+Oslo+Børs)")
 
 with c_side:
     st.markdown("<br><br>", unsafe_allow_html=True)
