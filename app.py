@@ -336,7 +336,12 @@ def fetch_and_analyze():
         except: continue
     
     # Sorter etter sannsynlighet (høyest først), prioriter BUY
-    return sorted(results, key=lambda x: (0 if x['signal'] == 'BUY' else 1 if x['signal'] == 'HOLD' else 2, -x['prob']))
+    # Sortering: 1) Signal (BUY først), 2) Sannsynlighet (høyest), 3) Gevinstpotensial (høyest)
+    return sorted(results, key=lambda x: (
+        0 if x['signal'] == 'BUY' else 1 if x['signal'] == 'HOLD' else 2,
+        -x['prob'],
+        -x['pot_pct']
+    ))
 
 # ============================================
 # 4. HOVEDINNHOLD
