@@ -2,145 +2,152 @@ import streamlit as st
 import yfinance as yf
 import pandas_ta as ta
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import pandas as pd
+from datetime import datetime
 
-# 1. Konfigurasjon og Stil
-st.set_page_config(page_title="K-man Island", layout="wide")
+# 1. Konfigurasjon og Avansert Stil
+st.set_page_config(page_title="K-man Island | Strategic Intelligence", layout="wide", initial_sidebar_state="expanded")
+
+# Custom CSS for et moderne "FinTech" utseende
 st.markdown("""
     <style>
-    .stApp { background-color: #FFFFFF; }
-    [data-testid="stMetric"] { background-color: #f8fafc; border-radius: 15px; padding: 20px; border: 1px solid #e2e8f0; }
-    h1 { color: #0e7490; font-family: 'Helvetica Neue', sans-serif; font-weight: 800; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+    
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .main {
+        background-color: #f8fafc;
+    }
+    
+    /* Metric Cards */
+    [data-testid="stMetric"] {
+        background-color: white;
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Header style */
+    .main-header {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.025em;
+    }
+    
+    .sub-header {
+        font-size: 1.1rem;
+        color: #64748b;
+        margin-bottom: 2rem;
+    }
+    
+    /* Signal Badges */
+    .badge {
+        padding: 4px 12px;
+        border-radius: 9999px;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+    }
+    .badge-buy { background-color: #dcfce7; color: #166534; }
+    .badge-sell { background-color: #fee2e2; color: #991b1b; }
+    .badge-hold { background-color: #f1f5f9; color: #475569; }
+    
+    /* Sidebar styling */
+    .css-1d391kg {
+        background-color: #ffffff;
+    }
+    
+    /* Custom tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 24px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 50px;
+        white-space: pre-wrap;
+        font-weight: 600;
+        font-size: 1rem;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🏝️ K-man Island")
-st.subheader("Tactical Portfolio Intelligence with Buy/Sell Signals")
-
-# 2. Skanner-motor med signal-logikk
+# 2. Skanner-motor med caching for ytelse
+@st.cache_data(ttl=3600) # Casher i 1 time
 def get_analysis(ticker):
     try:
+        # Henter data
         df = yf.download(ticker, period="1y", interval="1d", progress=False)
-        
-        # Håndter MultiIndex kolonner fra yfinance
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.droplevel(1)
         
         if df.empty or len(df) < 50: 
             return None
         
-        # Indikatorer for signaler
+        # Beregn Indikatorer
         df['RSI'] = ta.rsi(df['Close'], length=14)
         df['SMA20'] = ta.sma(df['Close'], length=20)
         df['SMA50'] = ta.sma(df['Close'], length=50)
+        df['EMA20'] = ta.ema(df['Close'], length=20)
         
-        # Sjekk for NaN-verdier
-        if pd.isna(df['RSI'].iloc[-1]) or pd.isna(df['SMA20'].iloc[-1]) or pd.isna(df['SMA50'].iloc[-1]):
-            return None
+        # Sjekk for gyldige verdier
+        if pd.isna(df['RSI'].iloc[-1]): return None
         
         last_close = float(df['Close'].iloc[-1])
         last_rsi = float(df['RSI'].iloc[-1])
         last_sma20 = float(df['SMA20'].iloc[-1])
         last_sma50 = float(df['SMA50'].iloc[-1])
+        prev_close = float(df['Close'].iloc[-2])
+        prev_sma20 = float(df['SMA20'].iloc[-2])
         
-        # Enkel Signal-logikk:
-        # BUY hvis RSI er lav (<50) og pris bryter over SMA20
-        buy_signal = False
-        sell_signal = False
+        # Signal Logikk
+        buy_signal = (last_rsi < 55) and (last_close > last_sma20) and (prev_close <= prev_sma20)
+        sell_signal = (last_rsi > 70) or (last_close < last_sma20 and prev_close >= prev_sma20)
         
-        if len(df) >= 2:
-            prev_close = df['Close'].iloc[-2]
-            prev_sma20 = df['SMA20'].iloc[-2]
-            
-            # Sjekk at vi har gyldige verdier
-            if not pd.isna(prev_close) and not pd.isna(prev_sma20):
-                buy_signal = (last_rsi < 50) and (last_close > last_sma20) and (prev_close <= prev_sma20)
-                sell_signal = (last_rsi > 70) or (last_close < last_sma20 and prev_close >= prev_sma20)
-
-        # K-Score (Momentum + Timing)
-        if len(df) >= 60:
-            old_price = float(df['Close'].iloc[-60])
-            returns_3m = (last_close / old_price) - 1
-        else:
-            old_price = float(df['Close'].iloc[0])
-            returns_3m = (last_close / old_price) - 1
-        
-        score = (returns_3m * 50) + (20 if 35 < last_rsi < 55 else 0)
+        # K-Score (Momentum + RSI optimalisering)
+        returns_3m = (last_close / df['Close'].iloc[-60]) - 1 if len(df) >= 60 else (last_close / df['Close'].iloc[0]) - 1
+        score = (returns_3m * 50) + (25 if 40 < last_rsi < 60 else 0) + (10 if last_close > last_sma50 else -10)
         
         return {
             "df": df,
             "ticker": ticker,
-            "pris": last_close,
-            "rsi": last_rsi,
+            "pris": round(last_close, 2),
+            "endring": round(((last_close - prev_close) / prev_close) * 100, 2),
+            "rsi": round(last_rsi, 1),
             "score": round(score, 1),
-            "trend": "UP" if last_close > last_sma50 else "DOWN",
+            "trend": "Bullish" if last_close > last_sma50 else "Bearish",
             "signal": "BUY" if buy_signal else "SELL" if sell_signal else "HOLD"
         }
-    except Exception as e:
-        # Prøv alternativ metode hvis første feiler
-        try:
-            ticker_obj = yf.Ticker(ticker)
-            df = ticker_obj.history(period="1y")
-            if df.empty or len(df) < 50:
-                return None
-            
-            df['RSI'] = ta.rsi(df['Close'], length=14)
-            df['SMA20'] = ta.sma(df['Close'], length=20)
-            df['SMA50'] = ta.sma(df['Close'], length=50)
-            
-            if pd.isna(df['RSI'].iloc[-1]) or pd.isna(df['SMA20'].iloc[-1]) or pd.isna(df['SMA50'].iloc[-1]):
-                return None
-            
-            last_close = float(df['Close'].iloc[-1])
-            last_rsi = float(df['RSI'].iloc[-1])
-            last_sma20 = float(df['SMA20'].iloc[-1])
-            last_sma50 = float(df['SMA50'].iloc[-1])
-            
-            buy_signal = False
-            sell_signal = False
-            
-            if len(df) >= 2:
-                prev_close = df['Close'].iloc[-2]
-                prev_sma20 = df['SMA20'].iloc[-2]
-                if not pd.isna(prev_close) and not pd.isna(prev_sma20):
-                    buy_signal = (last_rsi < 50) and (last_close > last_sma20) and (prev_close <= prev_sma20)
-                    sell_signal = (last_rsi > 70) or (last_close < last_sma20 and prev_close >= prev_sma20)
-            
-            if len(df) >= 60:
-                old_price = float(df['Close'].iloc[-60])
-                returns_3m = (last_close / old_price) - 1
-            else:
-                old_price = float(df['Close'].iloc[0])
-                returns_3m = (last_close / old_price) - 1
-            
-            score = (returns_3m * 50) + (20 if 35 < last_rsi < 55 else 0)
-            
-            return {
-                "df": df,
-                "ticker": ticker,
-                "pris": last_close,
-                "rsi": last_rsi,
-                "score": round(score, 1),
-                "trend": "UP" if last_close > last_sma50 else "DOWN",
-                "signal": "BUY" if buy_signal else "SELL" if sell_signal else "HOLD"
-            }
-        except:
-            return None
+    except:
+        return None
 
-# 3. Den store Watchlisten din
+# 3. Watchlist
 watchlist = [
     "NOD.OL", "SATS.OL", "KID.OL", "VAR.OL", "PROT.OL", "AKSO.OL", "NEL.OL", 
     "BGBIO.OL", "TEL.OL", "ORK.OL", "FRO.OL", "GOGL.OL", "NAS.OL", "DNB.OL", 
     "EQNR.OL", "YAR.OL", "NHY.OL", "MOWI.OL", "SUBC.OL", "TGS.OL", "AKRBP.OL", 
     "PGS.OL", "ADE.OL", "IDEX.OL", "AUTO.OL", "ACSB.OL", "LSG.OL", "SALM.OL", 
-    "BAKK.OL", "TOM.OL", "GRIEG.OL", "SBANK.OL", "HREC.OL", "ELK.OL", "MPCC.OL",
-    "KOG.OL", "BORR.OL", "RANA.OL", "SCATC.OL", "AZT.OL", "VOW.OL", "ACC.OL",
-    "PRAWN.OL", "OKEA.OL", "HAFNI.OL", "BELCO.OL", "2020.OL", "KOA.OL", "BWE.OL"
+    "BAKK.OL", "TOM.OL", "GRIEG.OL", "ELK.OL", "MPCC.OL", "KOG.OL", "BORR.OL", 
+    "RANA.OL", "SCATC.OL", "AZT.OL", "VOW.OL", "ACC.OL", "OKEA.OL", "HAFNI.OL", 
+    "BELCO.OL", "2020.OL", "KOA.OL", "BWE.OL"
 ]
 
-# 4. Kjøring og Visning
+# 4. App Header
+col_header, col_status = st.columns([3, 1])
+with col_header:
+    st.markdown('<p class="main-header">🏝️ K-man Island</p>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-header">Tactical Portfolio Intelligence & Advanced Signal Scanner</p>', unsafe_allow_html=True)
+
+with col_status:
+    st.info(f"Oversikt: Oslo Børs\nOppdatert: {datetime.now().strftime('%H:%M:%S')}")
+
+# 5. Scanning prosess
 results = []
-with st.spinner('K-man skanner Oslo Børs...'):
+with st.spinner('K-man skanner markedet for muligheter...'):
     for t in watchlist:
         data = get_analysis(t)
         if data: results.append(data)
@@ -148,66 +155,103 @@ with st.spinner('K-man skanner Oslo Børs...'):
 if results:
     df_res = pd.DataFrame([{k: v for k, v in r.items() if k != 'df'} for r in results])
     df_res = df_res.sort_values(by="score", ascending=False)
-    
-    # Vis informasjon om markedsstatus
-    st.info("ℹ️ Viser data fra siste handelsdag. Data kan være fra forrige handelsdag hvis børsen er stengt.")
-    
-    # Vis topp 10 tabellen
-    st.header("🎯 Top 10 Opportunities")
-    st.table(df_res.head(10))
-    
-    # 5. Interaktiv Graf med Piler
-    st.sidebar.header("Signal Detaljer")
-    target = st.sidebar.selectbox("Velg aksje for signaler:", df_res['ticker'].tolist())
-    
-    # Finn dataene for valgt aksje
-    try:
-        selected_data = next(item for item in results if item["ticker"] == target)
-        plot_df = selected_data['df'].tail(100)
+
+    # 6. Tabs layout
+    tab1, tab2, tab3 = st.tabs(["📊 Dashboard", "🔍 Market Scanner", "📈 Deep Dive Analysis"])
+
+    with tab1:
+        # Topp muligheter cards
+        st.markdown("### Top Ranked Opportunities")
+        top_3 = df_res.head(3)
+        cols = st.columns(3)
+        for i, (idx, row) in enumerate(top_3.iterrows()):
+            with cols[i]:
+                st.metric(
+                    label=f"#{i+1} {row['ticker']}", 
+                    value=f"{row['pris']} NOK", 
+                    delta=f"{row['endring']}%",
+                    help=f"K-Score: {row['score']}"
+                )
+                st.markdown(f"**Signal:** {row['signal']} | **Trend:** {row['trend']}")
+
+        st.markdown("---")
+        # Oversikt over signaler
+        c1, c2, c3 = st.columns(3)
+        buys = len(df_res[df_res['signal'] == 'BUY'])
+        sells = len(df_res[df_res['signal'] == 'SELL'])
+        c1.metric("Kjøpssignaler", buys, delta=None)
+        c2.metric("Salgssignaler", sells, delta=None)
+        c3.metric("Analyserte Aksjer", len(df_res), delta=None)
+
+    with tab2:
+        st.markdown("### Market Scanner Results")
         
-        # Sjekk at vi har nok data
-        if plot_df.empty or len(plot_df) < 2:
-            st.warning(f"Ingen tilstrekkelig data for {target}")
-        else:
-            fig = go.Figure()
-            fig.add_trace(go.Candlestick(
-                x=plot_df.index, 
-                open=plot_df['Open'], 
-                high=plot_df['High'], 
-                low=plot_df['Low'], 
-                close=plot_df['Close'], 
-                name="Pris"
-            ))
-            
-            # Legg til Buy/Sell piler (forenklet visning)
+        # Formatering av tabellen
+        def color_signal(val):
+            if val == 'BUY': return 'color: #166534; font-weight: bold'
+            if val == 'SELL': return 'color: #991b1b; font-weight: bold'
+            return 'color: #475569'
+
+        display_df = df_res[['ticker', 'pris', 'endring', 'rsi', 'score', 'trend', 'signal']].copy()
+        st.dataframe(
+            display_df.style.applymap(color_signal, subset=['signal']),
+            use_container_width=True,
+            height=600
+        )
+
+    with tab3:
+        st.sidebar.markdown("---")
+        st.sidebar.header("Deep Dive Settings")
+        target = st.sidebar.selectbox("Velg aksje for dypanalyse:", df_res['ticker'].tolist())
+        
+        selected_data = next(item for item in results if item["ticker"] == target)
+        df_plot = selected_data['df'].tail(150)
+        
+        # Avansert Plotly Graf
+        fig = make_subplots(rows=2, cols=1, shared_xaxes=True, 
+                           vertical_spacing=0.1, subplot_titles=(f'{target} Pris & SMA', 'RSI (14)'),
+                           row_width=[0.3, 0.7])
+
+        # Candlestick
+        fig.add_trace(go.Candlestick(
+            x=df_plot.index, open=df_plot['Open'], high=df_plot['High'], 
+            low=df_plot['Low'], close=df_plot['Close'], name="Pris"
+        ), row=1, col=1)
+        
+        # SMA Lines
+        fig.add_trace(go.Scatter(x=df_plot.index, y=df_plot['SMA20'], name="SMA 20", line=dict(color='blue', width=1)), row=1, col=1)
+        fig.add_trace(go.Scatter(x=df_plot.index, y=df_plot['SMA50'], name="SMA 50", line=dict(color='orange', width=1.5)), row=1, col=1)
+
+        # RSI
+        fig.add_trace(go.Scatter(x=df_plot.index, y=df_plot['RSI'], name="RSI", line=dict(color='purple', width=1.5)), row=2, col=1)
+        fig.add_hline(y=70, line_dash="dash", line_color="red", row=2, col=1)
+        fig.add_hline(y=30, line_dash="dash", line_color="green", row=2, col=1)
+        fig.add_hrect(y0=30, y1=70, fillcolor="gray", opacity=0.1, row=2, col=1)
+
+        fig.update_layout(height=800, xaxis_rangeslider_visible=False, template="plotly_white")
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Info box under grafen
+        col_inf1, col_inf2 = st.columns(2)
+        with col_inf1:
             if selected_data['signal'] == "BUY":
-                st.success(f"🚀 KJØPSSIGNAL identifisert for {target}")
+                st.success(f"🚀 **KJØPSSIGNAL identifisert!** {target} bryter opp gjennom SMA20 med RSI på {selected_data['rsi']}.")
             elif selected_data['signal'] == "SELL":
-                st.warning(f"⚠️ SALGSSIGNAL/GEVINSTSIKRING for {target}")
+                st.error(f"⚠️ **SALGSSIGNAL/GEVINSTSIKRING!** {target} viser svakhet eller er overkjøpt (RSI: {selected_data['rsi']}).")
             else:
-                st.info(f"📊 HOLD signal for {target} - Ingen sterk trend identifisert")
+                st.info(f"📊 **HOLD status.** {target} konsoliderer eller mangler bekreftet breakout.")
+        
+        with col_inf2:
+            st.markdown(f"""
+            **Tekniske Nøkkeltall for {target}:**
+            - Siste lukkekurs: **{selected_data['pris']} NOK**
+            - RSI (14): **{selected_data['rsi']}**
+            - K-Score: **{selected_data['score']}**
+            - Trend: **{selected_data['trend']}**
+            """)
 
-            fig.update_layout(
-                title=f"{target} - Analyse", 
-                xaxis_rangeslider_visible=False, 
-                template="plotly_white", 
-                height=600
-            )
-            st.plotly_chart(fig, use_container_width=True)
-    except StopIteration:
-        st.warning(f"Kunne ikke finne data for valgt aksje")
-    except Exception as e:
-        st.error(f"Feil ved visning av data: {str(e)}")
 else:
-    st.warning("⚠️ **Kunne ikke hente markedsdata**")
-    st.info("""
-    **Mulige årsaker:**
-    - Børsen er stengt (helg, kveld eller helligdag)
-    - Nettverksproblem eller API-rate limiting
-    - Ingen gyldig data tilgjengelig
-    
-    **Løsning:** Prøv å oppdatere siden om noen minutter eller sjekk internettforbindelsen.
-    Data vises fra siste handelsdag når børsen er stengt.
-    """)
+    st.error("Kunne ikke hente markedsdata for øyeblikket. Vennligst prøv igjen senere.")
 
-st.caption("Data leveres av yfinance. Signaler er taktiske indikatorer og ikke finansiell rådgivning.")
+st.markdown("---")
+st.caption("© 2026 K-man Island Intelligence. Data levert av yfinance. Alle signaler er kun til informasjonsformål.")
