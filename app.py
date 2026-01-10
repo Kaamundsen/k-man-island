@@ -13,289 +13,184 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. Premium Dark Theme CSS
+# 2. Lys, moderne stil
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
-
-:root {
-    --bg-primary: #0a0a0f;
-    --bg-secondary: #12121a;
-    --bg-card: rgba(22, 22, 32, 0.8);
-    --accent-cyan: #00d4ff;
-    --accent-emerald: #10b981;
-    --accent-amber: #f59e0b;
-    --accent-rose: #f43f5e;
-    --text-primary: #f8fafc;
-    --text-secondary: #94a3b8;
-    --border-color: rgba(255,255,255,0.08);
-}
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 
 .stApp {
-    background: linear-gradient(135deg, var(--bg-primary) 0%, #0d1117 50%, #0a0a12 100%);
-    background-attachment: fixed;
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
-/* Hide default streamlit elements */
+/* Hide default elements */
 #MainMenu, footer, header {visibility: hidden;}
-.block-container {padding-top: 2rem; padding-bottom: 2rem;}
 
 /* Typography */
 h1, h2, h3, p, span, div, label {
-    font-family: 'Outfit', sans-serif !important;
+    font-family: 'DM Sans', sans-serif !important;
 }
 
-/* Hero Section */
-.hero-container {
-    background: linear-gradient(135deg, rgba(0,212,255,0.1) 0%, rgba(16,185,129,0.05) 100%);
-    border: 1px solid var(--border-color);
-    border-radius: 24px;
-    padding: 3rem;
+/* Main title styling */
+.main-title {
+    font-size: 2.8rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    color: #64748b;
+    font-size: 1.1rem;
     margin-bottom: 2rem;
-    position: relative;
-    overflow: hidden;
 }
 
-.hero-container::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -20%;
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(0,212,255,0.15) 0%, transparent 70%);
-    pointer-events: none;
-}
-
-.hero-title {
-    font-size: 3.5rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, #fff 0%, var(--accent-cyan) 50%, var(--accent-emerald) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin: 0;
-    letter-spacing: -2px;
-}
-
-.hero-subtitle {
-    font-size: 1.2rem;
-    color: var(--text-secondary);
-    margin-top: 0.5rem;
-    font-weight: 400;
-}
-
-/* Signal Cards */
-.signal-card {
-    background: var(--bg-card);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--border-color);
-    border-radius: 20px;
-    padding: 1.5rem;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.signal-card:hover {
-    transform: translateY(-4px);
-    border-color: rgba(0,212,255,0.3);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-}
-
-.signal-card.buy {
-    border-left: 4px solid var(--accent-emerald);
-}
-
-.signal-card.sell {
-    border-left: 4px solid var(--accent-rose);
-}
-
-.signal-card.hold {
-    border-left: 4px solid var(--accent-amber);
-}
-
-/* Metric Cards */
-.metric-card {
-    background: linear-gradient(145deg, rgba(22,22,32,0.9) 0%, rgba(15,15,22,0.95) 100%);
-    border: 1px solid var(--border-color);
+/* Cards */
+.stat-card {
+    background: white;
     border-radius: 16px;
     padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    border: 1px solid #e2e8f0;
     text-align: center;
 }
 
-.metric-value {
-    font-size: 2.5rem;
+.stat-value {
+    font-size: 2rem;
     font-weight: 700;
-    color: var(--accent-cyan);
     margin: 0;
 }
 
-.metric-label {
+.stat-label {
+    color: #64748b;
     font-size: 0.85rem;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-top: 0.5rem;
+    margin-top: 0.25rem;
 }
 
-/* Custom Table */
-.stock-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0 8px;
-}
-
-.stock-table th {
-    background: transparent;
-    color: var(--text-secondary);
-    font-weight: 500;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.stock-table tr {
-    background: var(--bg-card);
-    transition: all 0.2s ease;
-}
-
-.stock-table tr:hover {
-    background: rgba(0,212,255,0.05);
-    transform: scale(1.01);
-}
-
-.stock-table td {
-    padding: 1rem;
-    color: var(--text-primary);
-    font-weight: 500;
-}
-
-.stock-table td:first-child {
-    border-radius: 12px 0 0 12px;
-}
-
-.stock-table td:last-child {
-    border-radius: 0 12px 12px 0;
-}
-
-/* Signal Badges */
-.badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.4rem 1rem;
+/* Signal badges */
+.signal-buy {
+    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+    color: #166534;
+    padding: 0.5rem 1rem;
     border-radius: 20px;
-    font-size: 0.8rem;
     font-weight: 600;
-    gap: 6px;
+    font-size: 0.85rem;
+    display: inline-block;
 }
 
-.badge-buy {
-    background: rgba(16,185,129,0.15);
-    color: var(--accent-emerald);
-    border: 1px solid rgba(16,185,129,0.3);
+.signal-sell {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    color: #991b1b;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: inline-block;
 }
 
-.badge-sell {
-    background: rgba(244,63,94,0.15);
-    color: var(--accent-rose);
-    border: 1px solid rgba(244,63,94,0.3);
+.signal-hold {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #92400e;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: inline-block;
 }
 
-.badge-hold {
-    background: rgba(245,158,11,0.15);
-    color: var(--accent-amber);
-    border: 1px solid rgba(245,158,11,0.3);
+/* Trend badges */
+.trend-up {
+    color: #16a34a;
+    font-weight: 600;
 }
 
-.badge-up {
-    background: rgba(16,185,129,0.1);
-    color: var(--accent-emerald);
+.trend-down {
+    color: #dc2626;
+    font-weight: 600;
 }
 
-.badge-down {
-    background: rgba(244,63,94,0.1);
-    color: var(--accent-rose);
+/* Table styling */
+.dataframe {
+    border: none !important;
+}
+
+.dataframe th {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    font-weight: 600 !important;
+    text-transform: uppercase;
+    font-size: 0.75rem !important;
+    letter-spacing: 0.5px;
+}
+
+.dataframe td {
+    background: white !important;
+    border-bottom: 1px solid #e2e8f0 !important;
 }
 
 /* Sidebar */
 section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
-    border-right: 1px solid var(--border-color);
+    background: white;
+    border-right: 1px solid #e2e8f0;
 }
 
-section[data-testid="stSidebar"] .stSelectbox label {
-    color: var(--text-secondary) !important;
+/* Tab styling */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 8px;
+    background: white;
+    padding: 0.5rem;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
 }
 
-/* Spinner */
-.stSpinner > div {
-    border-color: var(--accent-cyan) transparent transparent transparent !important;
+.stTabs [data-baseweb="tab"] {
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
 }
 
-/* Info boxes */
-.stAlert {
-    background: var(--bg-card) !important;
-    border: 1px solid var(--border-color) !important;
-    border-radius: 12px !important;
+.stTabs [aria-selected="true"] {
+    background: #0ea5e9 !important;
+    color: white !important;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: var(--bg-primary);
-}
-
-::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.1);
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: rgba(255,255,255,0.2);
-}
-
-/* Pulse animation for signals */
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-}
-
-.pulse {
-    animation: pulse 2s infinite;
+/* Info card in sidebar */
+.info-card {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 1px solid #bae6fd;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-top: 1rem;
 }
 
 /* Live indicator */
-.live-indicator {
+.live-badge {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
-    background: rgba(16,185,129,0.1);
-    border: 1px solid rgba(16,185,129,0.3);
+    gap: 6px;
+    background: #dcfce7;
+    color: #166534;
+    padding: 0.4rem 0.8rem;
     border-radius: 20px;
     font-size: 0.8rem;
-    color: var(--accent-emerald);
+    font-weight: 500;
 }
 
 .live-dot {
     width: 8px;
     height: 8px;
-    background: var(--accent-emerald);
+    background: #22c55e;
     border-radius: 50%;
-    animation: pulse 1.5s infinite;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.9); }
 }
 </style>
 """, unsafe_allow_html=True)
 
-# 3. Skanner-motor med signal-logikk
+# 3. Skanner-motor med BREDERE signal-logikk
 def get_analysis(ticker):
     try:
         df = yf.download(ticker, period="1y", interval="1d", progress=False)
@@ -309,6 +204,8 @@ def get_analysis(ticker):
         df['RSI'] = ta.rsi(df['Close'], length=14)
         df['SMA20'] = ta.sma(df['Close'], length=20)
         df['SMA50'] = ta.sma(df['Close'], length=50)
+        df['EMA12'] = ta.ema(df['Close'], length=12)
+        df['EMA26'] = ta.ema(df['Close'], length=26)
         
         if pd.isna(df['RSI'].iloc[-1]) or pd.isna(df['SMA20'].iloc[-1]) or pd.isna(df['SMA50'].iloc[-1]):
             return None
@@ -317,20 +214,49 @@ def get_analysis(ticker):
         last_rsi = float(df['RSI'].iloc[-1])
         last_sma20 = float(df['SMA20'].iloc[-1])
         last_sma50 = float(df['SMA50'].iloc[-1])
+        last_ema12 = float(df['EMA12'].iloc[-1])
+        last_ema26 = float(df['EMA26'].iloc[-1])
         
         # Beregn endring
         prev_close = float(df['Close'].iloc[-2]) if len(df) >= 2 else last_close
         change_pct = ((last_close - prev_close) / prev_close) * 100
         
+        # BREDERE SIGNAL-LOGIKK (mer generøs med BUY)
         buy_signal = False
         sell_signal = False
         
-        if len(df) >= 2:
-            prev_sma20 = df['SMA20'].iloc[-2]
-            if not pd.isna(prev_close) and not pd.isna(prev_sma20):
-                buy_signal = (last_rsi < 50) and (last_close > last_sma20) and (prev_close <= prev_sma20)
-                sell_signal = (last_rsi > 70) or (last_close < last_sma20 and prev_close >= prev_sma20)
-
+        # BUY-kriterier (må oppfylle minst 2 av 4):
+        buy_conditions = 0
+        
+        # 1. RSI er i kjøpssone (under 55)
+        if last_rsi < 55:
+            buy_conditions += 1
+        
+        # 2. Pris over SMA20 (kortsiktig opptrend)
+        if last_close > last_sma20:
+            buy_conditions += 1
+        
+        # 3. EMA12 over EMA26 (MACD-lignende bullish)
+        if last_ema12 > last_ema26:
+            buy_conditions += 1
+        
+        # 4. Pris har steget siste 5 dager
+        if len(df) >= 5:
+            five_day_return = (last_close / float(df['Close'].iloc[-5])) - 1
+            if five_day_return > 0.01:  # Mer enn 1% opp
+                buy_conditions += 1
+        
+        # BUY hvis minst 2 kriterier er oppfylt OG pris er over SMA50
+        if buy_conditions >= 2 and last_close > last_sma50:
+            buy_signal = True
+        
+        # SELL-kriterier
+        if last_rsi > 75:  # Kraftig overkjøpt
+            sell_signal = True
+        elif last_close < last_sma20 and last_close < last_sma50:  # Under begge MA
+            sell_signal = True
+        
+        # K-Score beregning
         if len(df) >= 60:
             old_price = float(df['Close'].iloc[-60])
             returns_3m = (last_close / old_price) - 1
@@ -338,7 +264,16 @@ def get_analysis(ticker):
             old_price = float(df['Close'].iloc[0])
             returns_3m = (last_close / old_price) - 1
         
-        score = (returns_3m * 50) + (20 if 35 < last_rsi < 55 else 0)
+        # Mer avansert score
+        score = (returns_3m * 40)  # Momentum
+        if 30 < last_rsi < 60: 
+            score += 20  # RSI sweet spot
+        if last_close > last_sma50: 
+            score += 15  # Over 50 SMA
+        if last_ema12 > last_ema26: 
+            score += 10  # Bullish EMA
+        if buy_signal:
+            score += 15  # Bonus for kjøpssignal
         
         return {
             "df": df,
@@ -360,6 +295,8 @@ def get_analysis(ticker):
             df['RSI'] = ta.rsi(df['Close'], length=14)
             df['SMA20'] = ta.sma(df['Close'], length=20)
             df['SMA50'] = ta.sma(df['Close'], length=50)
+            df['EMA12'] = ta.ema(df['Close'], length=12)
+            df['EMA26'] = ta.ema(df['Close'], length=26)
             
             if pd.isna(df['RSI'].iloc[-1]) or pd.isna(df['SMA20'].iloc[-1]) or pd.isna(df['SMA50'].iloc[-1]):
                 return None
@@ -368,27 +305,33 @@ def get_analysis(ticker):
             last_rsi = float(df['RSI'].iloc[-1])
             last_sma20 = float(df['SMA20'].iloc[-1])
             last_sma50 = float(df['SMA50'].iloc[-1])
+            last_ema12 = float(df['EMA12'].iloc[-1])
+            last_ema26 = float(df['EMA26'].iloc[-1])
             
             prev_close = float(df['Close'].iloc[-2]) if len(df) >= 2 else last_close
             change_pct = ((last_close - prev_close) / prev_close) * 100
             
-            buy_signal = False
-            sell_signal = False
+            buy_conditions = 0
+            if last_rsi < 55: buy_conditions += 1
+            if last_close > last_sma20: buy_conditions += 1
+            if last_ema12 > last_ema26: buy_conditions += 1
+            if len(df) >= 5:
+                five_day_return = (last_close / float(df['Close'].iloc[-5])) - 1
+                if five_day_return > 0.01: buy_conditions += 1
             
-            if len(df) >= 2:
-                prev_sma20 = df['SMA20'].iloc[-2]
-                if not pd.isna(prev_close) and not pd.isna(prev_sma20):
-                    buy_signal = (last_rsi < 50) and (last_close > last_sma20) and (prev_close <= prev_sma20)
-                    sell_signal = (last_rsi > 70) or (last_close < last_sma20 and prev_close >= prev_sma20)
+            buy_signal = buy_conditions >= 2 and last_close > last_sma50
+            sell_signal = last_rsi > 75 or (last_close < last_sma20 and last_close < last_sma50)
             
             if len(df) >= 60:
-                old_price = float(df['Close'].iloc[-60])
-                returns_3m = (last_close / old_price) - 1
+                returns_3m = (last_close / float(df['Close'].iloc[-60])) - 1
             else:
-                old_price = float(df['Close'].iloc[0])
-                returns_3m = (last_close / old_price) - 1
+                returns_3m = (last_close / float(df['Close'].iloc[0])) - 1
             
-            score = (returns_3m * 50) + (20 if 35 < last_rsi < 55 else 0)
+            score = (returns_3m * 40)
+            if 30 < last_rsi < 60: score += 20
+            if last_close > last_sma50: score += 15
+            if last_ema12 > last_ema26: score += 10
+            if buy_signal: score += 15
             
             return {
                 "df": df,
@@ -414,332 +357,276 @@ watchlist = [
     "PRAWN.OL", "OKEA.OL", "HAFNI.OL", "BELCO.OL", "2020.OL", "KOA.OL", "BWE.OL"
 ]
 
-# 5. Hero Section
-st.markdown(f"""
-<div class="hero-container">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-        <div>
-            <h1 class="hero-title">🏝️ K-man Island</h1>
-            <p class="hero-subtitle">Tactical Portfolio Intelligence • Oslo Børs Scanner</p>
-        </div>
-        <div class="live-indicator">
+# 5. Header
+col_title, col_live = st.columns([4, 1])
+with col_title:
+    st.markdown("# 🏝️ K-man Island")
+    st.markdown("**Tactical Portfolio Intelligence** • Oslo Børs Scanner")
+
+with col_live:
+    st.markdown(f"""
+    <div style="text-align: right; padding-top: 1rem;">
+        <span class="live-badge">
             <span class="live-dot"></span>
-            <span>{datetime.now().strftime('%H:%M')} • Siste data</span>
-        </div>
+            {datetime.now().strftime('%H:%M')}
+        </span>
     </div>
-</div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
+
+st.markdown("---")
 
 # 6. Data Loading
 results = []
-progress_placeholder = st.empty()
-
-with st.spinner(''):
-    progress_placeholder.markdown("""
-    <div style="text-align: center; padding: 2rem;">
-        <p style="color: #94a3b8; font-size: 1rem;">🔍 Skanner Oslo Børs...</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
+with st.spinner('🔍 Skanner Oslo Børs...'):
     for t in watchlist:
         data = get_analysis(t)
         if data: 
             results.append(data)
-
-progress_placeholder.empty()
 
 if results:
     df_res = pd.DataFrame([{k: v for k, v in r.items() if k != 'df'} for r in results])
     df_res = df_res.sort_values(by="score", ascending=False)
     
     # Stats
-    buy_signals = len([r for r in results if r['signal'] == 'BUY'])
-    sell_signals = len([r for r in results if r['signal'] == 'SELL'])
-    up_trends = len([r for r in results if r['trend'] == 'UP'])
+    buy_count = len([r for r in results if r['signal'] == 'BUY'])
+    sell_count = len([r for r in results if r['signal'] == 'SELL'])
+    up_count = len([r for r in results if r['trend'] == 'UP'])
     
-    # Metrics Row
-    col1, col2, col3, col4 = st.columns(4)
+    # Metrics row
+    c1, c2, c3, c4 = st.columns(4)
     
-    with col1:
+    with c1:
         st.markdown(f"""
-        <div class="metric-card">
-            <p class="metric-value">{len(results)}</p>
-            <p class="metric-label">Aksjer Analysert</p>
+        <div class="stat-card">
+            <p class="stat-value" style="color: #0ea5e9;">{len(results)}</p>
+            <p class="stat-label">Aksjer analysert</p>
         </div>
         """, unsafe_allow_html=True)
     
-    with col2:
+    with c2:
         st.markdown(f"""
-        <div class="metric-card">
-            <p class="metric-value" style="color: #10b981;">{buy_signals}</p>
-            <p class="metric-label">Kjøpssignaler</p>
+        <div class="stat-card">
+            <p class="stat-value" style="color: #22c55e;">{buy_count}</p>
+            <p class="stat-label">Kjøpssignaler</p>
         </div>
         """, unsafe_allow_html=True)
     
-    with col3:
+    with c3:
         st.markdown(f"""
-        <div class="metric-card">
-            <p class="metric-value" style="color: #f43f5e;">{sell_signals}</p>
-            <p class="metric-label">Salgssignaler</p>
+        <div class="stat-card">
+            <p class="stat-value" style="color: #ef4444;">{sell_count}</p>
+            <p class="stat-label">Salgssignaler</p>
         </div>
         """, unsafe_allow_html=True)
     
-    with col4:
+    with c4:
         st.markdown(f"""
-        <div class="metric-card">
-            <p class="metric-value" style="color: #00d4ff;">{up_trends}</p>
-            <p class="metric-label">Opptrend</p>
+        <div class="stat-card">
+            <p class="stat-value" style="color: #8b5cf6;">{up_count}</p>
+            <p class="stat-label">I opptrend</p>
         </div>
         """, unsafe_allow_html=True)
     
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # Top Opportunities Table
-    st.markdown("""
-    <h2 style="color: #f8fafc; font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem;">
-        🎯 Top 10 Opportunities
-    </h2>
-    """, unsafe_allow_html=True)
+    # TABS
+    tab1, tab2, tab3 = st.tabs(["🎯 Top 10", "📊 Alle signaler", "📈 Analyse"])
     
-    # Build HTML table
-    top10 = df_res.head(10)
-    
-    def get_signal_badge(signal):
-        if signal == "BUY":
-            return '<span class="badge badge-buy">🚀 KJØP</span>'
-        elif signal == "SELL":
-            return '<span class="badge badge-sell">⚠️ SELG</span>'
-        return '<span class="badge badge-hold">📊 HOLD</span>'
-    
-    def get_trend_badge(trend):
-        if trend == "UP":
-            return '<span class="badge badge-up">↑ Opptrend</span>'
-        return '<span class="badge badge-down">↓ Nedtrend</span>'
-    
-    def format_change(change):
-        color = "#10b981" if change >= 0 else "#f43f5e"
-        sign = "+" if change >= 0 else ""
-        return f'<span style="color: {color}; font-weight: 600;">{sign}{change:.2f}%</span>'
-    
-    table_html = """
-    <table class="stock-table">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Ticker</th>
-                <th>Pris</th>
-                <th>Endring</th>
-                <th>RSI</th>
-                <th>K-Score</th>
-                <th>Trend</th>
-                <th>Signal</th>
-            </tr>
-        </thead>
-        <tbody>
-    """
-    
-    for idx, row in enumerate(top10.itertuples(), 1):
-        table_html += f"""
-        <tr>
-            <td style="color: #94a3b8;">{idx}</td>
-            <td style="font-weight: 700; color: #00d4ff;">{row.ticker.replace('.OL', '')}</td>
-            <td>{row.pris:.2f} NOK</td>
-            <td>{format_change(row.change)}</td>
-            <td>{row.rsi:.1f}</td>
-            <td style="font-weight: 700;">{row.score}</td>
-            <td>{get_trend_badge(row.trend)}</td>
-            <td>{get_signal_badge(row.signal)}</td>
-        </tr>
-        """
-    
-    table_html += "</tbody></table>"
-    st.markdown(table_html, unsafe_allow_html=True)
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Sidebar for stock selection
-    with st.sidebar:
-        st.markdown("""
-        <h2 style="color: #f8fafc; font-size: 1.2rem; font-weight: 600; margin-bottom: 1rem;">
-            📊 Detaljert Analyse
-        </h2>
-        """, unsafe_allow_html=True)
+    with tab1:
+        st.subheader("Top 10 Opportunities")
         
-        target = st.selectbox(
-            "Velg aksje:",
+        # Formater dataframe for visning
+        display_df = df_res.head(10).copy()
+        display_df['Ticker'] = display_df['ticker'].str.replace('.OL', '')
+        display_df['Pris'] = display_df['pris'].apply(lambda x: f"{x:.2f} kr")
+        display_df['Endring'] = display_df['change'].apply(lambda x: f"+{x:.2f}%" if x >= 0 else f"{x:.2f}%")
+        display_df['RSI'] = display_df['rsi'].apply(lambda x: f"{x:.1f}")
+        display_df['K-Score'] = display_df['score']
+        display_df['Trend'] = display_df['trend'].apply(lambda x: "📈 UP" if x == "UP" else "📉 DOWN")
+        display_df['Signal'] = display_df['signal'].apply(lambda x: "🟢 KJØP" if x == "BUY" else "🔴 SELG" if x == "SELL" else "🟡 HOLD")
+        
+        st.dataframe(
+            display_df[['Ticker', 'Pris', 'Endring', 'RSI', 'K-Score', 'Trend', 'Signal']],
+            hide_index=True,
+            use_container_width=True
+        )
+    
+    with tab2:
+        st.subheader("Alle signaler")
+        
+        # Filter options
+        signal_filter = st.multiselect(
+            "Filtrer på signal:",
+            ["BUY", "SELL", "HOLD"],
+            default=["BUY", "SELL", "HOLD"]
+        )
+        
+        filtered_df = df_res[df_res['signal'].isin(signal_filter)].copy()
+        filtered_df['Ticker'] = filtered_df['ticker'].str.replace('.OL', '')
+        filtered_df['Pris'] = filtered_df['pris'].apply(lambda x: f"{x:.2f} kr")
+        filtered_df['Endring'] = filtered_df['change'].apply(lambda x: f"+{x:.2f}%" if x >= 0 else f"{x:.2f}%")
+        filtered_df['RSI'] = filtered_df['rsi'].apply(lambda x: f"{x:.1f}")
+        filtered_df['K-Score'] = filtered_df['score']
+        filtered_df['Trend'] = filtered_df['trend'].apply(lambda x: "📈 UP" if x == "UP" else "📉 DOWN")
+        filtered_df['Signal'] = filtered_df['signal'].apply(lambda x: "🟢 KJØP" if x == "BUY" else "🔴 SELG" if x == "SELL" else "🟡 HOLD")
+        
+        st.dataframe(
+            filtered_df[['Ticker', 'Pris', 'Endring', 'RSI', 'K-Score', 'Trend', 'Signal']],
+            hide_index=True,
+            use_container_width=True,
+            height=400
+        )
+    
+    with tab3:
+        st.subheader("Detaljert analyse")
+        
+        # Velg aksje
+        selected_ticker = st.selectbox(
+            "Velg aksje for analyse:",
             df_res['ticker'].tolist(),
             format_func=lambda x: x.replace('.OL', '')
         )
         
-        # Find selected data
-        selected_data = next((item for item in results if item["ticker"] == target), None)
+        selected_data = next((item for item in results if item["ticker"] == selected_ticker), None)
         
         if selected_data:
-            signal_class = selected_data['signal'].lower()
-            signal_emoji = "🚀" if signal_class == "buy" else "⚠️" if signal_class == "sell" else "📊"
-            signal_text = "KJØP" if signal_class == "buy" else "SELG" if signal_class == "sell" else "HOLD"
+            # Info cards
+            info_col1, info_col2, info_col3, info_col4 = st.columns(4)
             
-            st.markdown(f"""
-            <div class="signal-card {signal_class}" style="margin-top: 1rem;">
-                <h3 style="color: #f8fafc; font-size: 1.5rem; margin: 0;">{target.replace('.OL', '')}</h3>
-                <p style="color: #94a3b8; margin: 0.5rem 0;">Signal: <strong style="color: {'#10b981' if signal_class == 'buy' else '#f43f5e' if signal_class == 'sell' else '#f59e0b'}">{signal_emoji} {signal_text}</strong></p>
-                <hr style="border-color: rgba(255,255,255,0.1); margin: 1rem 0;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div>
-                        <p style="color: #94a3b8; font-size: 0.75rem; margin: 0;">PRIS</p>
-                        <p style="color: #f8fafc; font-size: 1.2rem; font-weight: 700; margin: 0;">{selected_data['pris']:.2f}</p>
-                    </div>
-                    <div>
-                        <p style="color: #94a3b8; font-size: 0.75rem; margin: 0;">RSI</p>
-                        <p style="color: #f8fafc; font-size: 1.2rem; font-weight: 700; margin: 0;">{selected_data['rsi']:.1f}</p>
-                    </div>
-                    <div>
-                        <p style="color: #94a3b8; font-size: 0.75rem; margin: 0;">K-SCORE</p>
-                        <p style="color: #00d4ff; font-size: 1.2rem; font-weight: 700; margin: 0;">{selected_data['score']}</p>
-                    </div>
-                    <div>
-                        <p style="color: #94a3b8; font-size: 0.75rem; margin: 0;">TREND</p>
-                        <p style="color: {'#10b981' if selected_data['trend'] == 'UP' else '#f43f5e'}; font-size: 1.2rem; font-weight: 700; margin: 0;">{'↑' if selected_data['trend'] == 'UP' else '↓'} {selected_data['trend']}</p>
-                    </div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            with info_col1:
+                signal_class = "signal-buy" if selected_data['signal'] == "BUY" else "signal-sell" if selected_data['signal'] == "SELL" else "signal-hold"
+                signal_text = "🟢 KJØP" if selected_data['signal'] == "BUY" else "🔴 SELG" if selected_data['signal'] == "SELL" else "🟡 HOLD"
+                st.markdown(f'<div class="{signal_class}">{signal_text}</div>', unsafe_allow_html=True)
+                st.caption("Signal")
+            
+            with info_col2:
+                st.metric("Pris", f"{selected_data['pris']:.2f} kr")
+            
+            with info_col3:
+                st.metric("RSI", f"{selected_data['rsi']:.1f}")
+            
+            with info_col4:
+                st.metric("K-Score", f"{selected_data['score']}")
+            
+            # Chart
+            plot_df = selected_data['df'].tail(100)
+            
+            if not plot_df.empty:
+                fig = go.Figure()
+                
+                # Candlestick
+                fig.add_trace(go.Candlestick(
+                    x=plot_df.index,
+                    open=plot_df['Open'],
+                    high=plot_df['High'],
+                    low=plot_df['Low'],
+                    close=plot_df['Close'],
+                    name="Pris",
+                    increasing_line_color='#22c55e',
+                    decreasing_line_color='#ef4444',
+                    increasing_fillcolor='#22c55e',
+                    decreasing_fillcolor='#ef4444'
+                ))
+                
+                # SMA lines
+                fig.add_trace(go.Scatter(
+                    x=plot_df.index,
+                    y=plot_df['SMA20'],
+                    mode='lines',
+                    name='SMA 20',
+                    line=dict(color='#0ea5e9', width=1.5)
+                ))
+                
+                fig.add_trace(go.Scatter(
+                    x=plot_df.index,
+                    y=plot_df['SMA50'],
+                    mode='lines',
+                    name='SMA 50',
+                    line=dict(color='#f59e0b', width=1.5)
+                ))
+                
+                fig.update_layout(
+                    title=f"{selected_ticker.replace('.OL', '')} - Siste 100 dager",
+                    plot_bgcolor='white',
+                    paper_bgcolor='white',
+                    xaxis=dict(gridcolor='#f1f5f9', showgrid=True),
+                    yaxis=dict(gridcolor='#f1f5f9', showgrid=True, side='right'),
+                    xaxis_rangeslider_visible=False,
+                    height=500,
+                    legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
+                    hovermode='x unified'
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+                
+                # RSI Chart
+                fig_rsi = go.Figure()
+                
+                fig_rsi.add_trace(go.Scatter(
+                    x=plot_df.index,
+                    y=plot_df['RSI'],
+                    mode='lines',
+                    name='RSI',
+                    line=dict(color='#8b5cf6', width=2),
+                    fill='tozeroy',
+                    fillcolor='rgba(139,92,246,0.1)'
+                ))
+                
+                fig_rsi.add_hline(y=70, line_dash="dash", line_color="#ef4444", opacity=0.7)
+                fig_rsi.add_hline(y=30, line_dash="dash", line_color="#22c55e", opacity=0.7)
+                
+                fig_rsi.update_layout(
+                    title="RSI Indikator",
+                    plot_bgcolor='white',
+                    paper_bgcolor='white',
+                    xaxis=dict(gridcolor='#f1f5f9', showgrid=True),
+                    yaxis=dict(gridcolor='#f1f5f9', showgrid=True, range=[0, 100]),
+                    height=200,
+                    showlegend=False
+                )
+                
+                st.plotly_chart(fig_rsi, use_container_width=True)
     
-    # Main Chart
-    if selected_data:
-        plot_df = selected_data['df'].tail(100)
+    # Sidebar info
+    with st.sidebar:
+        st.markdown("### 📋 Signal Guide")
         
-        if not plot_df.empty and len(plot_df) >= 2:
-            fig = go.Figure()
-            
-            # Candlestick
-            fig.add_trace(go.Candlestick(
-                x=plot_df.index,
-                open=plot_df['Open'],
-                high=plot_df['High'],
-                low=plot_df['Low'],
-                close=plot_df['Close'],
-                name="Pris",
-                increasing_line_color='#10b981',
-                decreasing_line_color='#f43f5e',
-                increasing_fillcolor='#10b981',
-                decreasing_fillcolor='#f43f5e'
-            ))
-            
-            # SMA lines
-            fig.add_trace(go.Scatter(
-                x=plot_df.index,
-                y=plot_df['SMA20'],
-                mode='lines',
-                name='SMA 20',
-                line=dict(color='#00d4ff', width=1.5, dash='dot')
-            ))
-            
-            fig.add_trace(go.Scatter(
-                x=plot_df.index,
-                y=plot_df['SMA50'],
-                mode='lines',
-                name='SMA 50',
-                line=dict(color='#f59e0b', width=1.5, dash='dot')
-            ))
-            
-            fig.update_layout(
-                title=dict(
-                    text=f"{target.replace('.OL', '')} • Siste 100 dager",
-                    font=dict(size=20, color='#f8fafc', family='Outfit')
-                ),
-                plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='rgba(0,0,0,0)',
-                xaxis=dict(
-                    gridcolor='rgba(255,255,255,0.05)',
-                    showgrid=True,
-                    zeroline=False,
-                    tickfont=dict(color='#94a3b8', family='Outfit')
-                ),
-                yaxis=dict(
-                    gridcolor='rgba(255,255,255,0.05)',
-                    showgrid=True,
-                    zeroline=False,
-                    tickfont=dict(color='#94a3b8', family='Outfit'),
-                    side='right'
-                ),
-                xaxis_rangeslider_visible=False,
-                height=500,
-                margin=dict(l=20, r=60, t=60, b=20),
-                legend=dict(
-                    bgcolor='rgba(0,0,0,0)',
-                    font=dict(color='#94a3b8', family='Outfit'),
-                    orientation='h',
-                    yanchor='bottom',
-                    y=1.02,
-                    xanchor='right',
-                    x=1
-                ),
-                hovermode='x unified'
-            )
-            
-            st.plotly_chart(fig, use_container_width=True)
-            
-            # RSI Chart
-            fig_rsi = go.Figure()
-            
-            fig_rsi.add_trace(go.Scatter(
-                x=plot_df.index,
-                y=plot_df['RSI'],
-                mode='lines',
-                name='RSI',
-                line=dict(color='#00d4ff', width=2),
-                fill='tozeroy',
-                fillcolor='rgba(0,212,255,0.1)'
-            ))
-            
-            # Overkjøpt/oversolgt linjer
-            fig_rsi.add_hline(y=70, line_dash="dash", line_color="#f43f5e", opacity=0.5)
-            fig_rsi.add_hline(y=30, line_dash="dash", line_color="#10b981", opacity=0.5)
-            
-            fig_rsi.update_layout(
-                title=dict(
-                    text="RSI Indikator",
-                    font=dict(size=16, color='#f8fafc', family='Outfit')
-                ),
-                plot_bgcolor='rgba(0,0,0,0)',
-                paper_bgcolor='rgba(0,0,0,0)',
-                xaxis=dict(
-                    gridcolor='rgba(255,255,255,0.05)',
-                    showgrid=True,
-                    zeroline=False,
-                    tickfont=dict(color='#94a3b8', family='Outfit')
-                ),
-                yaxis=dict(
-                    gridcolor='rgba(255,255,255,0.05)',
-                    showgrid=True,
-                    zeroline=False,
-                    tickfont=dict(color='#94a3b8', family='Outfit'),
-                    range=[0, 100]
-                ),
-                height=200,
-                margin=dict(l=20, r=60, t=40, b=20),
-                showlegend=False
-            )
-            
-            st.plotly_chart(fig_rsi, use_container_width=True)
+        st.markdown("""
+        <div class="info-card">
+            <p><strong>🟢 KJØP</strong></p>
+            <p style="font-size: 0.85rem; color: #64748b;">RSI under 55, pris over SMA20/50, positiv momentum</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="info-card" style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-color: #fecaca;">
+            <p><strong>🔴 SELG</strong></p>
+            <p style="font-size: 0.85rem; color: #64748b;">RSI over 75 eller pris under begge MA</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div class="info-card" style="background: linear-gradient(135deg, #fefce8 0%, #fef3c7 100%); border-color: #fde68a;">
+            <p><strong>🟡 HOLD</strong></p>
+            <p style="font-size: 0.85rem; color: #64748b;">Ingen klar retning, avvent</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("---")
+        
+        st.markdown("### 📊 K-Score")
+        st.caption("Kombinerer momentum, RSI og trendstyrke. Høyere = bedre mulighet.")
 
 else:
-    st.markdown("""
-    <div style="text-align: center; padding: 4rem 2rem; background: rgba(22,22,32,0.8); border-radius: 20px; border: 1px solid rgba(255,255,255,0.08);">
-        <h2 style="color: #f8fafc; font-size: 1.5rem;">⚠️ Ingen data tilgjengelig</h2>
-        <p style="color: #94a3b8; max-width: 400px; margin: 1rem auto;">
-            Børsen kan være stengt (helg/kveld) eller det er et midlertidig problem med datahentingen. 
-            Prøv igjen om noen minutter.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.warning("⚠️ Kunne ikke hente markedsdata")
+    st.info("""
+    **Mulige årsaker:**
+    - Børsen er stengt (helg/kveld)
+    - Nettverksproblem
+    
+    Prøv å oppdatere siden om noen minutter.
+    """)
 
 # Footer
-st.markdown("""
-<div style="text-align: center; padding: 2rem; margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.05);">
-    <p style="color: #64748b; font-size: 0.8rem;">
-        Data fra yfinance • K-Score er en taktisk indikator, ikke finansiell rådgivning
-    </p>
-</div>
-""", unsafe_allow_html=True)
+st.markdown("---")
+st.caption("Data fra yfinance • K-Score er en taktisk indikator, ikke finansiell rådgivning")
