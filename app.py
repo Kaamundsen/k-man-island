@@ -183,33 +183,30 @@ section[data-testid="stSidebar"] { display: none; }
     border-top: 1px solid #f3f4f6;
 }
 
-/* SKJUL KNAPPER I KOLONNER (aksjekort) */
-[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] {
+/* SKJUL KNAPP HELT */
+[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"],
+[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] *,
+[data-testid="stColumn"] .stButton,
+[data-testid="stColumn"] .stButton * {
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
-    right: 0 !important;
     width: 100% !important;
-    height: 500px !important;
+    height: 480px !important;
     background: transparent !important;
+    background-color: transparent !important;
     border: none !important;
+    border-color: transparent !important;
     box-shadow: none !important;
+    outline: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    color: transparent !important;
     z-index: 100 !important;
 }
 
-[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] > div,
-[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] > div > div {
-    height: 100% !important;
-    background: transparent !important;
-    border: none !important;
-}
-
-[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] button {
-    width: 100% !important;
-    height: 100% !important;
-    background: transparent !important;
-    border: none !important;
-    color: transparent !important;
+[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] button,
+[data-testid="stColumn"] .stButton button {
     cursor: pointer !important;
 }
 
