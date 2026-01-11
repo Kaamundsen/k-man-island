@@ -183,50 +183,38 @@ section[data-testid="stSidebar"] { display: none; }
     border-top: 1px solid #f3f4f6;
 }
 
-/* SKJUL KNAPP PÅ AKSJEKORT - kun i hovedvisningen */
-.stock-card-btn-wrapper [data-testid="stVerticalBlockBorderWrapper"],
-.stock-card-btn-wrapper [data-testid="stVerticalBlockBorderWrapper"] *,
-.stock-card-btn-wrapper .stButton,
-.stock-card-btn-wrapper .stButton * {
+/* SKJUL KNAPPER I KOLONNER (aksjekort) */
+[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] {
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
+    right: 0 !important;
     width: 100% !important;
-    height: 480px !important;
+    height: 500px !important;
     background: transparent !important;
-    background-color: transparent !important;
     border: none !important;
-    border-color: transparent !important;
     box-shadow: none !important;
-    outline: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    color: transparent !important;
     z-index: 100 !important;
 }
 
-.stock-card-btn-wrapper [data-testid="stVerticalBlockBorderWrapper"] button,
-.stock-card-btn-wrapper .stButton button {
-    cursor: pointer !important;
-}
-
-.stock-card-btn-wrapper {
-    position: relative !important;
-}
-
-/* Tilbake-knapp styling */
-.back-btn button {
-    background: #1a1a1a !important;
-    color: white !important;
+[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] > div,
+[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] > div > div {
+    height: 100% !important;
+    background: transparent !important;
     border: none !important;
-    border-radius: 12px !important;
-    padding: 12px 24px !important;
-    font-weight: 600 !important;
+}
+
+[data-testid="stColumn"] [data-testid="stVerticalBlockBorderWrapper"] button {
+    width: 100% !important;
+    height: 100% !important;
+    background: transparent !important;
+    border: none !important;
+    color: transparent !important;
     cursor: pointer !important;
 }
 
-.back-btn button:hover {
-    background: #333 !important;
+[data-testid="stColumn"] > div > div {
+    position: relative !important;
 }
 
 /* Widget-bokser */
@@ -434,8 +422,7 @@ with c_main:
                 badge_text = "KJØP" if stock['signal'] == "BUY" else "SELG" if stock['signal'] == "SELL" else "HOLD"
                 prob_color = "#E2FF3B" if stock['prob'] > 70 else "#A3E7D8" if stock['prob'] > 50 else "#FFB5B5"
                 
-                # Wrapper for usynlig knapp
-                st.markdown('<div class="stock-card-btn-wrapper">', unsafe_allow_html=True)
+                # Usynlig knapp over kortet
                 if st.button("⠀", key=f"btn_{stock['ticker']}", use_container_width=True):
                     st.session_state.selected_ticker = stock['ticker']
                     st.rerun()
@@ -485,7 +472,6 @@ with c_main:
                         </div>
                     </div>
                 </div>
-                </div>
                 """, unsafe_allow_html=True)
 
     # Analyse-visning
@@ -495,11 +481,9 @@ with c_main:
             st.error("Fant ikke aksjen")
             st.stop()
         
-        st.markdown('<div class="back-btn">', unsafe_allow_html=True)
         if st.button("← Tilbake til oversikt"):
             st.session_state.selected_ticker = None
             st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
         
         st.markdown(f"<h1 class='big-ticker'>{stock['ticker_short']}</h1>", unsafe_allow_html=True)
         
