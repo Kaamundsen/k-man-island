@@ -1,108 +1,116 @@
+'use client';
+
 import { Stock } from '@/lib/types';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, Shield, Zap } from 'lucide-react';
+import Link from 'next/link';
+import { clsx } from 'clsx';
 
 interface StockCardProps {
   stock: Stock;
 }
 
 export default function StockCard({ stock }: StockCardProps) {
-  const isPositive = stock.change >= 0;
-  const signalColor = stock.signal === 'BUY' ? 'bg-brand-emerald' : 
-                     stock.signal === 'SELL' ? 'bg-brand-rose' : 
-                     'bg-gray-500';
+  const isPositive = stock.changePercent >= 0;
+  
+  const signalConfig = {
+    BUY: { bg: 'bg-brand-emerald', text: 'KJØP', badgeBg: 'bg-brand-emerald/10', badgeText: 'text-brand-emerald' },
+    SELL: { bg: 'bg-brand-rose', text: 'SELG', badgeBg: 'bg-brand-rose/10', badgeText: 'text-brand-rose' },
+    HOLD: { bg: 'bg-gray-500', text: 'HOLD', badgeBg: 'bg-gray-100', badgeText: 'text-gray-700' },
+  };
+
+  const config = signalConfig[stock.signal];
+  const kScoreColor = stock.kScore >= 75 ? 'bg-brand-emerald' : stock.kScore >= 60 ? 'bg-yellow-500' : 'bg-gray-400';
+  const tickerShort = stock.ticker.replace('.OL', '');
 
   return (
-    <div className="bg-surface rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow">
-      {/* Header with ticker and K-SCORE */}
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <h3 className="text-lg font-semibold text-brand-slate">{stock.ticker}</h3>
-          <p className="text-sm text-gray-600">{stock.name}</p>
-        </div>
-        <div className="text-right">
-          <div className={`inline-flex items-center px-3 py-1 rounded-full text-white text-sm font-semibold ${signalColor}`}>
-            {stock.signal}
+    <Link 
+      href={`/analyse/${stock.ticker}`}
+      className="block bg-surface rounded-3xl border border-surface-border overflow-hidden hover:shadow-card-hover transition-all duration-200 hover:-translate-y-1 stock-card"
+    >
+      {/* Header */}
+      <div className={clsx('p-6 pb-5', config.bg)}>
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1">
+            <div className={clsx('inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold mb-3', config.badgeBg, config.badgeText)}>
+              {config.text}
+            </div>
+            <h3 className="text-2xl font-extrabold text-white tracking-tight">{tickerShort}</h3>
+            <p className="text-sm text-white/70 mt-1">{stock.name}</p>
           </div>
-          <div className="mt-2">
-            <span className="text-xs text-gray-500">K-SCORE</span>
-            <div className="text-2xl font-bold text-brand-slate">{stock.kScore}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Price and change */}
-      <div className="mb-4">
-        <div className="flex items-baseline gap-2">
-          <span className="text-2xl font-bold text-brand-slate">
-            {stock.market === 'OSLO' ? `${stock.price.toFixed(2)} NOK` : `$${stock.price.toFixed(2)}`}
-          </span>
-          <div className={`flex items-center gap-1 ${isPositive ? 'text-brand-emerald' : 'text-brand-rose'}`}>
-            {isPositive ? (
-              <TrendingUp className="w-4 h-4" />
-            ) : (
-              <TrendingDown className="w-4 h-4" />
+          <div className="flex gap-1.5">
+            {stock.strategies.includes('MOMENTUM') && (
+              <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center" title="Momentum">
+                <Zap className="w-4 h-4 text-white" strokeWidth={2.5} />
+              </div>
             )}
-            <span className="text-sm font-semibold">
-              {isPositive ? '+' : ''}{stock.changePercent.toFixed(2)}%
-            </span>
-          </div>
-        </div>
-        <div className={`text-xs ${isPositive ? 'text-brand-emerald' : 'text-brand-rose'}`}>
-          {isPositive ? '+' : ''}{stock.change.toFixed(2)} {stock.market === 'OSLO' ? 'NOK' : 'USD'}
-        </div>
-      </div>
-
-      {/* Gain/Risk section */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="bg-green-50 rounded-lg p-3">
-          <div className="text-xs text-gray-600 mb-1">Gevinst</div>
-          <div className="text-lg font-bold text-brand-emerald">
-            {stock.market === 'OSLO' ? `${stock.gainKr.toFixed(2)} NOK` : `$${stock.gainKr.toFixed(2)}`}
-          </div>
-          <div className="text-xs text-brand-emerald font-semibold">
-            +{stock.gainPercent.toFixed(2)}%
-          </div>
-        </div>
-        <div className="bg-red-50 rounded-lg p-3">
-          <div className="text-xs text-gray-600 mb-1">Risiko</div>
-          <div className="text-lg font-bold text-brand-rose">
-            {stock.market === 'OSLO' ? `${stock.riskKr.toFixed(2)} NOK` : `$${stock.riskKr.toFixed(2)}`}
-          </div>
-          <div className="text-xs text-brand-rose font-semibold">
-            -{stock.riskPercent.toFixed(2)}%
+            {stock.strategies.includes('BUFFETT') && (
+              <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center" title="Buffett">
+                <Shield className="w-4 h-4 text-white" strokeWidth={2.5} />
+              </div>
+            )}
+            {stock.strategies.includes('TVEITEREID') && (
+              <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center" title="Tveitereid">
+                <TrendingUp className="w-4 h-4 text-white" strokeWidth={2.5} />
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Target and Stop Loss */}
-      <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-        <div>
-          <div className="text-gray-600 text-xs mb-1">Target</div>
-          <div className="font-semibold text-brand-slate">
-            {stock.market === 'OSLO' ? `${stock.target.toFixed(2)} NOK` : `$${stock.target.toFixed(2)}`}
+      {/* Body */}
+      <div className="p-6">
+        {/* Price */}
+        <div className="flex items-baseline justify-between mb-5">
+          <div>
+            <div className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">PRIS</div>
+            <div className="text-3xl font-extrabold text-brand-slate">
+              {stock.price.toFixed(2)} <span className="text-lg text-gray-400">NOK</span>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className={clsx('text-lg font-bold', isPositive ? 'text-brand-emerald' : 'text-brand-rose')}>
+              {isPositive ? '+' : ''}{stock.changePercent.toFixed(1)}%
+            </div>
           </div>
         </div>
-        <div>
-          <div className="text-gray-600 text-xs mb-1">Stop Loss</div>
-          <div className="font-semibold text-brand-slate">
-            {stock.market === 'OSLO' ? `${stock.stopLoss.toFixed(2)} NOK` : `$${stock.stopLoss.toFixed(2)}`}
-          </div>
-        </div>
-      </div>
 
-      {/* Footer with time horizon and strategies */}
-      <div className="pt-4 border-t border-gray-200">
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-gray-600">Tidshorisont: <span className="font-semibold text-brand-slate">{stock.timeHorizon}</span></span>
-          <div className="flex gap-1">
-            {stock.strategies.map((strategy) => (
-              <span key={strategy} className="px-2 py-1 bg-gray-100 rounded text-gray-700">
-                {strategy}
-              </span>
-            ))}
+        {/* K-SCORE */}
+        <div className="mb-5">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-gray-500 uppercase tracking-wide font-semibold">K-SCORE</span>
+            <span className="text-2xl font-extrabold text-brand-slate">{stock.kScore}</span>
+          </div>
+          <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+            <div 
+              className={clsx('h-full rounded-full k-score-bar', kScoreColor)}
+              style={{ width: `${stock.kScore}%` }}
+            ></div>
           </div>
         </div>
+
+        {/* Gain and Risk */}
+        <div className="grid grid-cols-2 gap-4 mb-5">
+          <div>
+            <div className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">GEVINST</div>
+            <div className="text-lg font-bold text-brand-emerald">+{stock.gainKr.toFixed(2)} kr</div>
+            <div className="text-xs text-brand-emerald font-semibold">+{stock.gainPercent.toFixed(0)}%</div>
+          </div>
+          <div className="text-right">
+            <div className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">RISIKO (SL)</div>
+            <div className="text-lg font-bold text-brand-rose">-{stock.riskKr.toFixed(2)} kr</div>
+            <div className="text-xs text-brand-rose font-semibold">-{stock.riskPercent.toFixed(1)}%</div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100 text-xs text-gray-500">
+          <div className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+            <span>TIDSHORISONT</span>
+          </div>
+          <span className="font-semibold text-brand-slate">{stock.timeHorizon}</span>
+        </div>
       </div>
-    </div>
+    </Link>
   );
 }

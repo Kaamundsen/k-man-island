@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { Zap, Shield, TrendingUp } from 'lucide-react';
+import { clsx } from 'clsx';
 
-type MarketFilter = 'ALL' | 'OSLO' | 'USA';
-type StrategyFilter = 'ALL' | 'MOMENTUM' | 'BUFFETT' | 'TVEITEREID';
+export type MarketFilter = 'ALLE' | 'OSLO' | 'USA';
+export type StrategyFilter = 'ALLE' | 'MOMENTUM' | 'BUFFETT' | 'TVEITEREID';
 
 interface FilterBarProps {
   onMarketChange: (market: MarketFilter) => void;
@@ -11,8 +13,8 @@ interface FilterBarProps {
 }
 
 export default function FilterBar({ onMarketChange, onStrategyChange }: FilterBarProps) {
-  const [selectedMarket, setSelectedMarket] = useState<MarketFilter>('ALL');
-  const [selectedStrategy, setSelectedStrategy] = useState<StrategyFilter>('ALL');
+  const [selectedMarket, setSelectedMarket] = useState<MarketFilter>('ALLE');
+  const [selectedStrategy, setSelectedStrategy] = useState<StrategyFilter>('ALLE');
 
   const handleMarketClick = (market: MarketFilter) => {
     setSelectedMarket(market);
@@ -25,81 +27,93 @@ export default function FilterBar({ onMarketChange, onStrategyChange }: FilterBa
   };
 
   return (
-    <div className="flex flex-col sm:flex-row gap-4 mb-6">
+    <div className="flex flex-wrap gap-4 mb-8">
       {/* Market filters */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center">
         <button
-          onClick={() => handleMarketClick('ALL')}
-          className={`px-4 py-2 rounded-lg font-semibold text-sm transition-colors ${
-            selectedMarket === 'ALL'
-              ? 'bg-brand-emerald text-white'
-              : 'bg-surface text-brand-slate border border-gray-200 hover:bg-gray-50'
-          }`}
+          onClick={() => handleMarketClick('ALLE')}
+          className={clsx(
+            'px-5 py-2.5 rounded-xl font-bold text-sm transition-all',
+            selectedMarket === 'ALLE'
+              ? 'bg-brand-emerald text-white shadow-md'
+              : 'bg-surface text-gray-600 border border-gray-200 hover:bg-gray-50'
+          )}
         >
           ALL
         </button>
         <button
           onClick={() => handleMarketClick('OSLO')}
-          className={`px-4 py-2 rounded-lg font-semibold text-sm transition-colors ${
+          className={clsx(
+            'px-5 py-2.5 rounded-xl font-bold text-sm transition-all',
             selectedMarket === 'OSLO'
-              ? 'bg-brand-emerald text-white'
-              : 'bg-surface text-brand-slate border border-gray-200 hover:bg-gray-50'
-          }`}
+              ? 'bg-brand-emerald text-white shadow-md'
+              : 'bg-surface text-gray-600 border border-gray-200 hover:bg-gray-50'
+          )}
         >
           OSLO
         </button>
         <button
           onClick={() => handleMarketClick('USA')}
-          className={`px-4 py-2 rounded-lg font-semibold text-sm transition-colors ${
+          className={clsx(
+            'px-5 py-2.5 rounded-xl font-bold text-sm transition-all',
             selectedMarket === 'USA'
-              ? 'bg-brand-emerald text-white'
-              : 'bg-surface text-brand-slate border border-gray-200 hover:bg-gray-50'
-          }`}
+              ? 'bg-brand-emerald text-white shadow-md'
+              : 'bg-surface text-gray-600 border border-gray-200 hover:bg-gray-50'
+          )}
         >
           USA
         </button>
       </div>
 
+      <div className="h-8 w-px bg-gray-200"></div>
+
       {/* Strategy filters */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center">
         <button
-          onClick={() => handleStrategyClick('ALL')}
-          className={`px-4 py-2 rounded-lg font-semibold text-sm transition-colors ${
-            selectedStrategy === 'ALL'
-              ? 'bg-brand-emerald text-white'
-              : 'bg-surface text-brand-slate border border-gray-200 hover:bg-gray-50'
-          }`}
+          onClick={() => handleStrategyClick('ALLE')}
+          className={clsx(
+            'px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2',
+            selectedStrategy === 'ALLE'
+              ? 'bg-brand-slate text-white shadow-md'
+              : 'bg-surface text-gray-600 border border-gray-200 hover:bg-gray-50'
+          )}
         >
-          ALL
+          ALLE
         </button>
         <button
           onClick={() => handleStrategyClick('MOMENTUM')}
-          className={`px-4 py-2 rounded-lg font-semibold text-sm transition-colors ${
+          className={clsx(
+            'px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2',
             selectedStrategy === 'MOMENTUM'
-              ? 'bg-brand-emerald text-white'
-              : 'bg-surface text-brand-slate border border-gray-200 hover:bg-gray-50'
-          }`}
+              ? 'bg-brand-slate text-white shadow-md'
+              : 'bg-surface text-gray-600 border border-gray-200 hover:bg-gray-50'
+          )}
         >
+          <Zap className="w-4 h-4" strokeWidth={2.5} />
           MOMENTUM
         </button>
         <button
           onClick={() => handleStrategyClick('BUFFETT')}
-          className={`px-4 py-2 rounded-lg font-semibold text-sm transition-colors ${
+          className={clsx(
+            'px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2',
             selectedStrategy === 'BUFFETT'
-              ? 'bg-brand-emerald text-white'
-              : 'bg-surface text-brand-slate border border-gray-200 hover:bg-gray-50'
-          }`}
+              ? 'bg-brand-slate text-white shadow-md'
+              : 'bg-surface text-gray-600 border border-gray-200 hover:bg-gray-50'
+          )}
         >
+          <Shield className="w-4 h-4" strokeWidth={2.5} />
           BUFFETT
         </button>
         <button
           onClick={() => handleStrategyClick('TVEITEREID')}
-          className={`px-4 py-2 rounded-lg font-semibold text-sm transition-colors ${
+          className={clsx(
+            'px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2',
             selectedStrategy === 'TVEITEREID'
-              ? 'bg-brand-emerald text-white'
-              : 'bg-surface text-brand-slate border border-gray-200 hover:bg-gray-50'
-          }`}
+              ? 'bg-brand-slate text-white shadow-md'
+              : 'bg-surface text-gray-600 border border-gray-200 hover:bg-gray-50'
+          )}
         >
+          <TrendingUp className="w-4 h-4" strokeWidth={2.5} />
           TVEITEREID
         </button>
       </div>

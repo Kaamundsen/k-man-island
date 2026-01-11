@@ -2,28 +2,34 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Search, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Search, TrendingUp } from 'lucide-react';
 import { clsx } from 'clsx';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Markedsskanner', href: '/markedsskanner', icon: Search },
-  { name: 'Analyse', href: '/analyse', icon: BarChart3 },
+  { name: 'Dyp Analyse', href: '/analyse', icon: TrendingUp },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <div className="w-64 bg-surface border-r border-gray-200 h-screen fixed left-0 top-0 flex flex-col">
+    <div className="w-72 bg-surface border-r border-surface-border h-screen fixed left-0 top-0 flex flex-col">
       {/* Logo */}
-      <div className="p-6 border-b border-gray-200">
-        <h1 className="text-2xl font-bold text-brand-slate">K-Man Island</h1>
-        <p className="text-xs text-gray-500 mt-1">Aero v1</p>
+      <div className="p-6 border-b border-surface-border">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-brand-emerald flex items-center justify-center">
+            <TrendingUp className="w-7 h-7 text-white" strokeWidth={2.5} />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-brand-slate">K-man Island</h1>
+          </div>
+        </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4">
+      <nav className="flex-1 px-4 py-6">
         <ul className="space-y-2">
           {navigation.map((item) => {
             const isActive = pathname === item.href || 
@@ -34,14 +40,14 @@ export default function Sidebar() {
                 <Link
                   href={item.href}
                   className={clsx(
-                    'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
+                    'flex items-center gap-3 px-4 py-3 rounded-xl transition-all',
                     isActive
-                      ? 'bg-brand-emerald text-white'
-                      : 'text-brand-slate hover:bg-gray-100'
+                      ? 'bg-brand-slate text-white shadow-md'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-brand-slate'
                   )}
                 >
-                  <item.icon className="w-5 h-5" />
-                  <span className="font-medium">{item.name}</span>
+                  <item.icon className="w-5 h-5" strokeWidth={2} />
+                  <span className="font-medium text-sm">{item.name}</span>
                 </Link>
               </li>
             );
@@ -49,10 +55,32 @@ export default function Sidebar() {
         </ul>
       </nav>
 
+      {/* Goal Widget */}
+      <div className="px-4 pb-6">
+        <div className="bg-gradient-to-br from-brand-slate to-gray-800 rounded-2xl p-6 text-white">
+          <h3 className="text-sm font-semibold mb-2 opacity-90">Målsetning</h3>
+          <p className="text-2xl font-bold mb-4">100-200% Avkastning</p>
+          
+          <div className="space-y-2 mb-4">
+            <div className="flex justify-between text-xs">
+              <span className="opacity-75">Progresjon</span>
+              <span className="font-semibold">45%</span>
+            </div>
+            <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
+              <div className="bg-brand-emerald h-full rounded-full" style={{ width: '45%' }}></div>
+            </div>
+          </div>
+          
+          <p className="text-xs opacity-75 leading-relaxed">
+            Swing-trading med momentum strategi for Oslo Børs og US Markets.
+          </p>
+        </div>
+      </div>
+
       {/* Footer */}
-      <div className="p-4 border-t border-gray-200">
-        <p className="text-xs text-gray-500 text-center">
-          © 2024 K-Man Island
+      <div className="px-4 pb-4">
+        <p className="text-xs text-gray-400 text-center">
+          © 2026 K-man Island · Aero v1
         </p>
       </div>
     </div>
