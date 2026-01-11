@@ -27,7 +27,7 @@ export default function FilterBar({ onMarketChange, onStrategyChange }: FilterBa
   };
 
   return (
-    <div className="flex flex-wrap gap-4 mb-8">
+    <div className="flex flex-wrap gap-4">
       {/* Market filters */}
       <div className="flex gap-2 items-center">
         <button
