@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Zap, Shield, TrendingUp } from 'lucide-react';
+import { Zap, Shield, TrendingUp, ArrowUpCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 
 export type MarketFilter = 'ALLE' | 'OSLO' | 'USA';
-export type StrategyFilter = 'ALLE' | 'MOMENTUM' | 'BUFFETT' | 'TVEITEREID';
+export type StrategyFilter = 'ALLE' | 'MOMENTUM' | 'BUFFETT' | 'TVEITEREID' | 'REBOUND';
 
 interface FilterBarProps {
   onMarketChange: (market: MarketFilter) => void;
@@ -115,6 +115,18 @@ export default function FilterBar({ onMarketChange, onStrategyChange }: FilterBa
         >
           <TrendingUp className="w-4 h-4" strokeWidth={2.5} />
           TVEITEREID
+        </button>
+        <button
+          onClick={() => handleStrategyClick('REBOUND')}
+          className={clsx(
+            'px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2',
+            selectedStrategy === 'REBOUND'
+              ? 'bg-brand-slate text-white shadow-md'
+              : 'bg-surface text-gray-600 border border-gray-200 hover:bg-gray-50'
+          )}
+        >
+          <ArrowUpCircle className="w-4 h-4" strokeWidth={2.5} />
+          REBOUND
         </button>
       </div>
     </div>

@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { Circle } from 'lucide-react';
 
 export default function MarketStatus() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [isOpen, setIsOpen] = useState<boolean>(false);
 
   useEffect(() => {
     // Check if market is open (Monday-Friday, 9:00-16:20 Oslo time)
@@ -30,39 +29,18 @@ export default function MarketStatus() {
     };
 
     checkMarketStatus();
-    const interval = setInterval(() => {
-      setCurrentTime(new Date());
-      checkMarketStatus();
-    }, 60000); // Update every minute
+    const interval = setInterval(checkMarketStatus, 60000); // Update every minute
 
     return () => clearInterval(interval);
   }, []);
 
-  const formattedDate = currentTime.toLocaleDateString('nb-NO', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  });
-
-  const formattedTime = currentTime.toLocaleTimeString('nb-NO', {
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-
   return (
-    <div className="flex items-center gap-4 text-sm">
-      <div className="flex items-center gap-2">
-        <Circle 
-          className={`w-2.5 h-2.5 ${isOpen ? 'text-brand-emerald fill-brand-emerald' : 'text-gray-400 fill-gray-400'}`}
-        />
-        <span className={`font-semibold ${isOpen ? 'text-brand-emerald' : 'text-gray-500'}`}>
-          {isOpen ? 'Børsen er Åpen' : 'Børsen er Stengt'}
-        </span>
-      </div>
-      <span className="text-gray-400">·</span>
-      <span className="text-gray-600">
-        Sist oppdatert: {formattedDate}, {formattedTime}
+    <div className="flex items-center gap-2">
+      <Circle 
+        className={`w-2.5 h-2.5 ${isOpen ? 'text-brand-emerald fill-brand-emerald' : 'text-gray-400 fill-gray-400'}`}
+      />
+      <span className={`font-semibold text-sm ${isOpen ? 'text-brand-emerald' : 'text-gray-500'}`}>
+        {isOpen ? 'Børsen er Åpen' : 'Børsen er Stengt'}
       </span>
     </div>
   );

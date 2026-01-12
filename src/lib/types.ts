@@ -5,6 +5,7 @@ export interface Stock {
   change: number;
   changePercent: number;
   kScore: number;
+  rsi: number;
   signal: 'BUY' | 'HOLD' | 'SELL';
   target: number;
   stopLoss: number;
@@ -14,7 +15,7 @@ export interface Stock {
   riskPercent: number;
   timeHorizon: string;
   market: 'OSLO' | 'USA';
-  strategies: ('MOMENTUM' | 'BUFFETT' | 'TVEITEREID')[];
+  strategies: ('MOMENTUM' | 'BUFFETT' | 'TVEITEREID' | 'REBOUND')[];
 }
 
 export interface Trade {

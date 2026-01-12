@@ -1,21 +1,22 @@
 'use client';
 
 import { Stock } from '@/lib/types';
-import { TrendingUp, Shield, Zap } from 'lucide-react';
+import { TrendingUp, Shield, Zap, ArrowUpCircle } from 'lucide-react';
 import Link from 'next/link';
 import { clsx } from 'clsx';
 
 interface StockCardProps {
   stock: Stock;
+  rank?: number;
 }
 
-export default function StockCard({ stock }: StockCardProps) {
+export default function StockCard({ stock, rank }: StockCardProps) {
   const isPositive = stock.changePercent >= 0;
   
   const signalConfig = {
-    BUY: { bg: 'bg-brand-emerald', text: 'KJØP', badgeBg: 'bg-brand-emerald/10', badgeText: 'text-brand-emerald' },
-    SELL: { bg: 'bg-brand-rose', text: 'SELG', badgeBg: 'bg-brand-rose/10', badgeText: 'text-brand-rose' },
-    HOLD: { bg: 'bg-gray-500', text: 'HOLD', badgeBg: 'bg-gray-100', badgeText: 'text-gray-700' },
+    BUY: { bg: 'bg-brand-emerald', text: 'KJØP', badgeBg: 'bg-white/20', badgeText: 'text-white' },
+    SELL: { bg: 'bg-brand-rose', text: 'SELG', badgeBg: 'bg-white/20', badgeText: 'text-white' },
+    HOLD: { bg: 'bg-gray-500', text: 'HOLD', badgeBg: 'bg-white/20', badgeText: 'text-white' },
   };
 
   const config = signalConfig[stock.signal];
@@ -31,8 +32,15 @@ export default function StockCard({ stock }: StockCardProps) {
       <div className={clsx('p-6 pb-5', config.bg)}>
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
-            <div className={clsx('inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold mb-3', config.badgeBg, config.badgeText)}>
-              {config.text}
+            <div className="flex items-center gap-2 mb-3">
+              {rank && (
+                <span className="text-white font-extrabold text-xl">
+                  #{rank}
+                </span>
+              )}
+              <div className={clsx('inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold', config.badgeBg, config.badgeText)}>
+                {config.text}
+              </div>
             </div>
             <h3 className="text-2xl font-extrabold text-white tracking-tight">{tickerShort}</h3>
             <p className="text-sm text-white/70 mt-1">{stock.name}</p>
@@ -51,6 +59,11 @@ export default function StockCard({ stock }: StockCardProps) {
             {stock.strategies.includes('TVEITEREID') && (
               <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center" title="Tveitereid">
                 <TrendingUp className="w-4 h-4 text-white" strokeWidth={2.5} />
+              </div>
+            )}
+            {stock.strategies.includes('REBOUND') && (
+              <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center" title="Rebound">
+                <ArrowUpCircle className="w-4 h-4 text-white" strokeWidth={2.5} />
               </div>
             )}
           </div>
@@ -75,7 +88,7 @@ export default function StockCard({ stock }: StockCardProps) {
         </div>
 
         {/* K-SCORE */}
-        <div className="mb-5">
+        <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs text-gray-500 uppercase tracking-wide font-semibold">K-SCORE</span>
             <span className="text-2xl font-extrabold text-brand-slate">{stock.kScore}</span>
@@ -88,17 +101,59 @@ export default function StockCard({ stock }: StockCardProps) {
           </div>
         </div>
 
+        {/* RSI */}
+        <div className="mb-5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-500 uppercase tracking-wide font-semibold">RSI</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xl font-bold text-gray-700">{stock.rsi.toFixed(1)}</span>
+              <span className={clsx(
+                'text-xs font-semibold px-2 py-0.5 rounded',
+                stock.rsi < 40 ? 'bg-green-100 text-green-700' : // Underkjøpt - potensielt kjøp
+                stock.rsi > 60 ? 'bg-red-100 text-red-700' : // Overkjøpt
+                'bg-gray-100 text-gray-600' // Nøytral
+              )}>
+                {stock.rsi < 40 ? 'Lav' : stock.rsi > 60 ? 'Høy' : 'OK'}
+              </span>
+            </div>
+          </div>
+        </div>
+
         {/* Gain and Risk */}
-        <div className="grid grid-cols-2 gap-4 mb-5">
+        <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
             <div className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">GEVINST</div>
             <div className="text-lg font-bold text-brand-emerald">+{stock.gainKr.toFixed(2)} kr</div>
             <div className="text-xs text-brand-emerald font-semibold">+{stock.gainPercent.toFixed(0)}%</div>
           </div>
           <div className="text-right">
-            <div className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">RISIKO (SL)</div>
+            <div className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">RISIKO</div>
             <div className="text-lg font-bold text-brand-rose">-{stock.riskKr.toFixed(2)} kr</div>
             <div className="text-xs text-brand-rose font-semibold">-{stock.riskPercent.toFixed(1)}%</div>
+          </div>
+        </div>
+
+        {/* Risk/Reward Ratio */}
+        <div className="mb-5 bg-gray-50 rounded-xl p-3 border border-gray-100">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-600 font-semibold uppercase">Risk/Reward</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xl font-extrabold text-brand-slate">
+                1:{(stock.gainPercent / stock.riskPercent).toFixed(2)}
+              </span>
+              <span className={clsx(
+                'text-xs font-bold px-2 py-1 rounded',
+                (stock.gainPercent / stock.riskPercent) >= 2 ? 'bg-green-100 text-green-700' :
+                (stock.gainPercent / stock.riskPercent) >= 1.5 ? 'bg-emerald-100 text-emerald-700' :
+                (stock.gainPercent / stock.riskPercent) >= 1 ? 'bg-yellow-100 text-yellow-700' :
+                'bg-red-100 text-red-700'
+              )}>
+                {(stock.gainPercent / stock.riskPercent) >= 2 ? 'Utmerket' :
+                 (stock.gainPercent / stock.riskPercent) >= 1.5 ? 'God' :
+                 (stock.gainPercent / stock.riskPercent) >= 1 ? 'OK' :
+                 'Dårlig'}
+              </span>
+            </div>
           </div>
         </div>
 
