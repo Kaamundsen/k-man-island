@@ -2,3 +2,7 @@ __pycache__/
 .streamlit/
 venv/
 node_modules
+.env.local
+.env
+.next
+.DS_Store

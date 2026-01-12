@@ -15,22 +15,40 @@ interface DashboardContentProps {
 }
 
 // Beregn en sammensatt score for å rangere aksjer
-const calculateCompositeScore = (stock: Stock): number => {
+const calculateCompositeScore = (stock: Stock, prioritizeInsider: boolean = false): number => {
   let score = 0;
   
-  // K-Score (vekt: 50%)
-  score += stock.kScore * 0.5;
-  
-  // RSI bonus (vekt: 20%) - mellom 40-60 er best
-  const rsiOptimal = 50;
-  const rsiDistance = Math.abs(stock.rsi - rsiOptimal);
-  const rsiScore = Math.max(0, 100 - (rsiDistance * 3));
-  score += rsiScore * 0.2;
-  
-  // Risk/Reward Ratio (vekt: 30%)
-  const riskRewardRatio = stock.gainPercent / stock.riskPercent;
-  const rrScore = Math.min(100, riskRewardRatio * 20); // Cap ved 100
-  score += rrScore * 0.3;
+  if (prioritizeInsider && stock.insiderScore !== undefined) {
+    // Ved INSIDER-filter: Insider score får høyere vekt
+    score += stock.insiderScore * 0.4; // 40%
+    score += stock.kScore * 0.3; // 30%
+    
+    // RSI bonus (15%)
+    const rsiOptimal = 50;
+    const rsiDistance = Math.abs(stock.rsi - rsiOptimal);
+    const rsiScore = Math.max(0, 100 - (rsiDistance * 3));
+    score += rsiScore * 0.15;
+    
+    // Risk/Reward Ratio (15%)
+    const riskRewardRatio = stock.gainPercent / stock.riskPercent;
+    const rrScore = Math.min(100, riskRewardRatio * 20);
+    score += rrScore * 0.15;
+  } else {
+    // Standard scoring
+    // K-Score (vekt: 50%)
+    score += stock.kScore * 0.5;
+    
+    // RSI bonus (vekt: 20%) - mellom 40-60 er best
+    const rsiOptimal = 50;
+    const rsiDistance = Math.abs(stock.rsi - rsiOptimal);
+    const rsiScore = Math.max(0, 100 - (rsiDistance * 3));
+    score += rsiScore * 0.2;
+    
+    // Risk/Reward Ratio (vekt: 30%)
+    const riskRewardRatio = stock.gainPercent / stock.riskPercent;
+    const rrScore = Math.min(100, riskRewardRatio * 20); // Cap ved 100
+    score += rrScore * 0.3;
+  }
   
   return score;
 };
@@ -54,7 +72,7 @@ export default function DashboardContent({ initialStocks }: DashboardContentProp
     // Filter by strategy
     if (strategyFilter !== 'ALLE') {
       filtered = filtered.filter(stock => 
-        stock.strategies.includes(strategyFilter as 'MOMENTUM' | 'BUFFETT' | 'TVEITEREID' | 'REBOUND')
+        stock.strategies.includes(strategyFilter as 'MOMENTUM' | 'BUFFETT' | 'TVEITEREID' | 'REBOUND' | 'INSIDER')
       );
     }
 
@@ -62,10 +80,11 @@ export default function DashboardContent({ initialStocks }: DashboardContentProp
     const buyStocks = filtered.filter(stock => stock.signal === 'BUY');
     
     // Avansert sortering: Kombiner K-Score, RSI og Risk/Reward
+    const prioritizeInsider = strategyFilter === 'INSIDER';
     buyStocks.sort((a, b) => {
       // Beregn composite score
-      const scoreA = calculateCompositeScore(a);
-      const scoreB = calculateCompositeScore(b);
+      const scoreA = calculateCompositeScore(a, prioritizeInsider);
+      const scoreB = calculateCompositeScore(b, prioritizeInsider);
       return scoreB - scoreA;
     });
     
@@ -83,26 +102,43 @@ export default function DashboardContent({ initialStocks }: DashboardContentProp
   const holdSignals = initialStocks.filter(s => s.signal === 'HOLD').length;
   const sellSignals = initialStocks.filter(s => s.signal === 'SELL').length;
   
-  // Watchlist - alle aksjer unntatt topp 6 BUY (eller alle hvis list-only)
+  // Watchlist - alle aksjer unntatt topp 3 BUY (eller alle hvis list-only)
   const watchlistStocks = useMemo(() => {
-    // Hent alle BUY-aksjer og sorter de på samme måte
-    const allBuyStocks = initialStocks
+    const prioritizeInsider = strategyFilter === 'INSIDER';
+    
+    // Start med samme filtrering som kort
+    let filtered = [...initialStocks];
+    
+    // Filter by market
+    if (marketFilter !== 'ALLE') {
+      filtered = filtered.filter(stock => stock.market === marketFilter);
+    }
+    
+    // Filter by strategy
+    if (strategyFilter !== 'ALLE') {
+      filtered = filtered.filter(stock => 
+        stock.strategies.includes(strategyFilter as 'MOMENTUM' | 'BUFFETT' | 'TVEITEREID' | 'REBOUND' | 'INSIDER')
+      );
+    }
+    
+    // Hent alle BUY-aksjer fra filtrert liste og sorter de på samme måte
+    const allBuyStocks = filtered
       .filter(stock => stock.signal === 'BUY')
       .sort((a, b) => {
-        const scoreA = calculateCompositeScore(a);
-        const scoreB = calculateCompositeScore(b);
+        const scoreA = calculateCompositeScore(a, prioritizeInsider);
+        const scoreB = calculateCompositeScore(b, prioritizeInsider);
         return scoreB - scoreA;
       });
     
     if (viewMode === 'list-only') {
-      // Show all stocks in list
-      return initialStocks.sort((a, b) => {
+      // Show all filtered stocks in list
+      return filtered.sort((a, b) => {
         const signalOrder = { BUY: 0, HOLD: 1, SELL: 2 };
         if (signalOrder[a.signal] !== signalOrder[b.signal]) {
           return signalOrder[a.signal] - signalOrder[b.signal];
         }
-        const scoreA = calculateCompositeScore(a);
-        const scoreB = calculateCompositeScore(b);
+        const scoreA = calculateCompositeScore(a, prioritizeInsider);
+        const scoreB = calculateCompositeScore(b, prioritizeInsider);
         return scoreB - scoreA;
       });
     }
@@ -112,10 +148,10 @@ export default function DashboardContent({ initialStocks }: DashboardContentProp
       return [];
     }
     
-    // cards-and-list mode: Ekskluder topp 3
+    // cards-and-list mode: Ekskluder topp 3 fra filtrert liste
     const top3BuyTickers = allBuyStocks.slice(0, 3).map(s => s.ticker);
     
-    return initialStocks
+    return filtered
       .filter(stock => !top3BuyTickers.includes(stock.ticker))
       .sort((a, b) => {
         // Sort: BUY først, deretter HOLD, deretter SELL
@@ -124,11 +160,11 @@ export default function DashboardContent({ initialStocks }: DashboardContentProp
         if (signalOrder[a.signal] !== signalOrder[b.signal]) {
           return signalOrder[a.signal] - signalOrder[b.signal];
         }
-        const scoreA = calculateCompositeScore(a);
-        const scoreB = calculateCompositeScore(b);
+        const scoreA = calculateCompositeScore(a, prioritizeInsider);
+        const scoreB = calculateCompositeScore(b, prioritizeInsider);
         return scoreB - scoreA;
       });
-  }, [initialStocks, viewMode]);
+  }, [initialStocks, viewMode, strategyFilter, marketFilter]);
 
   return (
     <main className="min-h-screen p-8">
@@ -257,13 +293,16 @@ export default function DashboardContent({ initialStocks }: DashboardContentProp
       {/* Stock Grid */}
       {filteredStocks.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredStocks.map((stock, index) => (
-            useOriginalDesign ? (
-              <StockCardOriginal key={stock.ticker} stock={stock} rank={index + 1} />
+          {filteredStocks.map((stock, index) => {
+            // ALLTID bruk lokal rank (posisjon i filtrert liste)
+            const rank = index + 1;
+            
+            return useOriginalDesign ? (
+              <StockCardOriginal key={stock.ticker} stock={stock} rank={rank} />
             ) : (
-              <StockCard key={stock.ticker} stock={stock} rank={index + 1} />
-            )
-          ))}
+              <StockCard key={stock.ticker} stock={stock} rank={rank} />
+            );
+          })}
         </div>
       )}
       
@@ -304,11 +343,25 @@ export default function DashboardContent({ initialStocks }: DashboardContentProp
 
             {/* Table Body */}
             <div className="divide-y divide-gray-100">
-              {(() => {
-                let buyRank = viewMode === 'list-only' ? 1 : 4; // Start fra 1 i list-only, 4 i cards-and-list (etter topp 3)
-                return watchlistStocks.map((stock, index) => {
-                  // Beregn global ranking kun for BUY-aksjer
-                  const globalRank = stock.signal === 'BUY' ? buyRank++ : null;
+              {watchlistStocks.map((stock, index) => {
+                // Beregn rank basert på view mode og index
+                let rank;
+                if (viewMode === 'list-only') {
+                  // I list-only, rank starter fra 1
+                  rank = stock.signal === 'BUY' ? index + 1 : null;
+                } else {
+                  // I cards-and-list, rank starter fra 4 (etter topp 3 kort)
+                  // Men kun for BUY-aksjer
+                  if (stock.signal === 'BUY') {
+                    // Finn posisjonen i den filtrerte BUY-listen
+                    const buyStocksBeforeThis = watchlistStocks
+                      .slice(0, index)
+                      .filter(s => s.signal === 'BUY').length;
+                    rank = buyStocksBeforeThis + 4; // +4 fordi topp 3 er i kort
+                  } else {
+                    rank = null;
+                  }
+                }
                 const tickerShort = stock.ticker.replace('.OL', '');
                 const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
                   BUY: { bg: 'bg-emerald-50', text: 'text-emerald-700', label: 'BUY' },
@@ -327,9 +380,9 @@ export default function DashboardContent({ initialStocks }: DashboardContentProp
                   >
                     {/* Ranking */}
                     <div className="flex items-center">
-                      {globalRank ? (
+                      {rank ? (
                         <span className="text-lg font-extrabold text-gray-400 group-hover:text-brand-emerald transition-colors">
-                          {globalRank}
+                          {rank}
                         </span>
                       ) : (
                         <span className="text-gray-300">-</span>
@@ -391,8 +444,7 @@ export default function DashboardContent({ initialStocks }: DashboardContentProp
                     </div>
                   </Link>
                 );
-              });
-            })()}
+              })}
             </div>
           </div>
 

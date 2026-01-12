@@ -15,7 +15,10 @@ export interface Stock {
   riskPercent: number;
   timeHorizon: string;
   market: 'OSLO' | 'USA';
-  strategies: ('MOMENTUM' | 'BUFFETT' | 'TVEITEREID' | 'REBOUND')[];
+  strategies: ('MOMENTUM' | 'BUFFETT' | 'TVEITEREID' | 'REBOUND' | 'INSIDER')[];
+  insiderScore?: number; // 0-100 score basert på insider-aktivitet
+  insiderBuys?: number; // Antall innsidekjøp siste 90 dager
+  insiderNetShares?: number; // Netto kjøpte aksjer (kjøp - salg)
 }
 
 export interface Trade {

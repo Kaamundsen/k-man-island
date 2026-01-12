@@ -1,38 +1,45 @@
-import { Newspaper, ExternalLink } from 'lucide-react';
+'use client';
 
-interface NewsItem {
-  title: string;
-  date: string;
-  source: string;
-  url: string;
-}
+import { useState, useEffect } from 'react';
+import { Newspaper, ExternalLink } from 'lucide-react';
+import { NewsItem as FinnhubNewsItem } from '@/lib/api/finnhub';
 
 interface NewsWidgetProps {
   ticker: string;
 }
 
 export default function NewsWidget({ ticker }: NewsWidgetProps) {
-  // Mock news data - in production this would come from an API
-  const mockNews: NewsItem[] = [
-    {
-      title: `${ticker}: Melding om tildeling av opsjoner til ansatte`,
-      date: '2 timer siden',
-      source: 'Newsweb',
-      url: 'https://newsweb.oslobors.no'
-    },
-    {
-      title: `Analytikere oppjusterer kursmål for ${ticker}`,
-      date: '1 dag siden',
-      source: 'E24',
-      url: '#'
-    },
-    {
-      title: `${ticker} - Kvartalsrapport overgår forventningene`,
-      date: '3 dager siden',
-      source: 'DN',
-      url: '#'
-    },
-  ];
+  const [news, setNews] = useState<FinnhubNewsItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchNews() {
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/news/${ticker}`);
+        if (response.ok) {
+          const data = await response.json();
+          setNews(data);
+        }
+      } catch (error) {
+        console.error('Error fetching news:', error);
+      }
+      setLoading(false);
+    }
+    
+    fetchNews();
+  }, [ticker]);
+
+  const formatTimeAgo = (timestamp: number) => {
+    const now = Date.now();
+    const diff = now - (timestamp * 1000);
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(hours / 24);
+    
+    if (days > 0) return `${days} dag${days > 1 ? 'er' : ''} siden`;
+    if (hours > 0) return `${hours} time${hours > 1 ? 'r' : ''} siden`;
+    return 'Nylig';
+  };
 
   return (
     <div className="bg-surface rounded-2xl p-6 border border-surface-border">
@@ -41,31 +48,40 @@ export default function NewsWidget({ ticker }: NewsWidgetProps) {
         <h3 className="text-xl font-bold text-brand-slate">Siste Nyheter</h3>
       </div>
 
-      <div className="space-y-4">
-        {mockNews.map((news, index) => (
-          <a
-            key={index}
-            href={news.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors group"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1">
-                <h4 className="font-semibold text-brand-slate mb-2 group-hover:text-brand-emerald transition-colors">
-                  {news.title}
-                </h4>
-                <div className="flex items-center gap-3 text-xs text-gray-500">
-                  <span>📅 {news.date}</span>
-                  <span>•</span>
-                  <span>📰 {news.source}</span>
+      {loading ? (
+        <div className="text-center py-8 text-gray-500">Laster nyheter...</div>
+      ) : news.length > 0 ? (
+        <div className="space-y-4">
+          {news.map((item) => (
+            <a
+              key={item.id}
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors group"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <h4 className="font-semibold text-brand-slate mb-2 group-hover:text-brand-emerald transition-colors line-clamp-2">
+                    {item.headline}
+                  </h4>
+                  {item.summary && (
+                    <p className="text-xs text-gray-600 mb-2 line-clamp-2">{item.summary}</p>
+                  )}
+                  <div className="flex items-center gap-3 text-xs text-gray-500">
+                    <span>📅 {formatTimeAgo(item.datetime)}</span>
+                    <span>•</span>
+                    <span>📰 {item.source}</span>
+                  </div>
                 </div>
+                <ExternalLink className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
               </div>
-              <ExternalLink className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
-            </div>
-          </a>
-        ))}
-      </div>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-8 text-gray-500">Ingen nyheter funnet siste 30 dager</div>
+      )}
 
       <div className="mt-6 pt-6 border-t border-gray-200">
         <h4 className="text-sm font-bold text-brand-slate mb-3">Eksterne kilder</h4>

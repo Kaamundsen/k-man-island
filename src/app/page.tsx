@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import DashboardContent from '@/components/DashboardContent';
+import { fetchAllStocksWithKMomentum } from '@/lib/api/stock-data-v2';
 import { fetchLiveStockData } from '@/lib/api/stock-data';
 import { mockStocks } from '@/lib/mock-data';
 
@@ -7,24 +8,58 @@ import { mockStocks } from '@/lib/mock-data';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+// Loading component
+function DashboardLoading() {
+  return (
+    <div className="p-8">
+      <div className="mb-8">
+        <div className="h-10 bg-gray-200 rounded w-64 mb-4 animate-pulse"></div>
+        <div className="h-4 bg-gray-200 rounded w-96 animate-pulse"></div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="bg-gray-100 rounded-3xl h-96 animate-pulse"></div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default async function Home() {
-  console.log('Fetching stock data...');
+  console.log('🚀 Starting K-Momentum data fetch...');
   
-  // Fetch live data, fallback to mock if fails
-  let stocks = await fetchLiveStockData();
+  let stocks;
+  const useKMomentum = process.env.NEXT_PUBLIC_FINNHUB_API_KEY !== undefined;
   
-  console.log(`Fetched ${stocks.length} stocks from API`);
-  
-  // If no live data, use mock data
-  if (stocks.length === 0) {
-    console.warn('⚠️ Using mock data as fallback - API failed');
-    stocks = mockStocks;
+  if (useKMomentum) {
+    console.log('✨ Using K-Momentum strategy with Finnhub');
+    try {
+      stocks = await fetchAllStocksWithKMomentum();
+      
+      if (stocks.length === 0) {
+        console.warn('⚠️ K-Momentum returned no stocks, falling back to Yahoo Finance');
+        stocks = await fetchLiveStockData();
+      }
+    } catch (error) {
+      console.error('❌ K-Momentum failed:', error);
+      console.log('⚠️ Falling back to Yahoo Finance');
+      stocks = await fetchLiveStockData();
+    }
   } else {
-    console.log('✓ Using live data from Yahoo Finance');
+    console.log('⚠️ No Finnhub API key, using Yahoo Finance fallback');
+    stocks = await fetchLiveStockData();
+  }
+  
+  // Final fallback to mock data
+  if (stocks.length === 0) {
+    console.warn('⚠️ Using mock data as final fallback');
+    stocks = mockStocks;
   }
 
+  console.log(`✅ Loaded ${stocks.length} stocks for dashboard`);
+
   return (
-    <Suspense fallback={<div className="p-8">Laster...</div>}>
+    <Suspense fallback={<DashboardLoading />}>
       <DashboardContent initialStocks={stocks} />
     </Suspense>
   );
