@@ -6,3 +6,7 @@ node_modules
 .env
 .next
 .DS_Store
+.next/
+
+# Next.js build output
+.next/
