@@ -242,6 +242,19 @@ function convertToStock(quote: YahooQuote): Stock {
     strategies.push('REBOUND');
   }
   
+  // Calculate momentum type
+  const riskRewardRatio = indicators.riskKr > 0 ? indicators.gainKr / indicators.riskKr : 0;
+  const isTrend = indicators.kScore >= 70 && indicators.rsi >= 40 && indicators.rsi <= 60;
+  const isAsym = riskRewardRatio >= 2.5;
+  let momentumType: 'TREND' | 'ASYM' | 'GOLD' | 'NONE' = 'NONE';
+  if (isTrend && isAsym) {
+    momentumType = 'GOLD';
+  } else if (isTrend) {
+    momentumType = 'TREND';
+  } else if (isAsym) {
+    momentumType = 'ASYM';
+  }
+  
   return {
     ticker: quote.symbol,
     name: getStockName(quote.symbol),
@@ -260,6 +273,7 @@ function convertToStock(quote: YahooQuote): Stock {
     timeHorizon: indicators.signal === 'BUY' ? '2-6 uker' : '4-8 uker',
     market: isOslo ? 'OSLO' : 'USA',
     strategies: strategies.length > 0 ? strategies : ['MOMENTUM'],
+    momentumType,
   };
 }
 
