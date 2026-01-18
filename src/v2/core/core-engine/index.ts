@@ -1,6 +1,7 @@
 import type { CoreEngineOutput } from "./types";
 import type { AnalysisProvider } from "@/v2/adapters/analysis";
 import type { PortfolioProvider } from "@/v2/adapters/portfolio";
+import { scoreTrend } from "./profiles/trend";
 
 export type CoreEngineDeps = {
   analysis: AnalysisProvider;
@@ -12,23 +13,15 @@ export async function runCoreEngine(
   symbols: string[],
   asOfDate: string
 ): Promise<CoreEngineOutput[]> {
-  // TODO: implement TREND + ASYM scoring (next)
-  // For now: just return NONE for each symbol (wiring test)
   const outputs: CoreEngineOutput[] = [];
 
   for (const symbol of symbols) {
-    await deps.analysis.getCoreCandidateInput(symbol, asOfDate);
-    outputs.push({
-      symbol,
-      profile: "NONE",
-      hardPass: false,
-      softScore: 0,
-      reasons: ["NOT_IMPLEMENTED"],
-    });
+    const input = await deps.analysis.getCoreCandidateInput(symbol, asOfDate);
+    const trend = scoreTrend(input);
+
+    outputs.push(trend);
   }
 
-  // Ensure we can read portfolio too (wiring test)
   await deps.portfolio.getCoreTrades();
-
   return outputs;
 }
