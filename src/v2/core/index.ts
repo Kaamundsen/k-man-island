@@ -8,14 +8,20 @@ import { legacyIndicatorsProvider } from "@/v2/adapters/analysis/legacyIndicator
 import { legacyPortfolioProvider } from "@/v2/adapters/portfolio/legacyPortfolio";
 
 import { cacheGet, cacheSet, makeCoreCacheKey } from "@/v2/core/cache";
+import type { CoreModeConfig } from "@/v2/core/mode";
+import { defaultCoreMode } from "@/v2/core/mode";
 
-export async function runV2Core(symbols: string[], asOfDate: string) {
+export async function runV2Core(
+  symbols: string[],
+  asOfDate: string,
+  cfg: CoreModeConfig = defaultCoreMode()
+) {
   const version = "v2-stub";
   const universeHash = symbols.join("|");
   const key = makeCoreCacheKey(asOfDate, version, universeHash);
 
   const cached = cacheGet<any>(key);
-  if (cached) return cached;
+  if (cached) return { ...cached, mode: cfg };
 
   const outputs = await runCoreEngine(
     {
@@ -34,5 +40,6 @@ export async function runV2Core(symbols: string[], asOfDate: string) {
 
   const result = { outputs, slots, decisions, brief };
   cacheSet(key, result);
-  return result;
+
+  return { ...result, mode: cfg };
 }
