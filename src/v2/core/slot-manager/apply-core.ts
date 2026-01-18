@@ -8,9 +8,12 @@ export function applyCoreOutputsToSlots(
 ): SlotManagerState {
   let next = { ...state };
 
-  for (const o of outputs) {
-    if (o.profile === "NONE") continue;
-    if (!o.hardPass) continue;
+  // Prioriter høy score først
+  const ranked = [...outputs]
+    .filter(o => o.hardPass)
+    .sort((a, b) => b.softScore - a.softScore);
+
+  for (const o of ranked) {
     if (getOpenSlots(next) <= 0) break;
 
     const slot: CoreSlot = {
