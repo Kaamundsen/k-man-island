@@ -1,10 +1,13 @@
 import type { DailyBar, MarketDataProvider } from "./index";
-import { fetchHistoricalData } from "@/lib/api/historical-data"; // juster hvis funksjonsnavn avviker
+import { fetchHistoricalData } from "@/lib/api/historical-data";
 
 export const yahooDailyProvider: MarketDataProvider = {
-  async getDailyBars(symbol, fromDate, toDate) {
-    const rows = await fetchHistoricalData(symbol, fromDate, toDate, "1d");
-    return rows.map((r: any) => ({
+  async getDailyBars(symbol, _fromDate, _toDate) {
+    // fetchHistoricalData uses years parameter, default to 2 years
+    const history = await fetchHistoricalData(symbol, 2);
+    if (!history) return [];
+    
+    return history.candles.map((r) => ({
       date: r.date,
       open: r.open,
       high: r.high,

@@ -163,6 +163,7 @@ export const mockTrades: Trade[] = [
     quantity: 100,
     entryDate: new Date('2024-01-15'),
     portfolioId: 'portfolio-1',
+    strategyId: 'MOMENTUM_TREND',
     stopLoss: 29.50,
     target: 38.50,
     timeHorizonEnd: new Date('2024-03-01'),
@@ -176,6 +177,7 @@ export const mockTrades: Trade[] = [
     quantity: 150,
     entryDate: new Date('2024-01-10'),
     portfolioId: 'portfolio-1',
+    strategyId: 'MOMENTUM_TREND',
     stopLoss: 33.50,
     target: 42.00,
     timeHorizonEnd: new Date('2024-02-28'),
@@ -188,13 +190,13 @@ export const mockPortfolios: Portfolio[] = [
   {
     id: 'portfolio-1',
     name: 'K-Momentum Portfolio',
-    strategyBucket: 'K-Momentum',
+    description: 'K-Momentum strategy portfolio',
     trades: mockTrades,
   },
   {
     id: 'portfolio-2',
     name: 'Legacy Portfolio',
-    strategyBucket: 'Legacy',
+    description: 'Legacy portfolio',
     trades: [],
   },
 ];

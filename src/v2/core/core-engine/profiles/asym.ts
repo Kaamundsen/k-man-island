@@ -23,7 +23,7 @@ export function scoreAsym(input: CoreCandidateInput): CoreEngineOutput {
   const nearLow = pos <= 0.35;
 
   if (!nearLow) {
-    return { symbol: input.symbol, profile: "NONE", hardPass: flse, softScore: 0, reasons: ["NOT_ASYM_ZONE"] };
+    return { symbol: input.symbol, profile: "NONE", hardPass: false, softScore: 0, reasons: ["NOT_ASYM_ZONE"] };
   }
 
   reasons.push("NEAR_52W_LOW");

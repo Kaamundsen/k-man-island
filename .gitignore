@@ -10,3 +10,6 @@ node_modules
 
 # Next.js build output
 .next/
+
+# Duplicate nested project folder
+k-man-island/

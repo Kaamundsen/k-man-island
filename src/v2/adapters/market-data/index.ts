@@ -1,12 +1,4 @@
-export type DailyBar = {
-  date: string; // YYYY-MM-DD
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume?: number;
-};
+export { stooqProvider as provider } from "./stooq";
+export * from "./types";
 
-export type MarketDataProvider = {
-  getDailyBars: (symbol: string, fromDate: string, toDate: string) => Promise<DailyBar[]>;
-};
+

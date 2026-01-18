@@ -1,0 +1,10 @@
+total 16
+drwxr-xr-x   9 kyrreamundsen  staff  288 Jan 18 10:29 .
+drwx------@ 27 kyrreamundsen  staff  864 Jan 18 10:12 ..
+-rw-r--r--   1 kyrreamundsen  staff  110 Jan 18 10:13 00_SYSTEM_SNAPSHOT.md
+-rw-r--r--   1 kyrreamundsen  staff    0 Jan 18 10:12 01_CORE_STRATEGY.md
+-rw-r--r--   1 kyrreamundsen  staff    0 Jan 18 10:12 02_TRADING_FLOW.md
+-rw-r--r--   1 kyrreamundsen  staff    0 Jan 18 10:12 03_WHAT_TO_REMOVE.md
+-rw-r--r--   1 kyrreamundsen  staff    0 Jan 18 10:12 04_ROADMAP_DECISIONS.md
+drwxr-xr-x   3 kyrreamundsen  staff   96 Jan 18 10:29 docs
+-rw-r--r--   1 kyrreamundsen  staff  110 Jan 18 10:12 Untitled

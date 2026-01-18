@@ -1,18 +1,23 @@
 'use client';
 
-import { useState } from 'react';
-import { X, Plus } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Plus, Edit } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
+import { Trade, TradeInput } from '@/lib/types';
+import { createTrade, updateTrade, getPortfolios } from '@/lib/store';
+import { StrategyId, STRATEGIES } from '@/lib/strategies';
 
 interface AddTradeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  editTrade?: Trade | null;
 }
 
-export default function AddTradeModal({ isOpen, onClose, onSuccess }: AddTradeModalProps) {
+export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }: AddTradeModalProps) {
   const [formData, setFormData] = useState({
     ticker: '',
+    name: '',
     entryPrice: '',
     quantity: '',
     entryDate: new Date().toISOString().split('T')[0],
@@ -20,11 +25,53 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess }: AddTradeMo
     target: '',
     timeHorizonEnd: '',
     portfolioId: '',
+    strategyId: '' as StrategyId | '',
     notes: '',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [portfolios, setPortfolios] = useState<{ id: string; name: string }[]>([]);
+  const isEditMode = !!editTrade;
+
+  // Load portfolios and set edit data
+  useEffect(() => {
+    if (isOpen) {
+      const loadedPortfolios = getPortfolios();
+      setPortfolios(loadedPortfolios.map(p => ({ id: p.id, name: p.name })));
+      
+      if (editTrade) {
+        setFormData({
+          ticker: editTrade.ticker,
+          name: editTrade.name || '',
+          entryPrice: editTrade.entryPrice.toString(),
+          quantity: editTrade.quantity.toString(),
+          entryDate: new Date(editTrade.entryDate).toISOString().split('T')[0],
+          stopLoss: editTrade.stopLoss?.toString() || '',
+          target: editTrade.target?.toString() || '',
+          timeHorizonEnd: editTrade.timeHorizonEnd ? new Date(editTrade.timeHorizonEnd).toISOString().split('T')[0] : '',
+          portfolioId: editTrade.portfolioId,
+          strategyId: editTrade.strategyId || '',
+          notes: editTrade.notes || '',
+        });
+      } else {
+        // Reset form for new trade
+        setFormData({
+          ticker: '',
+          name: '',
+          entryPrice: '',
+          quantity: '',
+          entryDate: new Date().toISOString().split('T')[0],
+          stopLoss: '',
+          target: '',
+          timeHorizonEnd: '',
+          portfolioId: loadedPortfolios[0]?.id || '',
+          strategyId: '',
+          notes: '',
+        });
+      }
+    }
+  }, [isOpen, editTrade]);
 
   if (!isOpen) return null;
 
@@ -35,54 +82,72 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess }: AddTradeMo
 
     try {
       // Validate required fields
-      if (!formData.ticker || !formData.entryPrice || !formData.quantity || !formData.portfolioId) {
-        setError('Vennligst fyll ut alle obligatoriske felter');
+      if (!formData.ticker || !formData.entryPrice || !formData.quantity || !formData.portfolioId || !formData.strategyId) {
+        setError('Vennligst fyll ut alle obligatoriske felter (inkludert strategi)');
         setIsSubmitting(false);
         return;
       }
 
-      // Insert trade into Supabase
-      const { data, error: supabaseError } = await supabase
-        .from('trades')
-        .insert([
-          {
-            ticker: formData.ticker.toUpperCase(),
-            entry_price: parseFloat(formData.entryPrice),
-            quantity: parseInt(formData.quantity),
-            entry_date: formData.entryDate,
-            stop_loss: formData.stopLoss ? parseFloat(formData.stopLoss) : null,
-            target: formData.target ? parseFloat(formData.target) : null,
-            time_horizon_end: formData.timeHorizonEnd || null,
-            portfolio_id: formData.portfolioId,
-            notes: formData.notes || null,
-            status: 'ACTIVE',
-            dead_money_warning: false,
-          },
-        ])
-        .select();
+      const entryDate = new Date(formData.entryDate);
+      const timeHorizonEnd = formData.timeHorizonEnd 
+        ? new Date(formData.timeHorizonEnd) 
+        : new Date(entryDate.getTime() + 60 * 24 * 60 * 60 * 1000); // Default 60 days
 
-      if (supabaseError) {
-        throw supabaseError;
+      if (isEditMode && editTrade) {
+        // Update existing trade
+        updateTrade({
+          id: editTrade.id,
+          ticker: formData.ticker.toUpperCase(),
+          name: formData.name || undefined,
+          entryPrice: parseFloat(formData.entryPrice),
+          quantity: parseInt(formData.quantity),
+          entryDate,
+          portfolioId: formData.portfolioId,
+          strategyId: formData.strategyId as StrategyId,
+          stopLoss: formData.stopLoss ? parseFloat(formData.stopLoss) : undefined,
+          target: formData.target ? parseFloat(formData.target) : undefined,
+          timeHorizonEnd,
+          notes: formData.notes || undefined,
+        });
+      } else {
+        // Create new trade using local store
+        const tradeInput: TradeInput = {
+          ticker: formData.ticker.toUpperCase(),
+          name: formData.name || undefined,
+          entryPrice: parseFloat(formData.entryPrice),
+          quantity: parseInt(formData.quantity),
+          entryDate,
+          portfolioId: formData.portfolioId,
+          strategyId: formData.strategyId as StrategyId,
+          stopLoss: formData.stopLoss ? parseFloat(formData.stopLoss) : parseFloat(formData.entryPrice) * 0.9,
+          target: formData.target ? parseFloat(formData.target) : parseFloat(formData.entryPrice) * 1.15,
+          timeHorizonEnd,
+          notes: formData.notes || undefined,
+        };
+
+        createTrade(tradeInput);
       }
 
       // Success - reset form and close modal
       setFormData({
         ticker: '',
+        name: '',
         entryPrice: '',
         quantity: '',
         entryDate: new Date().toISOString().split('T')[0],
         stopLoss: '',
         target: '',
         timeHorizonEnd: '',
-        portfolioId: '',
+        portfolioId: portfolios[0]?.id || '',
+        strategyId: '',
         notes: '',
       });
 
       if (onSuccess) onSuccess();
       onClose();
-    } catch (err: any) {
-      console.error('Error adding trade:', err);
-      setError(err.message || 'Kunne ikke legge til trade. Sjekk at Supabase er konfigurert.');
+    } catch (err: unknown) {
+      console.error('Error saving trade:', err);
+      setError(err instanceof Error ? err.message : 'Kunne ikke lagre trade.');
     } finally {
       setIsSubmitting(false);
     }
@@ -101,8 +166,12 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess }: AddTradeMo
         {/* Header */}
         <div className="sticky top-0 bg-surface border-b border-gray-200 p-6 flex items-center justify-between rounded-t-3xl">
           <div>
-            <h2 className="text-2xl font-extrabold text-brand-slate">Legg til Trade</h2>
-            <p className="text-sm text-gray-600 mt-1">Registrer en ny handel for sporing</p>
+            <h2 className="text-2xl font-extrabold text-brand-slate flex items-center gap-2">
+              {isEditMode ? <><Edit className="w-6 h-6" /> Rediger Trade</> : 'Legg til Trade'}
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">
+              {isEditMode ? `Oppdater ${editTrade?.ticker}` : 'Registrer en ny handel for sporing'}
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -120,22 +189,42 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess }: AddTradeMo
             </div>
           )}
 
-          {/* Portfolio Selection */}
-          <div>
-            <label className="block text-sm font-bold text-brand-slate mb-2">
-              Portfolio *
-            </label>
-            <select
-              name="portfolioId"
-              value={formData.portfolioId}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
-            >
-              <option value="">Velg portfolio</option>
-              <option value="portfolio-1">K-Momentum Portfolio</option>
-              <option value="portfolio-2">Legacy Portfolio</option>
-            </select>
+          {/* Portfolio and Strategy Selection */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-bold text-brand-slate mb-2">
+                Portfolio *
+              </label>
+              <select
+                name="portfolioId"
+                value={formData.portfolioId}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
+              >
+                <option value="">Velg portfolio</option>
+                {portfolios.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-brand-slate mb-2">
+                Strategi *
+              </label>
+              <select
+                name="strategyId"
+                value={formData.strategyId}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
+              >
+                <option value="">Velg strategi</option>
+                {Object.entries(STRATEGIES).map(([id, strategy]) => (
+                  <option key={id} value={id}>{strategy.emoji} {strategy.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Basic Trade Info */}
@@ -302,8 +391,8 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess }: AddTradeMo
                 </>
               ) : (
                 <>
-                  <Plus className="w-5 h-5" />
-                  Legg til Trade
+                  {isEditMode ? <Edit className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+                  {isEditMode ? 'Oppdater Trade' : 'Legg til Trade'}
                 </>
               )}
             </button>

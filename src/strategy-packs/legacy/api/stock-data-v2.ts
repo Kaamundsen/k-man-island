@@ -1,6 +1,6 @@
-import { Stock } from '../types';
-import { getFinnhubQuote, getFinnhubCandles, getInsiderTransactions, InsiderTransaction } from './finnhub';
-import { analyzeKMomentum, DEFAULT_CONFIG } from './k-momentum';
+import { Stock } from '@/lib/types';
+import { getFinnhubQuote, getFinnhubCandles, getInsiderTransactions, InsiderTransaction } from '@/lib/api/finnhub';
+import { analyzeKMomentum, DEFAULT_CONFIG } from '@/lib/api/k-momentum';
 
 // Watchlist - topp 50 mest likvide Oslo Børs aksjer
 const WATCHLIST = [
