@@ -272,21 +272,21 @@ export default function RapportPage() {
       {/* SECTION A: CORE BRIEF (V2 compliant) */}
       {/* ============================================ */}
       {coreBrief && (
-        <div className="bg-gradient-to-br from-emerald-900 to-emerald-950 rounded-2xl mb-8 overflow-hidden shadow-lg">
+        <div className="bg-card dark:bg-[#0a1a14] border border-border dark:border-emerald-900/50 rounded-2xl mb-8 overflow-hidden shadow-lg">
           <button 
             onClick={() => setCoreBriefOpen(!coreBriefOpen)}
-            className="w-full p-6 flex items-center justify-between text-left hover:bg-emerald-800/30 transition-colors"
+            className="w-full p-6 flex items-center justify-between text-left hover:bg-muted dark:hover:bg-emerald-900/20 transition-colors"
           >
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <Target className="w-6 h-6 text-emerald-400" />
+            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <Target className="w-6 h-6 text-brand-emerald" />
               CORE BRIEF
             </h2>
             <div className="flex items-center gap-3">
-              <span className="px-3 py-1 bg-emerald-800 text-emerald-200 rounded-full text-sm font-medium">
+              <span className="px-3 py-1 bg-brand-emerald/20 text-brand-emerald rounded-full text-sm font-medium">
                 {coreBrief.coreStatus.slotsUsed} / {coreBrief.coreStatus.maxSlots} slots
               </span>
               <ChevronDown className={clsx(
-                'w-5 h-5 text-emerald-400 transition-transform',
+                'w-5 h-5 text-brand-emerald transition-transform',
                 coreBriefOpen && 'rotate-180'
               )} />
             </div>
@@ -296,39 +296,39 @@ export default function RapportPage() {
             <div className="px-6 pb-6 space-y-6">
               {/* Core Status */}
               <div className="grid grid-cols-4 gap-4">
-                <div className="bg-emerald-800/50 rounded-xl p-4 text-center">
-                  <div className="text-2xl font-bold text-white">{coreBrief.coreStatus.slotsUsed}</div>
-                  <div className="text-xs text-emerald-300">Aktive slots</div>
+                <div className="bg-muted dark:bg-emerald-950/50 rounded-xl p-4 text-center">
+                  <div className="text-2xl font-bold text-foreground">{coreBrief.coreStatus.slotsUsed}</div>
+                  <div className="text-xs text-brand-emerald">Aktive slots</div>
                 </div>
-                <div className="bg-emerald-800/50 rounded-xl p-4 text-center">
-                  <div className="text-2xl font-bold text-emerald-400">{coreBrief.coreStatus.trendCount}</div>
-                  <div className="text-xs text-emerald-300">TREND</div>
+                <div className="bg-muted dark:bg-emerald-950/50 rounded-xl p-4 text-center">
+                  <div className="text-2xl font-bold text-brand-emerald">{coreBrief.coreStatus.trendCount}</div>
+                  <div className="text-xs text-muted-foreground">TREND</div>
                 </div>
-                <div className="bg-emerald-800/50 rounded-xl p-4 text-center">
-                  <div className="text-2xl font-bold text-amber-400">{coreBrief.coreStatus.asymCount}</div>
-                  <div className="text-xs text-emerald-300">ASYM</div>
+                <div className="bg-muted dark:bg-emerald-950/50 rounded-xl p-4 text-center">
+                  <div className="text-2xl font-bold text-amber-500">{coreBrief.coreStatus.asymCount}</div>
+                  <div className="text-xs text-muted-foreground">ASYM</div>
                 </div>
-                <div className="bg-emerald-800/50 rounded-xl p-4 text-center">
-                  <div className="text-2xl font-bold text-white">{coreBrief.coreStatus.openSlots}</div>
-                  <div className="text-xs text-emerald-300">Ledige</div>
+                <div className="bg-muted dark:bg-emerald-950/50 rounded-xl p-4 text-center">
+                  <div className="text-2xl font-bold text-foreground">{coreBrief.coreStatus.openSlots}</div>
+                  <div className="text-xs text-muted-foreground">Ledige</div>
                 </div>
               </div>
               
               {/* Today's Actions */}
-              <div className="bg-emerald-800/30 rounded-xl p-4">
-                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-amber-400" />
+              <div className="bg-muted dark:bg-emerald-950/30 rounded-xl p-4">
+                <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-amber-500" />
                   Dagens Handlinger
                 </h3>
                 
                 {/* EXIT */}
                 {coreBrief.actions.exits.length > 0 && (
                   <div className="mb-4">
-                    <h4 className="text-red-400 font-medium mb-2">EXIT</h4>
+                    <h4 className="text-red-500 font-medium mb-2">EXIT</h4>
                     {coreBrief.actions.exits.map((e, i) => (
-                      <div key={i} className="flex items-center justify-between bg-red-900/30 rounded-lg p-3 mb-2">
-                        <span className="font-bold text-white">{e.ticker}</span>
-                        <span className="text-sm text-red-300">{e.reason}</span>
+                      <div key={i} className="flex items-center justify-between bg-red-500/10 dark:bg-red-950/40 rounded-lg p-3 mb-2">
+                        <span className="font-bold text-foreground">{e.ticker}</span>
+                        <span className="text-sm text-red-500">⚠️ {e.reason}</span>
                       </div>
                     ))}
                   </div>
@@ -337,11 +337,11 @@ export default function RapportPage() {
                 {/* MOVE_STOP */}
                 {coreBrief.actions.moveStops.length > 0 && (
                   <div className="mb-4">
-                    <h4 className="text-amber-400 font-medium mb-2">MOVE STOP</h4>
+                    <h4 className="text-amber-500 font-medium mb-2">MOVE STOP</h4>
                     {coreBrief.actions.moveStops.map((m, i) => (
-                      <div key={i} className="flex items-center justify-between bg-amber-900/30 rounded-lg p-3 mb-2">
-                        <span className="font-bold text-white">{m.ticker}</span>
-                        <span className="text-sm text-amber-300">{m.action}</span>
+                      <div key={i} className="flex items-center justify-between bg-amber-500/10 dark:bg-amber-950/40 rounded-lg p-3 mb-2">
+                        <span className="font-bold text-foreground">{m.ticker}</span>
+                        <span className="text-sm text-amber-500">{m.action}</span>
                       </div>
                     ))}
                   </div>
@@ -350,11 +350,11 @@ export default function RapportPage() {
                 {/* ENTER */}
                 {coreBrief.actions.enters.length > 0 && (
                   <div className="mb-4">
-                    <h4 className="text-emerald-400 font-medium mb-2">ENTER</h4>
+                    <h4 className="text-brand-emerald font-medium mb-2">ENTER</h4>
                     {coreBrief.actions.enters.map((e, i) => (
-                      <div key={i} className="flex items-center justify-between bg-emerald-900/30 rounded-lg p-3 mb-2">
-                        <span className="font-bold text-white">{e.ticker}</span>
-                        <span className="text-sm text-emerald-300">{e.profile} | R/R: {e.rr}</span>
+                      <div key={i} className="flex items-center justify-between bg-brand-emerald/10 dark:bg-emerald-950/40 rounded-lg p-3 mb-2">
+                        <span className="font-bold text-foreground">{e.ticker}</span>
+                        <span className="text-sm text-brand-emerald">{e.profile} | R/R: {e.rr}</span>
                       </div>
                     ))}
                   </div>
@@ -364,17 +364,17 @@ export default function RapportPage() {
                 {coreBrief.actions.exits.length === 0 && 
                  coreBrief.actions.moveStops.length === 0 && 
                  coreBrief.actions.enters.length === 0 && (
-                  <p className="text-emerald-300 italic">Ingen aktive handlinger i dag.</p>
+                  <p className="text-muted-foreground italic">Ingen aktive handlinger i dag.</p>
                 )}
               </div>
               
               {/* HOLD overview */}
               {coreBrief.actions.holds.length > 0 && (
-                <div className="bg-emerald-800/20 rounded-xl p-4">
-                  <h4 className="text-emerald-300 font-medium mb-2">HOLD ({coreBrief.actions.holds.length})</h4>
+                <div className="bg-muted dark:bg-emerald-950/20 rounded-xl p-4">
+                  <h4 className="text-brand-emerald font-medium mb-2">HOLD ({coreBrief.actions.holds.length})</h4>
                   <div className="flex flex-wrap gap-2">
                     {coreBrief.actions.holds.map((h, i) => (
-                      <span key={i} className="px-3 py-1 bg-emerald-800/50 rounded-full text-sm text-white">
+                      <span key={i} className="px-3 py-1 bg-brand-emerald/20 rounded-full text-sm text-foreground">
                         {h.ticker} - {h.note}
                       </span>
                     ))}
@@ -383,26 +383,26 @@ export default function RapportPage() {
               )}
               
               {/* Risk Check */}
-              <div className="bg-emerald-800/20 rounded-xl p-4">
-                <h4 className="text-emerald-300 font-medium mb-2">Risiko & Disiplin</h4>
+              <div className="bg-muted dark:bg-emerald-950/20 rounded-xl p-4">
+                <h4 className="text-brand-emerald font-medium mb-2">Risiko & Disiplin</h4>
                 <div className="flex flex-wrap gap-4 text-sm">
                   <span className={clsx(
                     'flex items-center gap-1',
-                    coreBrief.riskCheck.maxRiskPerTrade ? 'text-emerald-400' : 'text-red-400'
+                    coreBrief.riskCheck.maxRiskPerTrade ? 'text-brand-emerald' : 'text-red-500'
                   )}>
                     {coreBrief.riskCheck.maxRiskPerTrade ? <CheckCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
                     Maks risiko per trade
                   </span>
                   <span className={clsx(
                     'flex items-center gap-1',
-                    coreBrief.riskCheck.totalExposure ? 'text-emerald-400' : 'text-red-400'
+                    coreBrief.riskCheck.totalExposure ? 'text-brand-emerald' : 'text-red-500'
                   )}>
                     {coreBrief.riskCheck.totalExposure ? <CheckCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
                     Total eksponering OK
                   </span>
                   <span className={clsx(
                     'flex items-center gap-1',
-                    !coreBrief.riskCheck.overtrading ? 'text-emerald-400' : 'text-red-400'
+                    !coreBrief.riskCheck.overtrading ? 'text-brand-emerald' : 'text-red-500'
                   )}>
                     {!coreBrief.riskCheck.overtrading ? <CheckCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
                     Ingen overtrading
@@ -411,8 +411,8 @@ export default function RapportPage() {
               </div>
               
               {/* Daily mantra */}
-              <div className="text-center pt-4 border-t border-emerald-700">
-                <p className="text-emerald-300 italic text-sm">
+              <div className="text-center pt-4 border-t border-border">
+                <p className="text-muted-foreground italic text-sm">
                   "I dag skal jeg kun gjøre det Core Brief sier."
                 </p>
               </div>
@@ -425,21 +425,21 @@ export default function RapportPage() {
       {/* SECTION: MARKET OVERVIEW */}
       {/* ============================================ */}
       {marketOverview && (
-        <div className="bg-gradient-to-br from-blue-900 to-slate-900 rounded-2xl mb-8 overflow-hidden shadow-lg">
+        <div className="bg-card dark:bg-[#0a0f1a] border border-border dark:border-blue-900/50 rounded-2xl mb-8 overflow-hidden shadow-lg">
           <button 
             onClick={() => setMarketOpen(!marketOpen)}
-            className="w-full p-6 flex items-center justify-between text-left hover:bg-blue-800/30 transition-colors"
+            className="w-full p-6 flex items-center justify-between text-left hover:bg-muted dark:hover:bg-blue-900/20 transition-colors"
           >
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <BarChart3 className="w-6 h-6 text-blue-400" />
+            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <BarChart3 className="w-6 h-6 text-blue-500" />
               Markedsoversikt
             </h2>
             <div className="flex items-center gap-3">
-              <span className="px-3 py-1 bg-blue-800 text-blue-200 rounded-full text-sm font-medium">
+              <span className="px-3 py-1 bg-blue-500/20 text-blue-500 rounded-full text-sm font-medium">
                 {marketOverview.totalStocks} aksjer skannet
               </span>
               <ChevronDown className={clsx(
-                'w-5 h-5 text-blue-400 transition-transform',
+                'w-5 h-5 text-blue-500 transition-transform',
                 marketOpen && 'rotate-180'
               )} />
             </div>
@@ -449,36 +449,36 @@ export default function RapportPage() {
             <div className="px-6 pb-6 space-y-6">
               {/* Signal Summary */}
               <div className="grid grid-cols-3 gap-4">
-                <div className="bg-emerald-900/50 rounded-xl p-4 text-center">
-                  <div className="text-3xl font-bold text-emerald-400">{marketOverview.buySignals}</div>
-                  <div className="text-xs text-emerald-300">Kjøpssignaler</div>
+                <div className="bg-brand-emerald/10 dark:bg-emerald-950/40 rounded-xl p-4 text-center">
+                  <div className="text-3xl font-bold text-brand-emerald">{marketOverview.buySignals}</div>
+                  <div className="text-xs text-brand-emerald">Kjøpssignaler</div>
                 </div>
-                <div className="bg-amber-900/50 rounded-xl p-4 text-center">
-                  <div className="text-3xl font-bold text-amber-400">{marketOverview.holdSignals}</div>
-                  <div className="text-xs text-amber-300">Hold/Avvent</div>
+                <div className="bg-amber-500/10 dark:bg-amber-950/40 rounded-xl p-4 text-center">
+                  <div className="text-3xl font-bold text-amber-500">{marketOverview.holdSignals}</div>
+                  <div className="text-xs text-amber-500">Hold/Avvent</div>
                 </div>
-                <div className="bg-red-900/50 rounded-xl p-4 text-center">
-                  <div className="text-3xl font-bold text-red-400">{marketOverview.sellSignals}</div>
-                  <div className="text-xs text-red-300">Salgssignaler</div>
+                <div className="bg-red-500/10 dark:bg-red-950/40 rounded-xl p-4 text-center">
+                  <div className="text-3xl font-bold text-red-500">{marketOverview.sellSignals}</div>
+                  <div className="text-xs text-red-500">Salgssignaler</div>
                 </div>
               </div>
               
               {/* Top Buy Signals */}
               {marketOverview.topBuyStocks.length > 0 && (
-                <div className="bg-blue-800/30 rounded-xl p-4">
-                  <h4 className="text-blue-300 font-medium mb-3">Topp 5 Kjøpskandidater</h4>
+                <div className="bg-muted dark:bg-blue-950/30 rounded-xl p-4">
+                  <h4 className="text-blue-500 font-medium mb-3">Topp 5 Kjøpskandidater</h4>
                   <div className="space-y-2">
                     {marketOverview.topBuyStocks.map((stock, i) => (
-                      <div key={stock.ticker} className="flex items-center justify-between bg-blue-900/30 rounded-lg p-3">
+                      <div key={stock.ticker} className="flex items-center justify-between bg-blue-500/10 dark:bg-blue-950/40 rounded-lg p-3">
                         <div className="flex items-center gap-3">
-                          <span className="w-6 h-6 bg-emerald-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                          <span className="w-6 h-6 bg-brand-emerald text-white rounded-full flex items-center justify-center text-xs font-bold">
                             {i + 1}
                           </span>
-                          <span className="font-bold text-white">{stock.ticker.replace('.OL', '')}</span>
+                          <span className="font-bold text-foreground">{stock.ticker.replace('.OL', '')}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-blue-300">K-Score:</span>
-                          <span className="font-bold text-emerald-400">{stock.kScore}</span>
+                          <span className="text-sm text-muted-foreground">K-Score:</span>
+                          <span className="font-bold text-brand-emerald">{stock.kScore}</span>
                         </div>
                       </div>
                     ))}
@@ -487,7 +487,7 @@ export default function RapportPage() {
               )}
               
               {/* Timestamp */}
-              <div className="text-center text-xs text-blue-400">
+              <div className="text-center text-xs text-muted-foreground">
                 Sist skannet: {new Date(marketOverview.timestamp).toLocaleString('nb-NO')}
               </div>
             </div>
@@ -660,9 +660,9 @@ export default function RapportPage() {
                       </div>
                       <span className={clsx(
                         'px-2 py-1 rounded text-xs font-bold',
-                        e.recommendation.includes('SELL') ? 'bg-red-600 text-white' : 'bg-green-500 text-white'
+                        e.recommendation === 'STRONG_SELL' ? 'bg-red-600 text-white' : e.recommendation === 'SELL' ? 'bg-orange-500 text-white' : 'bg-green-500 text-white'
                       )}>
-                        {e.recommendation === 'STRONG_SELL' ? 'EXIT' : e.recommendation}
+                        {e.recommendation === 'STRONG_SELL' ? 'SELG' : e.recommendation === 'SELL' ? 'SELG' : e.recommendation}
                       </span>
                     </div>
                     <ul className="space-y-1">
@@ -720,7 +720,7 @@ export default function RapportPage() {
                         </span>
                       </div>
                       <span className="px-2 py-1 bg-orange-500 text-white rounded text-xs font-bold">
-                        EXIT
+                        SELG
                       </span>
                     </div>
                     <ul className="space-y-1">

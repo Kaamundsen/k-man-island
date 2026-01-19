@@ -373,10 +373,10 @@ export default function PorteføljePage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-4xl font-extrabold text-brand-slate tracking-tight">
+          <h1 className="text-4xl font-extrabold text-foreground tracking-tight">
             Portefølje
           </h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <p className="text-muted-foreground text-sm mt-1">
             Administrer dine trades og porteføljer
           </p>
         </div>
@@ -407,7 +407,7 @@ export default function PorteføljePage() {
             'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold transition-all',
             selectedPortfolioId === 'all' 
               ? 'bg-brand-slate text-white shadow-md' 
-              : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-400'
+              : 'bg-card border border-border text-muted-foreground hover:border-border/80'
           )}
         >
           <span>📊 Alle</span>
@@ -420,7 +420,7 @@ export default function PorteføljePage() {
         </button>
         
         {/* Separator */}
-        <div className="w-px h-5 bg-gray-200 mx-1"></div>
+        <div className="w-px h-5 bg-border mx-1"></div>
         
         {/* Individuelle porteføljer */}
         {portfolios.map(portfolio => {
@@ -436,13 +436,13 @@ export default function PorteføljePage() {
                   'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold transition-all',
                   isSelected 
                     ? 'bg-brand-slate text-white shadow-md' 
-                    : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-400'
+                    : 'bg-card border border-border text-muted-foreground hover:border-border/80'
                 )}
               >
                 <span>{strategy?.emoji || '📁'} {portfolio.name}</span>
                 <span className={clsx(
                   'text-xs',
-                  isSelected ? 'text-white/70' : 'text-gray-400'
+                  isSelected ? 'text-white/70' : 'text-muted-foreground'
                 )}>
                   {activeCount}
                 </span>
@@ -451,14 +451,14 @@ export default function PorteføljePage() {
               <div className="absolute -top-1 -right-1 hidden group-hover:flex items-center gap-0.5">
                 <button
                   onClick={(e) => { e.stopPropagation(); openEditPortfolio(portfolio); }}
-                  className="p-0.5 bg-white rounded-full shadow border border-gray-200 text-gray-400 hover:text-brand-emerald"
+                  className="p-0.5 bg-card rounded-full shadow border border-border text-muted-foreground hover:text-brand-emerald"
                   title="Rediger"
                 >
                   <Settings className="w-3 h-3" />
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); handleDeletePortfolio(portfolio.id, portfolio.name); }}
-                  className="p-0.5 bg-white rounded-full shadow border border-gray-200 text-gray-400 hover:text-brand-rose"
+                  className="p-0.5 bg-card rounded-full shadow border border-border text-muted-foreground hover:text-brand-rose"
                   title="Slett"
                 >
                   <X className="w-3 h-3" />
@@ -471,7 +471,7 @@ export default function PorteføljePage() {
         {/* Ny portefølje knapp */}
         <button
           onClick={() => setIsCreatePortfolioModalOpen(true)}
-          className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-sm text-gray-400 hover:text-brand-emerald hover:bg-gray-100 transition-all"
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-sm text-muted-foreground hover:text-brand-emerald hover:bg-muted transition-all"
           title="Ny portefølje"
         >
           <Plus className="w-4 h-4" />
@@ -480,18 +480,18 @@ export default function PorteføljePage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-8">
-        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100">
-          <div className="text-xs sm:text-sm text-gray-500 mb-1">Aktive Trades</div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-brand-slate">{activeTrades.length}</div>
+        <div className="bg-card rounded-2xl p-4 sm:p-5 border border-border">
+          <div className="text-xs sm:text-sm text-muted-foreground mb-1">Aktive Trades</div>
+          <div className="text-2xl sm:text-3xl font-extrabold text-foreground">{activeTrades.length}</div>
         </div>
-        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100">
-          <div className="text-xs sm:text-sm text-gray-500 mb-1">Investert</div>
-          <div className="text-xl sm:text-3xl font-extrabold text-brand-slate">
+        <div className="bg-card rounded-2xl p-4 sm:p-5 border border-border">
+          <div className="text-xs sm:text-sm text-muted-foreground mb-1">Investert</div>
+          <div className="text-xl sm:text-3xl font-extrabold text-foreground">
             {totalInvested.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr
           </div>
         </div>
-        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100">
-          <div className="text-xs sm:text-sm text-gray-500 mb-1">Realisert P/L</div>
+        <div className="bg-card rounded-2xl p-4 sm:p-5 border border-border">
+          <div className="text-xs sm:text-sm text-muted-foreground mb-1">Realisert P/L</div>
           <div className={clsx(
             'text-xl sm:text-3xl font-extrabold',
             totalPnL >= 0 ? 'text-brand-emerald' : 'text-brand-rose'
@@ -499,15 +499,15 @@ export default function PorteføljePage() {
             {totalPnL >= 0 ? '+' : ''}{totalPnL.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr
           </div>
         </div>
-        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-blue-200 bg-blue-50">
+        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-4 sm:p-5 border border-blue-200/50">
           <div className="text-xs sm:text-sm text-blue-600 mb-1">💰 Utbytte</div>
-          <div className="text-xl sm:text-3xl font-extrabold text-blue-700">
+          <div className="text-xl sm:text-3xl font-extrabold text-blue-700 dark:text-blue-400">
             +{totalDividends.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr
           </div>
         </div>
-        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100">
-          <div className="text-xs sm:text-sm text-gray-500 mb-1">Win Rate</div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-brand-slate">
+        <div className="bg-card rounded-2xl p-4 sm:p-5 border border-border">
+          <div className="text-xs sm:text-sm text-muted-foreground mb-1">Win Rate</div>
+          <div className="text-2xl sm:text-3xl font-extrabold text-foreground">
             {winRate.toFixed(0)}%
           </div>
         </div>
@@ -517,7 +517,7 @@ export default function PorteføljePage() {
       {activeTrades.length > 0 ? (
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <h2 className="text-lg sm:text-xl font-bold text-brand-slate flex items-center gap-2">
+            <h2 className="text-lg sm:text-xl font-bold text-foreground flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-brand-emerald" />
               Aktive Trades
             </h2>
@@ -531,7 +531,7 @@ export default function PorteføljePage() {
                       'px-2 py-1 text-xs font-semibold rounded-md transition-all',
                       selectedStrategies.length === 0 
                         ? 'bg-brand-slate text-white' 
-                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
                     )}
                   >
                     Alle
@@ -547,7 +547,7 @@ export default function PorteføljePage() {
                           'px-2 py-1 text-xs font-semibold rounded-md transition-all',
                           isSelected 
                             ? 'text-white shadow-sm' 
-                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
                         )}
                         style={isSelected ? { backgroundColor: strategy.color } : {}}
                         title={strategy.name}
@@ -560,14 +560,14 @@ export default function PorteføljePage() {
               )}
               
               {/* Toggle kr/% */}
-              <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
+              <div className="flex items-center bg-muted rounded-lg p-0.5">
                 <button
                   onClick={() => setDisplayMode('percent')}
                   className={clsx(
                     'px-3 py-1 text-xs font-semibold rounded-md transition-all',
                     displayMode === 'percent' 
-                      ? 'bg-white text-brand-slate shadow-sm' 
-                      : 'text-gray-500 hover:text-gray-700'
+                      ? 'bg-card text-foreground shadow-sm' 
+                      : 'text-muted-foreground hover:text-foreground'
                   )}
                 >
                   %
@@ -577,8 +577,8 @@ export default function PorteføljePage() {
                   className={clsx(
                     'px-3 py-1 text-xs font-semibold rounded-md transition-all',
                     displayMode === 'kr' 
-                      ? 'bg-white text-brand-slate shadow-sm' 
-                      : 'text-gray-500 hover:text-gray-700'
+                      ? 'bg-card text-foreground shadow-sm' 
+                      : 'text-muted-foreground hover:text-foreground'
                   )}
                 >
                   Kr
@@ -586,7 +586,7 @@ export default function PorteføljePage() {
               </div>
               
               {lastUpdated && (
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-muted-foreground">
                   {lastUpdated.toLocaleTimeString('nb-NO')}
                 </span>
               )}
@@ -596,8 +596,8 @@ export default function PorteføljePage() {
                 className={clsx(
                   'flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors',
                   quotesLoading 
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                    : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                    ? 'bg-muted text-muted-foreground cursor-not-allowed' 
+                    : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30'
                 )}
               >
                 <RefreshCw className={clsx('w-3.5 h-3.5', quotesLoading && 'animate-spin')} />
@@ -646,7 +646,7 @@ export default function PorteføljePage() {
                   
                   {/* Aktive trades tabell - vises kun hvis det finnes aktive trades */}
                   {!hasOnlyClosedTrades && (
-                  <div className="bg-white rounded-2xl border border-gray-100 overflow-x-auto">
+                  <div className="bg-card rounded-2xl border border-border overflow-x-auto">
                   <table className="w-full min-w-[900px]">
                     <colgroup>
                       <col className="w-[12%]" />
@@ -659,20 +659,20 @@ export default function PorteføljePage() {
                       <col className="w-[8%]" />
                       <col className="w-[10%]" />
                     </colgroup>
-                    <thead className="bg-white border-b border-gray-100">
+                    <thead className="bg-card dark:bg-[hsl(var(--table-header-bg))] border-b border-border">
                       <tr>
-                        <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase">Ticker</th>
-                        <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase">Strategi</th>
-                        <th className="text-right px-4 py-3 text-xs font-bold text-gray-400 uppercase">Antall</th>
-                        <th className="text-right px-4 py-3 text-xs font-bold text-gray-400 uppercase">Inngang</th>
-                        <th className="text-center px-4 py-3 text-xs font-bold text-gray-400 uppercase">Live Status</th>
-                        <th className="text-right px-4 py-3 text-xs font-bold text-gray-400 uppercase">I dag</th>
-                        <th className="text-right px-4 py-3 text-xs font-bold text-gray-400 uppercase">P/L</th>
-                        <th className="text-center px-4 py-3 text-xs font-bold text-gray-400 uppercase">Tid</th>
-                        <th className="text-center px-4 py-3 text-xs font-bold text-gray-400 uppercase">Aksjon</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Ticker</th>
+                        <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Strategi</th>
+                        <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Antall</th>
+                        <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Inngang</th>
+                        <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Live Status</th>
+                        <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase">I dag</th>
+                        <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase">P/L</th>
+                        <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Tid</th>
+                        <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Aksjon</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-50">
+                    <tbody className="divide-y divide-border/50">
                       {/* KUN AKTIVE TRADES */}
                       {strategyActiveTrades.map(trade => {
                         const tradeStrategy = STRATEGIES[trade.strategyId];
@@ -694,10 +694,10 @@ export default function PorteføljePage() {
                         const isNearTarget = currentPrice > trade.target * 0.95;
                         
                         return (
-                          <tr key={trade.id} className="hover:bg-gray-50 transition-colors">
+                          <tr key={trade.id} className="hover:bg-muted transition-colors">
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-1.5">
-                                <span className="font-bold text-brand-slate">{trade.ticker}</span>
+                                <span className="font-bold text-foreground">{trade.ticker}</span>
                                 {trade.notes && (
                                   <div className="relative group/note">
                                     <span className="text-amber-500 cursor-help">
@@ -710,7 +710,7 @@ export default function PorteføljePage() {
                                   </div>
                                 )}
                               </div>
-                              {trade.name && <div className="text-xs text-gray-400">{trade.name}</div>}
+                              {trade.name && <div className="text-xs text-muted-foreground">{trade.name}</div>}
                             </td>
                             <td className="px-4 py-3">
                               <span 
@@ -720,10 +720,10 @@ export default function PorteføljePage() {
                                 {tradeStrategy?.emoji} {tradeStrategy?.shortName || trade.strategyId}
                               </span>
                             </td>
-                            <td className="px-4 py-3 text-right font-semibold text-gray-700">{trade.quantity}</td>
+                            <td className="px-4 py-3 text-right font-semibold text-foreground">{trade.quantity}</td>
                             <td className="px-4 py-3 text-right">
-                              <div className="font-semibold text-gray-700">{trade.entryPrice.toFixed(2)} kr</div>
-                              <div className="text-xs text-gray-400">{new Date(trade.entryDate).toLocaleDateString('nb-NO')}</div>
+                              <div className="font-semibold text-foreground">{trade.entryPrice.toFixed(2)} kr</div>
+                              <div className="text-xs text-muted-foreground">{new Date(trade.entryDate).toLocaleDateString('nb-NO')}</div>
                             </td>
                             <td className="px-4 py-3">
                               <div className="min-w-[160px]">
@@ -734,7 +734,7 @@ export default function PorteføljePage() {
                                     ) : (
                                       <span className="w-1.5 h-1.5 bg-gray-300 rounded-full" />
                                     )}
-                                    <span className="text-sm font-bold text-gray-700">{currentPrice.toFixed(2)}</span>
+                                    <span className="text-sm font-bold text-foreground">{currentPrice.toFixed(2)}</span>
                                   </div>
                                   <div className="text-right text-xs">
                                     {isAboveTarget ? (
@@ -750,7 +750,7 @@ export default function PorteføljePage() {
                                   </div>
                                 </div>
                                 <div className="relative">
-                                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden relative">
+                                    <div className="h-2 bg-muted rounded-full overflow-hidden relative">
                                     <div className="absolute left-0 top-0 h-full bg-brand-rose/20" style={{ width: `${((trade.entryPrice - trade.stopLoss) / totalRange) * 100}%` }} />
                                     <div className="absolute top-0 h-full w-px bg-gray-400" style={{ left: `${((trade.entryPrice - trade.stopLoss) / totalRange) * 100}%` }} />
                                     <div className={clsx('h-full rounded-full transition-all', isAboveTarget ? 'bg-brand-emerald' : isNearTarget ? 'bg-brand-emerald/80' : isNearStop ? 'bg-brand-rose' : isProfit ? 'bg-blue-500' : 'bg-amber-500')} style={{ width: `${progressPercent}%` }} />
@@ -758,7 +758,7 @@ export default function PorteføljePage() {
                                   </div>
                                   <div className="flex justify-between mt-0.5 text-[9px]">
                                     <span className="text-brand-rose">{trade.stopLoss.toFixed(0)}</span>
-                                    <span className="text-gray-400">{trade.entryPrice.toFixed(0)}</span>
+                                    <span className="text-muted-foreground">{trade.entryPrice.toFixed(0)}</span>
                                     <span className="text-brand-emerald">{trade.target.toFixed(0)}</span>
                                   </div>
                                 </div>
@@ -799,7 +799,7 @@ export default function PorteføljePage() {
                                   </div>
                                 )
                               ) : (
-                                <span className="text-xs text-gray-400">—</span>
+                                <span className="text-xs text-muted-foreground">—</span>
                               )}
                             </td>
                             {/* P/L Total */}
@@ -817,10 +817,10 @@ export default function PorteføljePage() {
                               )}
                             </td>
                             <td className="px-4 py-3 text-center">
-                              <div className="text-sm font-medium text-gray-700">{daysHeld}d</div>
+                              <div className="text-sm font-medium text-foreground">{daysHeld}d</div>
                               {trade.timeHorizonEnd && (() => {
                                 const daysRemaining = Math.max(0, Math.ceil((new Date(trade.timeHorizonEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
-                                return <div className="text-[10px] text-gray-400">{daysRemaining}d igjen</div>;
+                                return <div className="text-[10px] text-muted-foreground">{daysRemaining}d igjen</div>;
                               })()}
                             </td>
                             <td className="px-4 py-3">
@@ -837,25 +837,25 @@ export default function PorteføljePage() {
                     
                     {/* Subtotal for denne strategien */}
                     {strategyInfo && (
-                      <tfoot className="bg-white border-t border-gray-200">
+                      <tfoot className="bg-card dark:bg-[hsl(var(--subtotal-bg))] border-t border-border">
                         <tr>
                           <td className="px-4 py-3 text-left">
-                            <span className="text-sm font-semibold text-gray-600">
+                            <span className="text-sm font-semibold text-card-foreground dark:text-[hsl(var(--subtotal-text))]">
                               {strategy?.emoji} Subtotal:
                             </span>
                           </td>
                           <td className="px-4 py-3"></td>
                           <td className="px-4 py-3 text-right">
-                            <span className="text-sm font-semibold text-gray-700">{strategyInfo.activeCount}</span>
+                            <span className="text-sm font-semibold text-card-foreground dark:text-[hsl(var(--subtotal-text))]">{strategyInfo.activeCount}</span>
                             {strategyInfo.closedCount > 0 && selectedPortfolioId !== 'all' && (
-                              <span className="text-xs text-gray-400 ml-1">+{strategyInfo.closedCount}</span>
+                              <span className="text-xs text-muted-foreground dark:text-[hsl(var(--subtotal-text))]/70 ml-1">+{strategyInfo.closedCount}</span>
                             )}
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <span className="text-sm font-semibold text-gray-700">{strategyInfo.invested.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</span>
+                            <span className="text-sm font-semibold text-card-foreground dark:text-[hsl(var(--subtotal-text))]">{strategyInfo.invested.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</span>
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <span className="text-sm font-semibold text-gray-700">{strategyInfo.currentValue.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</span>
+                            <span className="text-sm font-semibold text-card-foreground dark:text-[hsl(var(--subtotal-text))]">{strategyInfo.currentValue.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</span>
                           </td>
                           <td className="px-4 py-3"></td>{/* I dag - tom for subtotal */}
                           <td className="px-4 py-3 text-right">
@@ -965,7 +965,7 @@ export default function PorteføljePage() {
                                       </div>
                                     )}
                                   </div>
-                                  {trade.name && <div className="text-xs text-gray-400">{trade.name}</div>}
+                                  {trade.name && <div className="text-xs text-muted-foreground">{trade.name}</div>}
                                 </td>
                                 <td className="px-4 py-3">
                                   <span 
@@ -1020,13 +1020,13 @@ export default function PorteføljePage() {
                           const isClosedProfit = closedRealizedPnl >= 0;
                           
                           return (
-                            <tfoot className="bg-gray-50 border-t-2 border-gray-200">
+                            <tfoot className="bg-card dark:bg-[hsl(var(--subtotal-bg))] border-t-2 border-border">
                               <tr>
-                                <td className="px-4 py-3 font-bold text-gray-600">📦 Subtotal:</td>
+                                <td className="px-4 py-3 font-bold text-card-foreground dark:text-[hsl(var(--subtotal-text))]">📦 Subtotal:</td>
                                 <td className="px-4 py-3"></td>
-                                <td className="px-4 py-3 text-right font-semibold text-gray-600">{strategyClosedTrades.length}</td>
-                                <td className="px-4 py-3 text-right font-semibold text-gray-600">{closedInvested.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</td>
-                                <td className="px-4 py-3 text-center font-semibold text-gray-600">{closedExitValue.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</td>
+                                <td className="px-4 py-3 text-right font-semibold text-card-foreground dark:text-[hsl(var(--subtotal-text))]">{strategyClosedTrades.length}</td>
+                                <td className="px-4 py-3 text-right font-semibold text-card-foreground dark:text-[hsl(var(--subtotal-text))]">{closedInvested.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</td>
+                                <td className="px-4 py-3 text-center font-semibold text-card-foreground dark:text-[hsl(var(--subtotal-text))]">{closedExitValue.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</td>
                                 <td className="px-4 py-3 text-right">
                                   <div className={clsx('font-bold', isClosedProfit ? 'text-brand-emerald' : 'text-brand-rose')}>
                                     {isClosedProfit ? '+' : ''}{closedPnlPercent.toFixed(1)}%
@@ -1050,7 +1050,7 @@ export default function PorteføljePage() {
           </div>
           
           {/* Grand Total - Egen tabell */}
-          <div className="mt-6 bg-white rounded-2xl border border-gray-100 overflow-x-auto">
+          <div className="mt-6 bg-card rounded-2xl border border-border overflow-x-auto">
             <table className="w-full min-w-[900px]">
               <colgroup>
                 <col className="w-[12%]" />
@@ -1064,22 +1064,22 @@ export default function PorteføljePage() {
                 <col className="w-[10%]" />
               </colgroup>
               <tbody>
-                <tr>
+                <tr className="bg-card dark:bg-[hsl(var(--total-bg))]">
                   <td className="px-4 py-4 text-left">
-                    <span className="font-bold text-gray-700">Total:</span>
+                    <span className="font-bold text-card-foreground dark:text-[hsl(var(--total-text))]">Total:</span>
                   </td>
                   <td className="px-4 py-4"></td>
                   <td className="px-4 py-4 text-right">
-                    <span className="text-sm font-bold text-gray-700">{grandTotal.activeCount}</span>
+                    <span className="text-sm font-bold text-card-foreground dark:text-[hsl(var(--total-text))]">{grandTotal.activeCount}</span>
                     {grandTotal.closedCount > 0 && selectedPortfolioId !== 'all' && (
-                      <span className="text-xs text-gray-400 ml-1">+{grandTotal.closedCount}</span>
+                      <span className="text-xs text-muted-foreground dark:text-[hsl(var(--total-text))]/70 ml-1">+{grandTotal.closedCount}</span>
                     )}
                   </td>
                   <td className="px-4 py-4 text-right">
-                    <span className="text-sm font-bold text-gray-700">{grandTotal.invested.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</span>
+                    <span className="text-sm font-bold text-card-foreground dark:text-[hsl(var(--total-text))]">{grandTotal.invested.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</span>
                   </td>
                   <td className="px-4 py-4 text-right">
-                    <span className="text-sm font-bold text-gray-700">{grandTotal.currentValue.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</span>
+                    <span className="text-sm font-bold text-card-foreground dark:text-[hsl(var(--total-text))]">{grandTotal.currentValue.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</span>
                   </td>
                   <td className="px-4 py-4"></td>{/* I dag - tom for total */}
                   <td className="px-4 py-4 text-right">

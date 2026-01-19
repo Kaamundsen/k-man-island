@@ -24,7 +24,7 @@ const SOURCE_BRANDING: Record<string, { color: string; bgColor: string; darkBg: 
   'E24': { 
     color: 'text-gray-900', 
     bgColor: 'bg-[#f5f0eb]',  // Lys beige som logo
-    darkBg: 'dark:bg-[#f5f0eb] dark:text-gray-900',
+    darkBg: 'dark:bg-black dark:text-white',  // Sort bakgrunn, hvit tekst i dark mode
     name: 'E24',
     textStyle: 'font-black',
   },
@@ -50,14 +50,14 @@ const SOURCE_BRANDING: Record<string, { color: string; bgColor: string; darkBg: 
   'Investornytt': { 
     color: 'text-[#3d3d5c]', 
     bgColor: 'bg-[#f5f0eb]',  // Lys beige
-    darkBg: 'dark:bg-[#f5f0eb] dark:text-[#3d3d5c]',
+    darkBg: 'dark:bg-[#2a2a3d] dark:text-gray-200',  // Mørk bakgrunn i dark mode
     name: 'Investornytt',
     textStyle: 'font-semibold',
   },
   'Investtech': { 
     color: 'text-[#5a5a5a]',  // Grå som "invest" 
     bgColor: 'bg-[#f5f5f5]',  // Lys grå bakgrunn
-    darkBg: 'dark:bg-[#f5f5f5] dark:text-[#5a5a5a]',
+    darkBg: 'dark:bg-[#3a3a4a] dark:text-gray-200',  // Mørk bakgrunn i dark mode
     name: 'Investtech',
     textStyle: 'font-semibold',
     // Logo: grå + oransje (#e86c1f)
@@ -342,27 +342,27 @@ export function NewsAggregator({
   
   if (compact) {
     return (
-      <div className="bg-white dark:bg-dark-surface rounded-lg p-4 border border-gray-200 dark:border-dark-border">
+      <div className="bg-card rounded-lg p-4 border border-border">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+          <h3 className="font-semibold text-foreground flex items-center gap-2">
             <Newspaper className="h-5 w-5 text-blue-500" />
             Siste Nyheter
           </h3>
           <button
             onClick={fetchNews}
             disabled={loading}
-            className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="p-1.5 rounded hover:bg-muted"
           >
-            <RefreshCw className={`h-4 w-4 text-gray-500 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 text-muted-foreground ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>
         
         {loading && news.length === 0 ? (
-          <div className="text-center py-4 text-gray-500">Laster nyheter...</div>
+          <div className="text-center py-4 text-muted-foreground">Laster nyheter...</div>
         ) : error ? (
           <div className="text-center py-4 text-red-500 text-sm">{error}</div>
         ) : filteredNews.length === 0 ? (
-          <div className="text-center py-4 text-gray-500 text-sm">Ingen nyheter funnet</div>
+          <div className="text-center py-4 text-muted-foreground text-sm">Ingen nyheter funnet</div>
         ) : (
           <div className="space-y-2">
             {filteredNews.slice(0, 5).map(item => (
@@ -376,10 +376,10 @@ export function NewsAggregator({
                 <div className="flex items-start gap-2">
                   {getSentimentIcon(item.sentiment)}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 line-clamp-2">
+                    <p className="text-sm text-foreground group-hover:text-blue-600 line-clamp-2">
                       {item.title}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-dark-muted mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       {item.source} • {formatDate(item.publishedAt)}
                     </p>
                   </div>
@@ -393,19 +393,19 @@ export function NewsAggregator({
   }
   
   return (
-    <div className="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-gray-100 dark:border-dark-border">
+    <div className="bg-card rounded-xl shadow-sm border border-border">
       {/* Header */}
-      <div className="p-4 border-b border-gray-100 dark:border-dark-border">
+      <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-              <Newspaper className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <Newspaper className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <h2 className="font-semibold text-gray-900 dark:text-white">
+              <h2 className="font-semibold text-foreground">
                 Nyhetsaggregator
               </h2>
-              <p className="text-sm text-gray-500 dark:text-dark-muted">
+              <p className="text-sm text-muted-foreground">
                 {ticker ? `Nyheter om ${ticker}` : 'Siste finansnyheter'}
               </p>
             </div>
@@ -413,16 +413,16 @@ export function NewsAggregator({
           
           <div className="flex items-center gap-2">
             {lastUpdated && (
-              <span className="text-xs text-gray-400 dark:text-dark-muted">
+              <span className="text-xs text-muted-foreground">
                 Oppdatert {formatDate(lastUpdated)}
               </span>
             )}
             <button
               onClick={fetchNews}
               disabled={loading}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
             >
-              <RefreshCw className={`h-5 w-5 text-gray-500 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-5 w-5 text-muted-foreground ${loading ? 'animate-spin' : ''}`} />
             </button>
           </div>
         </div>
@@ -497,6 +497,25 @@ export function NewsAggregator({
                 );
               }
               
+              // E24 needs special handling for dark mode active state
+              if (source === 'E24') {
+                return (
+                  <button
+                    key={source}
+                    onClick={handleClick}
+                    type="button"
+                    className={`px-3 py-1.5 text-xs rounded transition-all ${branding.textStyle || 'font-medium'} ${
+                      isActive
+                        ? 'bg-black text-white shadow-sm ring-2 ring-offset-1 ring-gray-500'
+                        : 'bg-white dark:bg-dark-surface text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-dark-border hover:border-gray-400'
+                    }`}
+                  >
+                    {source}
+                    <span className={`ml-1 ${isActive ? 'opacity-70' : 'opacity-50'}`}>({count})</span>
+                  </button>
+                );
+              }
+              
               return (
                 <button
                   key={source}
@@ -504,7 +523,7 @@ export function NewsAggregator({
                   type="button"
                   className={`px-3 py-1.5 text-xs rounded transition-all ${branding.textStyle || 'font-medium'} ${
                     isActive
-                      ? `${branding.bgColor} ${branding.color} shadow-sm ring-2 ring-offset-1 ring-blue-400`
+                      ? `${branding.bgColor} ${branding.color} ${branding.darkBg} shadow-sm ring-2 ring-offset-1 ring-blue-400`
                       : 'bg-white dark:bg-dark-surface text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-dark-border hover:border-gray-400'
                   }`}
                 >

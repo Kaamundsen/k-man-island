@@ -36,7 +36,7 @@ export default function FilterBar({ onMarketChange, onStrategyChange }: FilterBa
             'px-5 py-2.5 rounded-xl font-bold text-sm transition-all',
             selectedMarket === 'ALLE'
               ? 'bg-brand-emerald text-white shadow-md'
-              : 'bg-surface text-gray-600 border border-gray-200 hover:bg-gray-50'
+              : 'bg-card text-muted-foreground border border-border hover:bg-muted'
           )}
         >
           ALL
@@ -47,7 +47,7 @@ export default function FilterBar({ onMarketChange, onStrategyChange }: FilterBa
             'px-5 py-2.5 rounded-xl font-bold text-sm transition-all',
             selectedMarket === 'OSLO'
               ? 'bg-brand-emerald text-white shadow-md'
-              : 'bg-surface text-gray-600 border border-gray-200 hover:bg-gray-50'
+              : 'bg-card text-muted-foreground border border-border hover:bg-muted'
           )}
         >
           OSLO
@@ -58,14 +58,14 @@ export default function FilterBar({ onMarketChange, onStrategyChange }: FilterBa
             'px-5 py-2.5 rounded-xl font-bold text-sm transition-all',
             selectedMarket === 'USA'
               ? 'bg-brand-emerald text-white shadow-md'
-              : 'bg-surface text-gray-600 border border-gray-200 hover:bg-gray-50'
+              : 'bg-card text-muted-foreground border border-border hover:bg-muted'
           )}
         >
           USA
         </button>
       </div>
 
-      <div className="h-8 w-px bg-gray-200"></div>
+      <div className="h-8 w-px bg-border"></div>
 
       {/* Strategy filters */}
       <div className="flex gap-2 items-center">
@@ -75,7 +75,7 @@ export default function FilterBar({ onMarketChange, onStrategyChange }: FilterBa
             'px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2',
             selectedStrategy === 'ALLE'
               ? 'bg-brand-slate text-white shadow-md'
-              : 'bg-surface text-gray-600 border border-gray-200 hover:bg-gray-50'
+              : 'bg-card text-muted-foreground border border-border hover:bg-muted'
           )}
         >
           ALLE
@@ -86,7 +86,7 @@ export default function FilterBar({ onMarketChange, onStrategyChange }: FilterBa
             'px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2',
             selectedStrategy === 'MOMENTUM'
               ? 'bg-brand-slate text-white shadow-md'
-              : 'bg-surface text-gray-600 border border-gray-200 hover:bg-gray-50'
+              : 'bg-card text-muted-foreground border border-border hover:bg-muted'
           )}
         >
           <Zap className="w-4 h-4" strokeWidth={2.5} />
@@ -98,7 +98,7 @@ export default function FilterBar({ onMarketChange, onStrategyChange }: FilterBa
             'px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2',
             selectedStrategy === 'BUFFETT'
               ? 'bg-brand-slate text-white shadow-md'
-              : 'bg-surface text-gray-600 border border-gray-200 hover:bg-gray-50'
+              : 'bg-card text-muted-foreground border border-border hover:bg-muted'
           )}
         >
           <Shield className="w-4 h-4" strokeWidth={2.5} />
@@ -110,7 +110,7 @@ export default function FilterBar({ onMarketChange, onStrategyChange }: FilterBa
             'px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2',
             selectedStrategy === 'TVEITEREID'
               ? 'bg-brand-slate text-white shadow-md'
-              : 'bg-surface text-gray-600 border border-gray-200 hover:bg-gray-50'
+              : 'bg-card text-muted-foreground border border-border hover:bg-muted'
           )}
         >
           <TrendingUp className="w-4 h-4" strokeWidth={2.5} />
@@ -122,7 +122,7 @@ export default function FilterBar({ onMarketChange, onStrategyChange }: FilterBa
             'px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2',
             selectedStrategy === 'REBOUND'
               ? 'bg-brand-slate text-white shadow-md'
-              : 'bg-surface text-gray-600 border border-gray-200 hover:bg-gray-50'
+              : 'bg-card text-muted-foreground border border-border hover:bg-muted'
           )}
         >
           <ArrowUpCircle className="w-4 h-4" strokeWidth={2.5} />
@@ -134,7 +134,7 @@ export default function FilterBar({ onMarketChange, onStrategyChange }: FilterBa
             'px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2',
             selectedStrategy === 'INSIDER'
               ? 'bg-brand-slate text-white shadow-md'
-              : 'bg-surface text-gray-600 border border-gray-200 hover:bg-gray-50'
+              : 'bg-card text-muted-foreground border border-border hover:bg-muted'
           )}
         >
           <Users className="w-4 h-4" strokeWidth={2.5} />

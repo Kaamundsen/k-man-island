@@ -1,60 +1,525 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * K-MAN ISLAND - GLOBAL STYLES & DARK MODE DESIGN SYSTEM
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * 
+ * VERSION: 1.0.0
+ * LAST UPDATED: 2026-01-19
+ * 
+ * This file contains the complete dark mode styling system for K-man Island.
+ * DO NOT modify dark mode colors without updating this documentation.
+ * 
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * DARK MODE COLOR PALETTE (LOCKED)
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * 
+ * PRIMARY COLORS:
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │ Background (main)     │ #040710  │ HSL: 225 60% 4%   │ Very dark blue-black │
+ * │ Hover/Muted/Rollover  │ #212936  │ HSL: 220 26% 17%  │ Dark slate           │
+ * │ Border                │ #2a3444  │ HSL: 220 20% 22%  │ Visible border       │
+ * │ Table Header/Subtotal │ #121826  │ HSL: 222 36% 11%  │ Slightly lighter     │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ * 
+ * TEXT COLORS:
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │ Primary Text          │ #e2e8f0  │ HSL: 214 32% 91%  │ Light gray           │
+ * │ Muted Text            │ #94a3b8  │ HSL: 215 20% 65%  │ Medium gray          │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ * 
+ * ACCENT COLORS:
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │ Brand Emerald         │ #10B981  │ HSL: 160 84% 39%  │ Primary action color │
+ * │ Brand Slate           │ #1E293B  │                   │ Dark blue-gray       │
+ * │ Brand Rose            │ #F43F5E  │                   │ Error/negative       │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ * 
+ * SEMANTIC ALERT BACKGROUNDS (dark mode - 10-20% opacity):
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │ Success (green)       │ hsl(142 76% 36% / 0.15-0.2)  │ Green tint           │
+ * │ Warning (amber/yellow)│ hsl(45 93% 47% / 0.1-0.2)   │ Yellow/amber tint    │
+ * │ Error (red/rose)      │ hsl(0 84% 60% / 0.08-0.2)   │ Red tint             │
+ * │ Info (blue)           │ hsl(217 91% 60% / 0.1-0.2)  │ Blue tint            │
+ * │ Purple                │ hsl(270 95% 60% / 0.1-0.2)  │ Purple tint          │
+ * │ Orange                │ hsl(25 95% 53% / 0.1-0.2)   │ Orange tint          │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ * 
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * COMPONENT-SPECIFIC STYLES
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * 
+ * SIDEBAR:
+ * - Background: #040710 (--card)
+ * - Border: #2a3444 (--border)
+ * - Active nav item: bg-primary (emerald)
+ * - Hover: #212936 (--muted)
+ * 
+ * CARDS/PANELS:
+ * - Background: #040710 (--card)
+ * - Border: #2a3444 (--border)
+ * - Hover state: #212936
+ * 
+ * TABLES:
+ * - Header background: #121826 (--table-header-bg)
+ * - Row hover: #212936
+ * - Subtotal/Total rows: #121826
+ * - Border: #2a3444
+ * 
+ * FORMS/INPUTS:
+ * - Background: #040710
+ * - Border: #2a3444
+ * - Focus border: emerald (--ring)
+ * - Placeholder: #94a3b8
+ * 
+ * BUTTONS:
+ * - Primary: bg-brand-emerald text-white
+ * - Secondary: bg-muted (#212936) text-foreground
+ * - Destructive: bg-red-600 text-white
+ * 
+ * THEME TOGGLE:
+ * - Dark mode ON: bg-brand-emerald, switch right
+ * - Light mode ON: bg-gray-300, switch left
+ * 
+ * FILTER BUTTONS (e.g., News sources):
+ * - E24 active: bg-black text-white (both modes)
+ * - Other sources active: Use source branding with darkBg override
+ * - Inactive: bg-muted text-muted-foreground
+ * 
+ * CORE BRIEF / MARKEDSOVERSIKT SECTIONS:
+ * - Core Brief: dark:bg-[#0a1a14] (very dark green tint)
+ * - Markedsoversikt: dark:bg-[#0a0f1a] (very dark blue tint)
+ * - Inner boxes: dark:bg-*-950/30-50 variants
+ * 
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * SCROLLBAR:
+ * - Track: #040710
+ * - Thumb: #212936
+ * - Thumb hover: #2a3444
+ * 
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * For full documentation, see: docs/design/02_DARK_MODE_STYLE_GUIDE.md
+ * ═══════════════════════════════════════════════════════════════════════════════
+ */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-/* Light mode (default) */
-:root {
-  --foreground-rgb: 30, 41, 59;
-  --background-start-rgb: 248, 250, 252;
-  --background-end-rgb: 255, 255, 255;
-  
-  /* Surface tokens */
-  --surface: 255, 255, 255;
-  --surface-muted: 248, 250, 252;
-  --surface-border: 226, 232, 240;
-  
-  /* Text tokens */
-  --text-primary: 30, 41, 59;
-  --text-muted: 100, 116, 139;
-  
-  /* Scrollbar */
-  --scrollbar-track: #f1f5f9;
-  --scrollbar-thumb: #cbd5e1;
-  --scrollbar-thumb-hover: #94a3b8;
+@layer base {
+  /* Light mode (default) - Design Contract: 01_DESIGN_RULES_CONTRACT.md */
+  :root {
+    /* Backgrounds - #F8FAFC (surface-muted) */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    
+    /* Cards/Panels - #FFFFFF (surface) */
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    
+    --primary: 160 84% 39%;
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 160 84% 39%;
+    
+    /* Scrollbar */
+    --scrollbar-track: #f1f5f9;
+    --scrollbar-thumb: #cbd5e1;
+    --scrollbar-thumb-hover: #94a3b8;
+  }
+
+  /* Dark mode - Custom dark theme
+   * Background: #040710 (very dark blue-black)
+   * Hover/Muted: #212936
+   * Border: #2a3444 (visible against dark bg)
+   */
+  .dark {
+    /* Background - #040710 (very dark blue-black) */
+    --background: 225 60% 4%;
+    --foreground: 214 32% 91%;
+    
+    /* Card - same as background for seamless look */
+    --card: 225 60% 4%;
+    --card-foreground: 214 32% 91%;
+    
+    --popover: 220 26% 14%;
+    --popover-foreground: 214 32% 91%;
+    
+    --primary: 160 84% 39%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Secondary/Muted - #212936 (hover/rollover color) */
+    --secondary: 220 26% 17%;
+    --secondary-foreground: 214 32% 91%;
+    
+    --muted: 220 26% 17%;
+    --muted-foreground: 215 20% 65%;
+    
+    --accent: 220 26% 17%;
+    --accent-foreground: 214 32% 91%;
+    
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Border - slightly lighter for visibility */
+    --border: 220 20% 22%;
+    --input: 220 20% 22%;
+    --ring: 160 84% 39%;
+    
+    /* Table-specific backgrounds - #121826 */
+    --subtotal-bg: 222 36% 11%;
+    --total-bg: 222 36% 11%;
+    --subtotal-text: 0 0% 100%;
+    --total-text: 0 0% 100%;
+    --table-header-bg: 222 36% 11%;
+    
+    /* Scrollbar */
+    --scrollbar-track: #040710;
+    --scrollbar-thumb: #212936;
+    --scrollbar-thumb-hover: #2a3444;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
 }
 
-/* Dark mode */
-.dark {
-  --foreground-rgb: 229, 231, 235;
-  --background-start-rgb: 17, 24, 39;
-  --background-end-rgb: 11, 15, 25;
-  
-  /* Surface tokens */
-  --surface: 11, 15, 25;
-  --surface-muted: 17, 24, 39;
-  --surface-border: 31, 41, 55;
-  
-  /* Text tokens */
-  --text-primary: 229, 231, 235;
-  --text-muted: 156, 163, 175;
-  
-  /* Scrollbar */
-  --scrollbar-track: #1f2937;
-  --scrollbar-thumb: #374151;
-  --scrollbar-thumb-hover: #4b5563;
+/* ============================================
+ * GLOBAL DARK MODE OVERRIDES
+ * These ensure hardcoded Tailwind classes work
+ * correctly in dark mode without JSX changes.
+ * ============================================ */
+
+/* Background overrides - #040710 */
+.dark .bg-white {
+  background-color: #040710 !important;
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
-  font-family: 'Inter', system-ui, sans-serif;
+.dark .bg-gray-50,
+.dark .bg-gray-100 {
+  background-color: #212936 !important;
+}
+
+.dark .bg-gray-50\/50,
+.dark .bg-gray-50\/70,
+.dark .bg-gray-100\/50 {
+  background-color: rgba(33, 41, 54, 0.5) !important;
+}
+
+/* Border overrides */
+.dark .border-gray-50,
+.dark .border-gray-100,
+.dark .border-gray-200 {
+  border-color: hsl(var(--border)) !important;
+}
+
+.dark .divide-gray-50 > :not([hidden]) ~ :not([hidden]),
+.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: hsl(var(--border) / 0.5) !important;
+}
+
+/* Text overrides - foreground (dark text in light mode) */
+.dark .text-gray-900,
+.dark .text-gray-800 {
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark .text-gray-700,
+.dark .text-gray-600 {
+  color: hsl(var(--card-foreground)) !important;
+}
+
+/* Text overrides - muted (lighter text) */
+.dark .text-gray-500,
+.dark .text-gray-400 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* Hover state overrides - #212936 */
+.dark .hover\:bg-gray-50:hover,
+.dark .hover\:bg-gray-100:hover,
+.dark .hover\:bg-gray-200:hover {
+  background-color: #212936 !important;
+}
+
+.dark .hover\:bg-gray-50\/70:hover {
+  background-color: rgba(33, 41, 54, 0.7) !important;
+}
+
+/* Muted backgrounds - #212936 */
+.dark .bg-muted {
+  background-color: #212936 !important;
+}
+
+/* Ring/Focus overrides */
+.dark .ring-gray-100,
+.dark .ring-gray-200 {
+  --tw-ring-color: hsl(var(--border)) !important;
+}
+
+/* Shadow adjustments for dark mode */
+.dark .shadow-sm,
+.dark .shadow,
+.dark .shadow-md {
+  --tw-shadow-color: rgb(0 0 0 / 0.3);
+}
+
+/* Placeholder text */
+.dark .placeholder-gray-400::placeholder,
+.dark .placeholder-gray-500::placeholder {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* Brand slate text - maps to foreground in dark mode */
+.dark .text-brand-slate {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Input/Form element overrides */
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: #040710;
+  border-color: #2a3444;
+  color: hsl(var(--foreground));
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: hsl(var(--muted-foreground));
+}
+
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  border-color: hsl(var(--ring));
+}
+
+/* Focus ring overrides */
+.dark .focus\:border-gray-300:focus,
+.dark .focus\:border-gray-400:focus {
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Yellow/Amber backgrounds (alerts, warnings) - keep but adjust opacity */
+.dark .bg-yellow-50,
+.dark .bg-amber-50 {
+  background-color: hsl(45 93% 47% / 0.1) !important;
+}
+
+.dark .border-yellow-200,
+.dark .border-amber-200 {
+  border-color: hsl(45 93% 47% / 0.3) !important;
+}
+
+.dark .text-yellow-800,
+.dark .text-amber-800 {
+  color: hsl(45 93% 47%) !important;
+}
+
+.dark .text-yellow-700,
+.dark .text-amber-700,
+.dark .text-yellow-600,
+.dark .text-amber-600 {
+  color: hsl(45 93% 60%) !important;
+}
+
+/* Green backgrounds (success states) */
+.dark .bg-green-50 {
+  background-color: hsl(142 76% 36% / 0.1) !important;
+}
+
+.dark .border-green-200 {
+  border-color: hsl(142 76% 36% / 0.3) !important;
+}
+
+.dark .text-green-800 {
+  color: hsl(142 76% 50%) !important;
+}
+
+/* Red backgrounds (error states) */
+.dark .bg-red-50 {
+  background-color: hsl(0 84% 60% / 0.1) !important;
+}
+
+.dark .border-red-200 {
+  border-color: hsl(0 84% 60% / 0.3) !important;
+}
+
+.dark .text-red-800 {
+  color: hsl(0 84% 60%) !important;
+}
+
+/* Orange backgrounds (warning states) */
+.dark .bg-orange-50 {
+  background-color: hsl(25 95% 53% / 0.1) !important;
+}
+
+.dark .border-orange-200 {
+  border-color: hsl(25 95% 53% / 0.3) !important;
+}
+
+.dark .text-orange-800 {
+  color: hsl(25 95% 60%) !important;
+}
+
+/* Blue info backgrounds */
+.dark .bg-blue-50 {
+  background-color: hsl(217 91% 60% / 0.1) !important;
+}
+
+.dark .border-blue-200 {
+  border-color: hsl(217 91% 60% / 0.3) !important;
+}
+
+.dark .text-blue-800 {
+  color: hsl(217 91% 70%) !important;
+}
+
+.dark .text-blue-700 {
+  color: hsl(217 91% 65%) !important;
+}
+
+/* Purple backgrounds */
+.dark .bg-purple-50 {
+  background-color: hsl(270 95% 60% / 0.1) !important;
+}
+
+.dark .border-purple-200 {
+  border-color: hsl(270 95% 60% / 0.3) !important;
+}
+
+.dark .text-purple-800 {
+  color: hsl(270 95% 70%) !important;
+}
+
+.dark .text-purple-700 {
+  color: hsl(270 95% 65%) !important;
+}
+
+/* Indigo backgrounds */
+.dark .bg-indigo-50 {
+  background-color: hsl(239 84% 67% / 0.1) !important;
+}
+
+/* Cyan backgrounds */
+.dark .bg-cyan-100 {
+  background-color: hsl(185 96% 90% / 0.15) !important;
+}
+
+/* Emerald backgrounds */
+.dark .bg-emerald-100 {
+  background-color: hsl(152 76% 36% / 0.15) !important;
+}
+
+/* Semantic color-100 backgrounds for dark mode (risk levels, alerts, etc.) */
+.dark .bg-green-100 {
+  background-color: hsl(142 76% 36% / 0.2) !important;
+}
+
+.dark .bg-yellow-100 {
+  background-color: hsl(45 93% 47% / 0.2) !important;
+}
+
+.dark .bg-orange-100 {
+  background-color: hsl(25 95% 53% / 0.2) !important;
+}
+
+.dark .bg-red-100 {
+  background-color: hsl(0 84% 60% / 0.2) !important;
+}
+
+.dark .bg-blue-100 {
+  background-color: hsl(217 91% 60% / 0.2) !important;
+}
+
+.dark .bg-purple-100 {
+  background-color: hsl(270 95% 60% / 0.2) !important;
+}
+
+/* Text colors for semantic backgrounds in dark mode */
+.dark .text-green-600 {
+  color: hsl(142 76% 50%) !important;
+}
+
+.dark .text-yellow-600 {
+  color: hsl(45 93% 55%) !important;
+}
+
+.dark .text-orange-600 {
+  color: hsl(25 95% 60%) !important;
+}
+
+.dark .text-red-600 {
+  color: hsl(0 84% 65%) !important;
+}
+
+/* Amber/Yellow warning boxes - softer in dark mode */
+.dark .bg-amber-100 {
+  background-color: hsl(45 93% 47% / 0.15) !important;
+}
+
+/* Rose/Red info boxes - softer in dark mode */
+.dark .bg-rose-50 {
+  background-color: hsl(0 84% 60% / 0.08) !important;
+}
+
+.dark .border-rose-200 {
+  border-color: hsl(0 84% 60% / 0.25) !important;
+}
+
+.dark .text-rose-800,
+.dark .text-rose-700,
+.dark .text-rose-600 {
+  color: hsl(0 84% 70%) !important;
+}
+
+/* Green success boxes inside alerts */
+.dark .bg-green-100 {
+  background-color: hsl(142 76% 36% / 0.15) !important;
+}
+
+.dark .border-green-300 {
+  border-color: hsl(142 76% 36% / 0.3) !important;
+}
+
+.dark .text-green-800 {
+  color: hsl(142 76% 55%) !important;
+}
+
+/* Amber text colors for warning boxes */
+.dark .text-amber-800,
+.dark .text-amber-700,
+.dark .text-amber-600 {
+  color: hsl(45 93% 65%) !important;
+}
+
+/* Primary color backgrounds for active states */
+.dark .bg-primary\/10 {
+  background-color: hsl(160 84% 39% / 0.2) !important;
 }
 
 /* Custom scrollbar */
@@ -95,4 +560,63 @@ body {
 
 .stock-card:hover {
   transform: translateY(-4px);
+}
+
+/* Badge variants */
+@layer components {
+  /* Light mode badge styles - matching design reference */
+  .badge-buy {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    background-color: #15BF7D !important;
+    color: #FFFFFF !important;
+  }
+  
+  .badge-watch {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    background-color: #FFEBBC !important;
+    color: #E58700 !important;
+  }
+  
+  .badge-sell {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    background-color: #FFECEF !important;
+    color: #E5395F !important;
+  }
+  
+  /* Dark mode badge styles */
+  .dark .badge-buy {
+    background-color: rgba(16, 185, 129, 0.2) !important;
+    color: rgb(52, 211, 153) !important;
+    border: 1px solid rgba(16, 185, 129, 0.3) !important;
+  }
+  
+  .dark .badge-watch {
+    background-color: rgba(217, 119, 6, 0.2) !important;
+    color: rgb(251, 191, 36) !important;
+    border: 1px solid rgba(217, 119, 6, 0.3) !important;
+  }
+  
+  .dark .badge-sell {
+    background-color: rgba(220, 38, 38, 0.2) !important;
+    color: rgb(248, 113, 113) !important;
+    border: 1px solid rgba(220, 38, 38, 0.3) !important;
+  }
 }

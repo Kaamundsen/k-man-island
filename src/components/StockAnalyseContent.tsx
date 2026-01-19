@@ -81,8 +81,8 @@ export default function StockAnalyseContent({ stock, allStocks }: StockAnalyseCo
   
   const signalConfig = {
     BUY: { bg: 'bg-brand-emerald', text: 'KJØP' },
-    SELL: { bg: 'bg-brand-rose', text: 'SELG' },
-    HOLD: { bg: 'bg-gray-500', text: 'HOLD' },
+    SELL: { bg: 'bg-brand-rose', text: 'SELL' },
+    HOLD: { bg: 'bg-gray-500', text: 'WATCH' },
   };
 
   const config = signalConfig[stock.signal];

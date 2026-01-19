@@ -10,12 +10,41 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        dark: {
-          surface: "#0b0f19",
-          muted: "#111827",
-          border: "#1f2937",
-          text: "#e5e7eb",
+        // Semantic design tokens (Shadcn-style HSL variables)
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        card: {
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
         },
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
+        },
+        primary: {
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
+        },
+        secondary: {
+          DEFAULT: 'hsl(var(--secondary))',
+          foreground: 'hsl(var(--secondary-foreground))',
+        },
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
+        accent: {
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
+        },
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))',
+        },
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
+        // Brand colors (keep for specific brand usage)
         brand: {
           emerald: '#10B981',
           'emerald-light': '#D1FAE5',
@@ -23,10 +52,19 @@ const config: Config = {
           'rose-light': '#FFE4E6',
           slate: '#1E293B',
         },
+        // Dark mode specific colors (used with dark: prefix)
+        dark: {
+          bg: '#040710',
+          surface: '#040710',
+          border: '#212936',
+          text: '#e5e7eb',
+          muted: '#9ca3af',
+        },
+        // Surface colors for light mode components
         surface: {
-          DEFAULT: '#FFFFFF',
-          muted: '#F8FAFC',
-          border: '#E2E8F0',
+          DEFAULT: '#ffffff',
+          muted: '#f8fafc',
+          border: '#e2e8f0',
         },
       },
       fontFamily: {

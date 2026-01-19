@@ -175,7 +175,7 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
       <div className="mb-8">
         {/* Top row: Dashboard + Market Status */}
         <div className="flex items-center justify-between mb-3">
-          <h1 className="text-4xl font-extrabold text-brand-slate tracking-tight">
+          <h1 className="text-4xl font-extrabold text-foreground tracking-tight">
             Dashboard
           </h1>
           <MarketStatus />
@@ -184,7 +184,7 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
         {/* Bottom row: Last updated + Refresh + Signals */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <p className="text-gray-500 text-sm">
+            <p className="text-muted-foreground text-sm">
               Sist oppdatert: {lastUpdated 
                 ? new Date(lastUpdated).toLocaleDateString('nb-NO', { 
                     weekday: 'long', 
@@ -208,7 +208,7 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
               <button
                 onClick={onRefresh}
                 disabled={isRefreshing}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-brand-slate bg-gray-100 hover:bg-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-foreground bg-muted hover:bg-muted/80 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isRefreshing ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -225,19 +225,19 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
             <div className="flex items-center gap-1.5">
               <TrendingUp className="w-4 h-4 text-brand-emerald" strokeWidth={2.5} />
               <span className="text-base font-bold text-brand-emerald">{buySignals}</span>
-              <span className="text-sm font-medium text-gray-600 uppercase">Kjøp</span>
+              <span className="text-sm font-medium text-muted-foreground uppercase">Kjøp</span>
             </div>
             
             <div className="flex items-center gap-1.5">
-              <Minus className="w-4 h-4 text-gray-500" strokeWidth={2.5} />
-              <span className="text-base font-bold text-gray-600">{holdSignals}</span>
-              <span className="text-sm font-medium text-gray-600 uppercase">Hold</span>
+              <Minus className="w-4 h-4 text-muted-foreground" strokeWidth={2.5} />
+              <span className="text-base font-bold text-muted-foreground">{holdSignals}</span>
+              <span className="text-sm font-medium text-muted-foreground uppercase">Hold</span>
             </div>
             
             <div className="flex items-center gap-1.5">
               <TrendingDown className="w-4 h-4 text-brand-rose" strokeWidth={2.5} />
               <span className="text-base font-bold text-brand-rose">{sellSignals}</span>
-              <span className="text-sm font-medium text-gray-600 uppercase">Selg</span>
+              <span className="text-sm font-medium text-muted-foreground uppercase">Selg</span>
             </div>
           </div>
         </div>
@@ -246,13 +246,13 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
       {/* Filters */}
       <div className="mb-8">
         <div className="flex items-baseline gap-3 mb-4">
-          <h2 className="text-2xl font-bold text-brand-slate">
+          <h2 className="text-2xl font-bold text-foreground">
             {viewMode === 'cards-only' ? 'Alle Kjøpsanbefalinger' : 
              viewMode === 'list-only' ? '' : 
              'Topp 3 Kjøpsanbefalinger'}
           </h2>
           {viewMode !== 'list-only' && (
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-muted-foreground">
               Rangert etter K-Score, RSI og Risk/Reward
             </span>
           )}
@@ -266,14 +266,14 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
           
           <div className="flex items-center gap-3">
             {/* View Mode Filter */}
-            <div className="flex items-center gap-2 bg-gray-100 rounded-xl p-1">
+            <div className="flex items-center gap-2 bg-muted rounded-xl p-1">
               <button
                 onClick={() => setViewMode('cards-and-list')}
                 className={clsx(
                   'p-2 rounded-lg transition-all',
                   viewMode === 'cards-and-list' 
-                    ? 'bg-white shadow-sm text-brand-emerald' 
-                    : 'text-gray-400 hover:text-gray-600'
+                    ? 'bg-card shadow-sm text-brand-emerald' 
+                    : 'text-muted-foreground hover:text-foreground'
                 )}
                 title="Kort + Liste"
               >
@@ -284,8 +284,8 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
                 className={clsx(
                   'p-2 rounded-lg transition-all',
                   viewMode === 'list-only' 
-                    ? 'bg-white shadow-sm text-brand-emerald' 
-                    : 'text-gray-400 hover:text-gray-600'
+                    ? 'bg-card shadow-sm text-brand-emerald' 
+                    : 'text-muted-foreground hover:text-foreground'
                 )}
                 title="Kun Liste"
               >
@@ -296,8 +296,8 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
                 className={clsx(
                   'p-2 rounded-lg transition-all',
                   viewMode === 'cards-only' 
-                    ? 'bg-white shadow-sm text-brand-emerald' 
-                    : 'text-gray-400 hover:text-gray-600'
+                    ? 'bg-card shadow-sm text-brand-emerald' 
+                    : 'text-muted-foreground hover:text-foreground'
                 )}
                 title="Kun Kort"
               >
@@ -311,8 +311,8 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
               className="flex-shrink-0"
               title={useOriginalDesign ? 'Bytt til Moderne Design (farget topp)' : 'Bytt til Original Design (hvit)'}
             >
-              <div className={`relative w-12 h-6 rounded-full transition-colors ${!useOriginalDesign ? 'bg-brand-emerald' : 'bg-gray-300'}`}>
-                <div className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform shadow-sm ${!useOriginalDesign ? 'translate-x-6' : 'translate-x-0'}`}></div>
+              <div className={`relative w-12 h-6 rounded-full transition-colors ${!useOriginalDesign ? 'bg-brand-emerald' : 'bg-muted'}`}>
+                <div className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-card transition-transform shadow-sm ${!useOriginalDesign ? 'translate-x-6' : 'translate-x-0'}`}></div>
               </div>
             </button>
           </div>
@@ -337,8 +337,8 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
       
       {filteredStocks.length === 0 && viewMode !== 'list-only' && (
         <div className="text-center py-16">
-          <div className="text-gray-400 text-lg mb-2">Ingen aksjer matcher filtrene</div>
-          <p className="text-gray-500 text-sm">Prøv å justere filtreringsalternativene</p>
+          <div className="text-muted-foreground text-lg mb-2">Ingen aksjer matcher filtrene</div>
+          <p className="text-muted-foreground text-sm">Prøv å justere filtreringsalternativene</p>
         </div>
       )}
 
@@ -346,11 +346,11 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
       {watchlistStocks.length > 0 && (
         <div className={clsx(viewMode === 'list-only' ? 'mt-0' : 'mt-16')}>
           <div className="flex items-center gap-3 mb-6">
-            <AlertCircle className="w-6 h-6 text-gray-400" />
-            <h2 className="text-2xl font-bold text-gray-400">
+            <AlertCircle className="w-6 h-6 text-muted-foreground" />
+            <h2 className="text-2xl font-bold text-muted-foreground">
               {viewMode === 'list-only' ? 'Alle Aksjer' : 'Overvåkes'}
             </h2>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-muted-foreground">
               {viewMode === 'list-only' 
                 ? `${watchlistStocks.length} aksjer totalt` 
                 : `${watchlistStocks.filter(s => s.signal === 'BUY').length} flere kjøpsmuligheter`
@@ -358,20 +358,20 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
             </span>
           </div>
 
-          <div className="bg-surface rounded-3xl border border-surface-border overflow-hidden">
+          <div className="bg-card rounded-3xl border border-border overflow-hidden">
             {/* Table Header */}
-            <div className="grid grid-cols-[0.5fr,2fr,1fr,1.5fr,1fr,1.5fr,0.5fr] gap-4 px-6 py-4 bg-gray-50 border-b border-gray-200">
-              <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">#</div>
-              <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">TICKER</div>
-              <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">PRIS</div>
-              <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">STATUS</div>
-              <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">RSI</div>
-              <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">K-SCORE</div>
-              <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">AKSJON</div>
+            <div className="grid grid-cols-[0.5fr,2fr,1fr,1.5fr,1fr,1.5fr,0.5fr] gap-4 px-6 py-4 bg-muted border-b border-border">
+              <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">#</div>
+              <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">TICKER</div>
+              <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">PRIS</div>
+              <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">STATUS</div>
+              <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">RSI</div>
+              <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">K-SCORE</div>
+              <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">AKSJON</div>
             </div>
 
             {/* Table Body */}
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-border">
               {watchlistStocks.map((stock, index) => {
                 // Beregn rank basert på view mode og index
                 let rank;
@@ -392,43 +392,43 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
                   }
                 }
                 const tickerShort = stock.ticker.replace('.OL', '');
-                const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
-                  BUY: { bg: 'bg-emerald-50', text: 'text-emerald-700', label: 'BUY' },
-                  HOLD: { bg: 'bg-yellow-50', text: 'text-yellow-700', label: 'WATCH' },
-                  SELL: { bg: 'bg-red-50', text: 'text-red-600', label: 'SELL' },
+                const statusConfig: Record<string, { className: string; label: string }> = {
+                  BUY: { className: 'badge-buy', label: 'KJØP' },
+                  HOLD: { className: 'badge-watch', label: 'WATCH' },
+                  SELL: { className: 'badge-sell', label: 'SELL' },
                 };
                 const config = statusConfig[stock.signal] || statusConfig.HOLD;
-                const kScoreColor = stock.kScore >= 75 ? 'bg-[#10B981]' : stock.kScore >= 60 ? 'bg-yellow-400' : 'bg-gray-300';
+                const kScoreColor = stock.kScore >= 75 ? 'bg-brand-emerald' : stock.kScore >= 60 ? 'bg-yellow-400' : 'bg-muted';
                 const priceChangeColor = stock.changePercent > 0 ? 'text-brand-emerald' : 'text-brand-rose';
 
                 return (
                   <Link
                     key={stock.ticker}
                     href={`/analyse/${stock.ticker}`}
-                    className="grid grid-cols-[0.5fr,2fr,1fr,1.5fr,1fr,1.5fr,0.5fr] gap-4 px-6 py-5 hover:bg-gray-50 transition-colors group"
+                    className="grid grid-cols-[0.5fr,2fr,1fr,1.5fr,1fr,1.5fr,0.5fr] gap-4 px-6 py-5 hover:bg-muted transition-colors group"
                   >
                     {/* Ranking */}
                     <div className="flex items-center">
                       {rank ? (
-                        <span className="text-lg font-extrabold text-gray-400 group-hover:text-brand-emerald transition-colors">
+                        <span className="text-lg font-extrabold text-muted-foreground group-hover:text-brand-emerald transition-colors">
                           {rank}
                         </span>
                       ) : (
-                        <span className="text-gray-300">-</span>
+                        <span className="text-muted-foreground/50">-</span>
                       )}
                     </div>
 
                     {/* Ticker */}
                     <div>
-                      <div className="text-lg font-bold text-[#1E293B] group-hover:text-brand-emerald transition-colors">
+                      <div className="text-lg font-bold text-foreground group-hover:text-brand-emerald transition-colors">
                         {tickerShort}
                       </div>
-                      <div className="text-sm text-gray-500 mt-0.5">{stock.name}</div>
+                      <div className="text-sm text-muted-foreground mt-0.5">{stock.name}</div>
                     </div>
 
                     {/* Price */}
                     <div>
-                      <div className="text-lg font-bold text-[#1E293B]">
+                      <div className="text-lg font-bold text-foreground">
                         {stock.price.toFixed(2)} kr
                       </div>
                       <div className={clsx('text-sm font-semibold mt-0.5', priceChangeColor)}>
@@ -438,28 +438,24 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
 
                     {/* Status */}
                     <div className="flex items-center">
-                      <span className={clsx(
-                        'inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold',
-                        config.bg,
-                        config.text
-                      )}>
+                      <span className={config.className}>
                         {config.label}
                       </span>
                     </div>
 
                     {/* RSI */}
                     <div className="flex items-center">
-                      <span className="text-lg font-semibold text-gray-600">
+                      <span className="text-lg font-semibold text-muted-foreground">
                         {stock.rsi.toFixed(1)}
                       </span>
                     </div>
 
                     {/* K-Score */}
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl font-extrabold text-[#10B981]">
+                      <span className="text-2xl font-extrabold text-brand-emerald">
                         {stock.kScore}
                       </span>
-                      <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden max-w-[80px]">
+                      <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden max-w-[80px]">
                         <div 
                           className={clsx('h-full rounded-full', kScoreColor)}
                           style={{ width: `${stock.kScore}%` }}
@@ -469,7 +465,7 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
 
                     {/* Action */}
                     <div className="flex items-center justify-end">
-                      <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-brand-emerald transition-colors" />
+                      <ChevronRight className="w-5 h-5 text-muted-foreground/50 group-hover:text-brand-emerald transition-colors" />
                     </div>
                   </Link>
                 );
@@ -477,7 +473,7 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
             </div>
           </div>
 
-          <div className="mt-4 text-center text-sm text-gray-500">
+          <div className="mt-4 text-center text-sm text-muted-foreground">
             Viser {watchlistStocks.length} aksjer som overvåkes
           </div>
         </div>

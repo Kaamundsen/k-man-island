@@ -30,10 +30,10 @@ export default function ArtiklerPage() {
       {/* Header */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-2xl font-bold text-foreground mb-2">
             📰 Nyheter & Artikkel-Tips
           </h1>
-          <p className="text-gray-600 dark:text-dark-muted">
+          <p className="text-muted-foreground">
             Hent nyheter fra finansaviser og lagre viktig informasjon fra artikler
           </p>
         </div>
@@ -64,7 +64,7 @@ export default function ArtiklerPage() {
       />
       
       {/* Tabs */}
-      <div className="flex gap-2 mb-6 border-b border-gray-200 dark:border-dark-border pb-3">
+      <div className="flex gap-2 mb-6 border-b border-border pb-3">
         <TabButton 
           active={activeTab === 'aggregator'} 
           onClick={() => setActiveTab('aggregator')}
@@ -117,8 +117,8 @@ function TabButton({
       onClick={onClick}
       className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors
         ${active 
-          ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400' 
-          : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
+          ? 'bg-primary/10 text-primary' 
+          : 'text-muted-foreground hover:bg-muted'
         }`}
     >
       {icon}
@@ -131,11 +131,11 @@ function HowToSection() {
   return (
     <div className="space-y-6">
       {/* Intro */}
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-6 border border-blue-200/50">
+        <h2 className="text-xl font-bold text-foreground mb-3">
           🎯 Hvordan nyttiggjøre finansnyheter
         </h2>
-        <p className="text-gray-700 dark:text-gray-300">
+        <p className="text-muted-foreground">
           Finansaviser som E24, DN, og Finansavisen har ofte betalingsmur. 
           Her er hvordan du kan bruke informasjonen effektivt:
         </p>
@@ -144,20 +144,20 @@ function HowToSection() {
       {/* Methods */}
       <div className="grid md:grid-cols-2 gap-6">
         {/* Method 1: RSS */}
-        <div className="bg-white dark:bg-dark-surface rounded-xl p-5 border border-gray-200 dark:border-dark-border">
+        <div className="bg-card rounded-xl p-5 border border-border">
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-              <Newspaper className="h-5 w-5 text-green-600 dark:text-green-400" />
+              <Newspaper className="h-5 w-5 text-green-600" />
             </div>
-            <h3 className="font-semibold text-gray-900 dark:text-white">
+            <h3 className="font-semibold text-foreground">
               1. Nyhetsstrøm (RSS)
             </h3>
           </div>
-          <p className="text-sm text-gray-600 dark:text-dark-muted mb-3">
+          <p className="text-sm text-muted-foreground mb-3">
             Overskrifter og ingresser er <strong>gratis</strong> via RSS. Bruk &quot;Nyhetsstrøm&quot;-fanen 
             for å se siste nyheter uten abonnement.
           </p>
-          <ul className="text-sm text-gray-600 dark:text-dark-muted space-y-1">
+          <ul className="text-sm text-muted-foreground space-y-1">
             <li>✅ Overskrifter</li>
             <li>✅ Korte sammendrag</li>
             <li>✅ Automatisk oppdatering</li>
@@ -166,20 +166,20 @@ function HowToSection() {
         </div>
         
         {/* Method 2: Manual */}
-        <div className="bg-white dark:bg-dark-surface rounded-xl p-5 border border-gray-200 dark:border-dark-border">
+        <div className="bg-card rounded-xl p-5 border border-border">
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-              <FileText className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              <FileText className="h-5 w-5 text-purple-600" />
             </div>
-            <h3 className="font-semibold text-gray-900 dark:text-white">
+            <h3 className="font-semibold text-foreground">
               2. Manuell Lagring
             </h3>
           </div>
-          <p className="text-sm text-gray-600 dark:text-dark-muted mb-3">
+          <p className="text-sm text-muted-foreground mb-3">
             Les artikler (med abonnement) og lagre <strong>nøkkelpunkter</strong> manuelt. 
             Perfekt for Investtech-tips, analytikeranbefalinger, etc.
           </p>
-          <ul className="text-sm text-gray-600 dark:text-dark-muted space-y-1">
+          <ul className="text-sm text-muted-foreground space-y-1">
             <li>✅ Dine egne notater</li>
             <li>✅ Koble til aksjer</li>
             <li>✅ Søkbart arkiv</li>
@@ -188,16 +188,16 @@ function HowToSection() {
         </div>
         
         {/* Method 3: Newsweb */}
-        <div className="bg-white dark:bg-dark-surface rounded-xl p-5 border border-gray-200 dark:border-dark-border">
+        <div className="bg-card rounded-xl p-5 border border-border">
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-              <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <AlertCircle className="h-5 w-5 text-blue-600" />
             </div>
-            <h3 className="font-semibold text-gray-900 dark:text-white">
+            <h3 className="font-semibold text-foreground">
               3. Newsweb (Gratis!)
             </h3>
           </div>
-          <p className="text-sm text-gray-600 dark:text-dark-muted mb-3">
+          <p className="text-sm text-muted-foreground mb-3">
             Oslo Børs&apos; offisielle meldingstjeneste. <strong>100% gratis</strong> og 
             inneholder alle børsmeldinger, innsidehandler, og flagginger.
           </p>
@@ -205,23 +205,23 @@ function HowToSection() {
             href="https://newsweb.oslobors.no"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline text-sm"
+            className="inline-flex items-center gap-1 text-primary hover:underline text-sm"
           >
             Gå til Newsweb <ExternalLink className="h-3 w-3" />
           </a>
         </div>
         
         {/* Method 4: Google News */}
-        <div className="bg-white dark:bg-dark-surface rounded-xl p-5 border border-gray-200 dark:border-dark-border">
+        <div className="bg-card rounded-xl p-5 border border-border">
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/30">
-              <ExternalLink className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+              <ExternalLink className="h-5 w-5 text-orange-600" />
             </div>
-            <h3 className="font-semibold text-gray-900 dark:text-white">
+            <h3 className="font-semibold text-foreground">
               4. Google News
             </h3>
           </div>
-          <p className="text-sm text-gray-600 dark:text-dark-muted mb-3">
+          <p className="text-sm text-muted-foreground mb-3">
             Aggregerer nyheter fra mange kilder. Noen artikler er gratis, 
             andre krever abonnement.
           </p>
@@ -229,7 +229,7 @@ function HowToSection() {
             href="https://news.google.com/search?q=aksjer+OR+børs&hl=no&gl=NO"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline text-sm"
+            className="inline-flex items-center gap-1 text-primary hover:underline text-sm"
           >
             Søk på Google News <ExternalLink className="h-3 w-3" />
           </a>
@@ -237,7 +237,7 @@ function HowToSection() {
       </div>
       
       {/* Tip Box */}
-      <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-5 border border-yellow-200 dark:border-yellow-800">
+      <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-5 border border-yellow-200/50">
         <h3 className="font-semibold text-yellow-800 dark:text-yellow-400 mb-2">
           💡 Pro-tips for Investtech-artikler
         </h3>
@@ -257,8 +257,8 @@ function HowToSection() {
       </div>
       
       {/* Quick Links */}
-      <div className="bg-white dark:bg-dark-surface rounded-xl p-5 border border-gray-200 dark:border-dark-border">
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
+      <div className="bg-card rounded-xl p-5 border border-border">
+        <h3 className="font-semibold text-foreground mb-4">
           🔗 Nyttige lenker (gratis)
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -282,9 +282,8 @@ function QuickLink({ href, label }: { href: string; label: string }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 
-                 text-gray-700 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 
-                 hover:text-blue-700 dark:hover:text-blue-400 transition-colors text-sm font-medium"
+      className="flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-muted 
+                 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors text-sm font-medium"
     >
       {label}
       <ExternalLink className="h-3 w-3" />

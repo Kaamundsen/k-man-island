@@ -286,23 +286,23 @@ function StrategyCard({ strategy, scoring }: { strategy: StrategyDefinition; sco
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
       {/* Header */}
       <div 
-        className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+        className="p-6 cursor-pointer hover:bg-muted transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <span className="text-3xl">{strategy.emoji}</span>
             <div>
-              <h3 className="text-lg font-bold text-gray-900">{strategy.name}</h3>
-              <p className="text-sm text-gray-500">{strategy.description}</p>
+              <h3 className="text-lg font-bold text-foreground">{strategy.name}</h3>
+              <p className="text-sm text-muted-foreground">{strategy.description}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <RiskBadge level={strategy.riskLevel} />
-            {expanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+            {expanded ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
           </div>
         </div>
 
@@ -312,14 +312,14 @@ function StrategyCard({ strategy, scoring }: { strategy: StrategyDefinition; sco
             <Target className="w-4 h-4 text-green-500" />
             <span className="text-sm">
               <span className="font-medium text-green-600">{strategy.targetReturn.min}-{strategy.targetReturn.max}%</span>
-              <span className="text-gray-400 ml-1">mål</span>
+              <span className="text-muted-foreground ml-1">mål</span>
             </span>
           </div>
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-blue-500" />
             <span className="text-sm">
               <span className="font-medium">{strategy.typicalHoldingDays.min}-{strategy.typicalHoldingDays.max}</span>
-              <span className="text-gray-400 ml-1">dager</span>
+              <span className="text-muted-foreground ml-1">dager</span>
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -328,7 +328,7 @@ function StrategyCard({ strategy, scoring }: { strategy: StrategyDefinition; sco
             ) : (
               <AlertTriangle className="w-4 h-4 text-yellow-500" />
             )}
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-muted-foreground">
               {strategy.enabled ? 'Aktiv' : 'Inaktiv'}
             </span>
           </div>
@@ -337,24 +337,24 @@ function StrategyCard({ strategy, scoring }: { strategy: StrategyDefinition; sco
 
       {/* Expanded content */}
       {expanded && scoring && (
-        <div className="border-t border-gray-100 p-6 bg-gray-50">
-          <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <div className="border-t border-border p-6 bg-muted">
+          <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-brand-emerald" />
             Hvordan scoren beregnes
           </h4>
           
-          <p className="text-sm text-gray-600 mb-4">{scoring.description}</p>
+          <p className="text-sm text-muted-foreground mb-4">{scoring.description}</p>
 
           <div className="space-y-3">
             {scoring.criteria.map((criteria, idx) => (
-              <div key={idx} className="bg-white rounded-lg p-4 border border-gray-200">
+              <div key={idx} className="bg-card rounded-lg p-4 border border-border">
                 <div className="flex items-start justify-between mb-2">
-                  <span className="font-medium text-gray-900">{criteria.name}</span>
-                  <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded text-gray-600">
+                  <span className="font-medium text-foreground">{criteria.name}</span>
+                  <span className="text-sm font-mono bg-muted px-2 py-0.5 rounded text-muted-foreground">
                     {criteria.weight}
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 mb-2">{criteria.description}</p>
+                <p className="text-sm text-muted-foreground mb-2">{criteria.description}</p>
                 <div className="flex flex-col gap-1 text-xs">
                   <span className="text-green-600">✓ Ideelt: {criteria.ideal}</span>
                   {criteria.penalty && (
@@ -400,74 +400,74 @@ export default function StrategierPage() {
     <main className="min-h-screen p-8 max-w-5xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Strategi-dokumentasjon</h1>
-        <p className="text-gray-600">
+        <h1 className="text-3xl font-bold text-foreground mb-2">Strategi-dokumentasjon</h1>
+        <p className="text-muted-foreground">
           Oversikt over alle trading-strategier og hvordan de scorer aksjer.
           Oppdatert automatisk ved endringer i systemet.
         </p>
       </div>
 
       {/* Global BUY criteria */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+      <div className="bg-card rounded-2xl shadow-sm border border-border p-6 mb-8">
+        <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
           <CheckCircle2 className="w-6 h-6 text-green-500" />
           Globale BUY-kriterier
         </h2>
-        <p className="text-gray-600 mb-4">
+        <p className="text-muted-foreground mb-4">
           For at en aksje skal få BUY-signal må den oppfylle <strong>alle</strong> disse kriteriene:
         </p>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
             <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
               <span className="font-bold text-green-600">K</span>
             </div>
             <div>
               <p className="font-medium">K-Score ≥ {BUY_SIGNAL_CRITERIA.kScore.min}</p>
-              <p className="text-sm text-gray-500">{BUY_SIGNAL_CRITERIA.kScore.description}</p>
+              <p className="text-sm text-muted-foreground">{BUY_SIGNAL_CRITERIA.kScore.description}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
             <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
               <span className="font-bold text-blue-600">RSI</span>
             </div>
             <div>
               <p className="font-medium">RSI: {BUY_SIGNAL_CRITERIA.rsi.min}-{BUY_SIGNAL_CRITERIA.rsi.max}</p>
-              <p className="text-sm text-gray-500">{BUY_SIGNAL_CRITERIA.rsi.description}</p>
+              <p className="text-sm text-muted-foreground">{BUY_SIGNAL_CRITERIA.rsi.description}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
             <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-emerald-600" />
             </div>
             <div>
               <p className="font-medium">Positiv momentum</p>
-              <p className="text-sm text-gray-500">{BUY_SIGNAL_CRITERIA.momentum.description}</p>
+              <p className="text-sm text-muted-foreground">{BUY_SIGNAL_CRITERIA.momentum.description}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
             <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center">
               <span className="font-bold text-cyan-600">📈</span>
             </div>
             <div>
               <p className="font-medium">Over SMA50</p>
-              <p className="text-sm text-gray-500">{BUY_SIGNAL_CRITERIA.trend.description}</p>
+              <p className="text-sm text-muted-foreground">{BUY_SIGNAL_CRITERIA.trend.description}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
             <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
               <Shield className="w-5 h-5 text-purple-600" />
             </div>
             <div>
               <p className="font-medium">R/R ≥ {BUY_SIGNAL_CRITERIA.riskReward.min}:1</p>
-              <p className="text-sm text-gray-500">{BUY_SIGNAL_CRITERIA.riskReward.description}</p>
+              <p className="text-sm text-muted-foreground">{BUY_SIGNAL_CRITERIA.riskReward.description}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* K-Score forklaring */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+      <div className="bg-card rounded-2xl shadow-sm border border-border p-6 mb-8">
+        <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
           <span className="w-8 h-8 bg-brand-emerald rounded-lg flex items-center justify-center text-white font-bold">K</span>
           K-Score - Validert Momentum-score
         </h2>
@@ -477,7 +477,7 @@ export default function StrategierPage() {
             for å beregne korrekt momentum, SMA-trender og volatilitet.
           </p>
         </div>
-        <p className="text-gray-600 mb-4">
+        <p className="text-muted-foreground mb-4">
           K-Score er basert på <strong>akademisk forskning om momentum-faktoren</strong> (Jegadeesh & Titman, 1993).
           Studier viser at aksjer med sterk 3-12 måneders avkastning fortsetter å prestere godt.
         </p>
@@ -522,9 +522,9 @@ export default function StrategierPage() {
           </div>
         </div>
         
-        <div className="bg-gray-50 rounded-lg p-4 text-sm">
+        <div className="bg-muted rounded-lg p-4 text-sm">
           <strong>Hvorfor denne formelen?</strong>
-          <p className="text-gray-600 mt-1">
+          <p className="text-muted-foreground mt-1">
             Momentum-faktoren har vært konsistent lønnsom over flere tiår i ulike markeder.
             Ved å kombinere momentum med trend-bekreftelse og moderat volatilitet, 
             filtrerer vi ut aksjer med høyest sannsynlighet for fortsatt oppgang.
@@ -533,63 +533,63 @@ export default function StrategierPage() {
       </div>
 
       {/* Target returns */}
-      <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl border border-yellow-200 p-6 mb-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+      <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-2xl border border-yellow-200/50 p-6 mb-8">
+        <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
           <Target className="w-6 h-6 text-yellow-600" />
           Hvordan oppnå 100-200% årlig avkastning
         </h2>
         
         {/* Realistic calculation */}
-        <div className="bg-white/80 rounded-xl p-4 mb-4">
-          <h3 className="font-semibold text-gray-800 mb-3">📊 Realistisk regnestykke</h3>
+        <div className="bg-card/80 rounded-xl p-4 mb-4">
+          <h3 className="font-semibold text-foreground mb-3">📊 Realistisk regnestykke</h3>
           <div className="grid md:grid-cols-4 gap-3 text-sm">
-            <div className="bg-gray-50 rounded-lg p-3 text-center">
+            <div className="bg-muted rounded-lg p-3 text-center">
               <p className="text-2xl font-bold text-brand-emerald">20-25</p>
-              <p className="text-gray-500">trades/år</p>
+              <p className="text-muted-foreground">trades/år</p>
             </div>
-            <div className="bg-gray-50 rounded-lg p-3 text-center">
+            <div className="bg-muted rounded-lg p-3 text-center">
               <p className="text-2xl font-bold text-blue-600">8-15%</p>
-              <p className="text-gray-500">snitt gevinst</p>
+              <p className="text-muted-foreground">snitt gevinst</p>
             </div>
-            <div className="bg-gray-50 rounded-lg p-3 text-center">
+            <div className="bg-muted rounded-lg p-3 text-center">
               <p className="text-2xl font-bold text-purple-600">60%</p>
-              <p className="text-gray-500">win-rate</p>
+              <p className="text-muted-foreground">win-rate</p>
             </div>
-            <div className="bg-gray-50 rounded-lg p-3 text-center">
+            <div className="bg-muted rounded-lg p-3 text-center">
               <p className="text-2xl font-bold text-yellow-600">100-200%</p>
-              <p className="text-gray-500">årlig mål</p>
+              <p className="text-muted-foreground">årlig mål</p>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-3">
+          <p className="text-xs text-muted-foreground mt-3">
             Med 25 trades, 60% win-rate, 12% snittgevinst og 5% snitttap: (15×12%) - (10×5%) = 130% årlig
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
           <div>
-            <h3 className="font-semibold text-gray-800 mb-2">🚀 Momentum Asymmetrisk (M-Asym)</h3>
-            <p className="text-sm text-gray-600 mb-2">
+            <h3 className="font-semibold text-foreground mb-2">🚀 Momentum Asymmetrisk (M-Asym)</h3>
+            <p className="text-sm text-muted-foreground mb-2">
               <strong>Mål per trade:</strong> 15-25% på 1-3 uker
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Fokus på asymmetriske setups med R/R 3:1+. Aksepterer lavere win-rate (45-50%) 
               fordi gevinstene er større enn tapene. Stop loss typisk 5-8%.
             </p>
           </div>
           <div>
-            <h3 className="font-semibold text-gray-800 mb-2">📈 Momentum Trend (M-Trend)</h3>
-            <p className="text-sm text-gray-600 mb-2">
+            <h3 className="font-semibold text-foreground mb-2">📈 Momentum Trend (M-Trend)</h3>
+            <p className="text-sm text-muted-foreground mb-2">
               <strong>Mål per trade:</strong> 8-15% på 2-4 uker
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Følger etablerte trender med høyere win-rate (60-70%). 
               Mindre gevinst per trade, men mer konsistent. Stop loss 5-7%.
             </p>
           </div>
         </div>
         
-        <div className="mt-4 p-4 bg-white/70 rounded-lg">
-          <p className="text-sm text-gray-700">
+        <div className="mt-4 p-4 bg-card/70 rounded-lg">
+          <p className="text-sm text-foreground">
             <strong>🥇 GOLD PICK:</strong> Aksjer som scorer 70+ på BEGGE strategiene har 
             både etablert trend OG asymmetrisk potensial. Disse prioriteres for større posisjonsstørrelser.
           </p>
@@ -610,7 +610,7 @@ export default function StrategierPage() {
 
       {/* Momentum strategies */}
       <section className="mb-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
           <Zap className="w-6 h-6 text-yellow-500" />
           Momentum-strategier
         </h2>
@@ -627,7 +627,7 @@ export default function StrategierPage() {
 
       {/* Value strategies */}
       <section className="mb-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
           <Shield className="w-6 h-6 text-blue-500" />
           Verdi-strategier
         </h2>
@@ -644,7 +644,7 @@ export default function StrategierPage() {
 
       {/* Technical strategies */}
       <section className="mb-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
           <TrendingUp className="w-6 h-6 text-purple-500" />
           Tekniske strategier
         </h2>
@@ -662,7 +662,7 @@ export default function StrategierPage() {
       {/* Event strategies */}
       {eventStrategies.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
             <Info className="w-6 h-6 text-pink-500" />
             Hendelsesbaserte strategier
           </h2>
@@ -679,60 +679,60 @@ export default function StrategierPage() {
       )}
 
       {/* Warning about "honest" strategies */}
-      <div className="bg-red-50 border border-red-200 rounded-2xl p-6 mb-8">
-        <h2 className="text-xl font-bold text-red-800 mb-4 flex items-center gap-2">
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200/50 rounded-2xl p-6 mb-8">
+        <h2 className="text-xl font-bold text-red-800 dark:text-red-400 mb-4 flex items-center gap-2">
           <AlertTriangle className="w-6 h-6 text-red-500" />
           ⚠️ &quot;Ærlige&quot; strategier - Les dette!
         </h2>
-        <p className="text-gray-700 mb-4">
+        <p className="text-muted-foreground mb-4">
           Følgende strategier er <strong>ikke ekte handelsstrategier</strong>, men ærlige kategorier 
           for kjøp du har gjort uten en klar plan. De finnes for selvrefleksjon og læring.
         </p>
         
         <div className="grid md:grid-cols-2 gap-4 mb-4">
-          <div className="bg-white rounded-lg p-4 border border-red-100">
+          <div className="bg-card rounded-lg p-4 border border-red-200/50">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-2xl">🚨</span>
-              <span className="font-bold text-red-700">FOMO</span>
+              <span className="font-bold text-red-700 dark:text-red-400">FOMO</span>
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               <strong>Forventet avkastning: -50% til 0%</strong><br/>
               80%+ av FOMO-kjøp taper penger. Du kjøper på toppen etter alle andre.
             </p>
           </div>
-          <div className="bg-white rounded-lg p-4 border border-red-100">
+          <div className="bg-card rounded-lg p-4 border border-red-200/50">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-2xl">🎲</span>
-              <span className="font-bold text-red-700">YOLO/Magefølelse</span>
+              <span className="font-bold text-red-700 dark:text-red-400">YOLO/Magefølelse</span>
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               <strong>Forventet avkastning: -30% til +20%</strong><br/>
               Gambling uten analyse. De fleste taper over tid.
             </p>
           </div>
-          <div className="bg-white rounded-lg p-4 border border-orange-100">
+          <div className="bg-card rounded-lg p-4 border border-orange-200/50">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-2xl">💬</span>
-              <span className="font-bold text-orange-700">Tips fra noen</span>
+              <span className="font-bold text-orange-700 dark:text-orange-400">Tips fra noen</span>
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               <strong>Forventet avkastning: -20% til +10%</strong><br/>
               Tips er ofte allerede priset inn når du hører om det.
             </p>
           </div>
-          <div className="bg-white rounded-lg p-4 border border-blue-100">
+          <div className="bg-card rounded-lg p-4 border border-blue-200/50">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-2xl">💎</span>
-              <span className="font-bold text-blue-700">HODL</span>
+              <span className="font-bold text-blue-700 dark:text-blue-400">HODL</span>
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               <strong>Forventet avkastning: -20% til +15%</strong><br/>
               Følger markedet. Historisk ca. 8% årlig for indeks.
             </p>
           </div>
         </div>
         
-        <p className="text-sm text-red-700 font-medium">
+        <p className="text-sm text-red-700 dark:text-red-400 font-medium">
           💡 Bruk disse kategoriene til å spore hvor mye du taper på impulsive kjøp 
           vs. disiplinerte strategier. Lær av dataene!
         </p>
@@ -760,13 +760,13 @@ export default function StrategierPage() {
       </div>
 
       {/* Footer note */}
-      <div className="bg-gray-100 rounded-xl p-6 text-center">
-        <p className="text-sm text-gray-600">
+      <div className="bg-muted rounded-xl p-6 text-center">
+        <p className="text-sm text-muted-foreground">
           <strong>NB:</strong> Denne dokumentasjonen oppdateres automatisk når strategiene endres i koden.
-          Se <code className="bg-gray-200 px-1 rounded">src/lib/api/stock-data.ts</code> og 
-          <code className="bg-gray-200 px-1 rounded ml-1">src/lib/strategies/index.ts</code> for implementasjonsdetaljer.
+          Se <code className="bg-secondary px-1 rounded">src/lib/api/stock-data.ts</code> og 
+          <code className="bg-secondary px-1 rounded ml-1">src/lib/strategies/index.ts</code> for implementasjonsdetaljer.
         </p>
-        <p className="text-xs text-gray-500 mt-2">
+        <p className="text-xs text-muted-foreground mt-2">
           Sist oppdatert: {new Date().toLocaleDateString('nb-NO')}
         </p>
       </div>

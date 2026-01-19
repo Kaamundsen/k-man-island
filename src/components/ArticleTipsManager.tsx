@@ -91,8 +91,8 @@ export default function ArticleTipsManager() {
             <Newspaper className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-brand-slate dark:text-white">Artikkel-tips</h2>
-            <p className="text-gray-500 dark:text-dark-muted">Investtech, E24, analytikere</p>
+            <h2 className="text-2xl font-bold text-foreground">Artikkel-tips</h2>
+            <p className="text-muted-foreground">Investtech, E24, analytikere</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -116,21 +116,21 @@ export default function ArticleTipsManager() {
       {/* Stats */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-surface dark:bg-dark-surface rounded-2xl p-4 border border-surface-border dark:border-dark-border">
-            <div className="text-xs text-gray-500 dark:text-dark-muted mb-1">Artikler</div>
-            <div className="text-2xl font-bold text-brand-slate dark:text-white">{stats.totalArticles}</div>
+          <div className="bg-card rounded-2xl p-4 border border-border">
+            <div className="text-xs text-muted-foreground mb-1">Artikler</div>
+            <div className="text-2xl font-bold text-foreground">{stats.totalArticles}</div>
           </div>
-          <div className="bg-surface dark:bg-dark-surface rounded-2xl p-4 border border-surface-border dark:border-dark-border">
-            <div className="text-xs text-gray-500 dark:text-dark-muted mb-1">Aksje-nevnelser</div>
-            <div className="text-2xl font-bold text-brand-slate dark:text-white">{stats.totalMentions}</div>
+          <div className="bg-card rounded-2xl p-4 border border-border">
+            <div className="text-xs text-muted-foreground mb-1">Aksje-nevnelser</div>
+            <div className="text-2xl font-bold text-foreground">{stats.totalMentions}</div>
           </div>
-          <div className="bg-surface dark:bg-dark-surface rounded-2xl p-4 border border-surface-border dark:border-dark-border">
-            <div className="text-xs text-gray-500 dark:text-dark-muted mb-1">Topp-picks (30d)</div>
+          <div className="bg-card rounded-2xl p-4 border border-border">
+            <div className="text-xs text-muted-foreground mb-1">Topp-picks (30d)</div>
             <div className="text-2xl font-bold text-brand-emerald">{stats.recentTopPicks}</div>
           </div>
-          <div className="bg-surface dark:bg-dark-surface rounded-2xl p-4 border border-surface-border dark:border-dark-border">
-            <div className="text-xs text-gray-500 dark:text-dark-muted mb-1">Mest nevnt</div>
-            <div className="text-lg font-bold text-brand-slate dark:text-white">
+          <div className="bg-card rounded-2xl p-4 border border-border">
+            <div className="text-xs text-muted-foreground mb-1">Mest nevnt</div>
+            <div className="text-lg font-bold text-foreground">
               {stats.mostMentioned[0]?.ticker || '-'}
             </div>
           </div>
@@ -146,8 +146,10 @@ export default function ArticleTipsManager() {
             className={clsx(
               'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
               filterSource === source
-                ? 'bg-brand-emerald text-white'
-                : 'bg-gray-100 dark:bg-dark-border text-gray-600 dark:text-dark-muted hover:bg-gray-200 dark:hover:bg-slate-600'
+                ? source === 'E24'
+                  ? 'bg-black text-white'
+                  : 'bg-brand-emerald text-white'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'
             )}
           >
             {source === 'alle' ? 'Alle' : source}
@@ -156,11 +158,11 @@ export default function ArticleTipsManager() {
       </div>
 
       {/* Article List */}
-      <div className="bg-surface dark:bg-dark-surface rounded-2xl border border-surface-border dark:border-dark-border overflow-hidden">
+      <div className="bg-card rounded-2xl border border-border overflow-hidden">
         {filteredArticles.length === 0 ? (
           <div className="p-12 text-center">
-            <Newspaper className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <p className="text-gray-500 dark:text-dark-muted mb-2">Ingen artikler lagt til ennå</p>
+            <Newspaper className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+            <p className="text-muted-foreground mb-2">Ingen artikler lagt til ennå</p>
             <button
               onClick={() => setShowQuickAdd(true)}
               className="text-brand-emerald hover:underline"
@@ -169,26 +171,34 @@ export default function ArticleTipsManager() {
             </button>
           </div>
         ) : (
-          <div className="divide-y divide-gray-100 dark:divide-dark-border">
+          <div className="divide-y divide-border">
             {filteredArticles.map(article => (
               <div 
                 key={article.id}
-                className="p-4 hover:bg-gray-50 dark:hover:bg-dark-border transition-colors"
+                className="p-4 hover:bg-muted transition-colors"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs font-medium">
+                      <span className={clsx(
+                        'px-2 py-0.5 rounded text-xs font-medium',
+                        article.source === 'E24' ? 'bg-[#f5f0eb] text-gray-900 dark:bg-black dark:text-white font-black' :
+                        article.source === 'DN' ? 'bg-[#1e1e5c] text-white' :
+                        article.source === 'Finansavisen' ? 'bg-[#2b5797] text-white font-bold' :
+                        article.source === 'Investtech' ? 'bg-[#f5f5f5] text-[#5a5a5a] dark:bg-[#3a3a4a] dark:text-gray-200' :
+                        article.source === 'Newsweb' ? 'bg-[#003366] text-white' :
+                        'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                      )}>
                         {article.source}
                       </span>
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-muted-foreground">
                         {new Date(article.publishedDate).toLocaleDateString('nb-NO')}
                       </span>
                     </div>
-                    <h3 className="font-semibold text-brand-slate dark:text-white mb-1 truncate">
+                    <h3 className="font-semibold text-foreground mb-1 truncate">
                       {article.title}
                     </h3>
-                    <p className="text-sm text-gray-500 dark:text-dark-muted line-clamp-2 mb-2">
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
                       {article.summary}
                     </p>
                     

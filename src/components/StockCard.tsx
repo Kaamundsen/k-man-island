@@ -15,8 +15,8 @@ export default function StockCard({ stock, rank }: StockCardProps) {
   
   const signalConfig = {
     BUY: { bg: 'bg-brand-emerald', text: 'KJØP', badgeBg: 'bg-white/20', badgeText: 'text-white' },
-    SELL: { bg: 'bg-brand-rose', text: 'SELG', badgeBg: 'bg-white/20', badgeText: 'text-white' },
-    HOLD: { bg: 'bg-gray-500', text: 'HOLD', badgeBg: 'bg-white/20', badgeText: 'text-white' },
+    SELL: { bg: 'bg-brand-rose', text: 'SELL', badgeBg: 'bg-white/20', badgeText: 'text-white' },
+    HOLD: { bg: 'bg-gray-500', text: 'WATCH', badgeBg: 'bg-white/20', badgeText: 'text-white' },
   };
 
   const config = signalConfig[stock.signal];
@@ -26,7 +26,7 @@ export default function StockCard({ stock, rank }: StockCardProps) {
   return (
     <Link 
       href={`/analyse/${stock.ticker}`}
-      className="block bg-surface rounded-3xl border border-surface-border overflow-hidden hover:shadow-card-hover transition-all duration-200 hover:-translate-y-1 stock-card"
+      className="block bg-card rounded-3xl border border-border overflow-hidden hover:shadow-card-hover transition-all duration-200 hover:-translate-y-1 stock-card"
     >
       {/* Header */}
       <div className={clsx('p-6 pb-5', config.bg)}>
@@ -84,9 +84,9 @@ export default function StockCard({ stock, rank }: StockCardProps) {
         {/* Price */}
         <div className="flex items-baseline justify-between mb-5">
           <div>
-            <div className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">PRIS</div>
-            <div className="text-3xl font-extrabold text-brand-slate">
-              {stock.price.toFixed(2)} <span className="text-lg text-gray-400">NOK</span>
+            <div className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1">PRIS</div>
+            <div className="text-3xl font-extrabold text-foreground">
+              {stock.price.toFixed(2)} <span className="text-lg text-muted-foreground">NOK</span>
             </div>
           </div>
           <div className="text-right">
@@ -99,10 +99,10 @@ export default function StockCard({ stock, rank }: StockCardProps) {
         {/* K-SCORE */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-gray-500 uppercase tracking-wide font-semibold">K-SCORE</span>
-            <span className="text-2xl font-extrabold text-brand-slate">{stock.kScore}</span>
+            <span className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">K-SCORE</span>
+            <span className="text-2xl font-extrabold text-foreground">{stock.kScore}</span>
           </div>
-          <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+          <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden">
             <div 
               className={clsx('h-full rounded-full k-score-bar', kScoreColor)}
               style={{ width: `${stock.kScore}%` }}
@@ -113,9 +113,9 @@ export default function StockCard({ stock, rank }: StockCardProps) {
         {/* RSI */}
         <div className="mb-5">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-500 uppercase tracking-wide font-semibold">RSI</span>
+            <span className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">RSI</span>
             <div className="flex items-center gap-2">
-              <span className="text-xl font-bold text-gray-700">{stock.rsi.toFixed(1)}</span>
+              <span className="text-xl font-bold text-foreground">{stock.rsi.toFixed(1)}</span>
               <span className={clsx(
                 'text-xs font-semibold px-2 py-0.5 rounded',
                 stock.rsi >= 30 && stock.rsi <= 70 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
@@ -129,7 +129,7 @@ export default function StockCard({ stock, rank }: StockCardProps) {
         {/* Risk/Reward Ratio - Grafisk */}
         <div className="mb-5">
           {/* Grafisk bar - Gevinst først (venstre/grønn), Risiko sist (høyre/rød) */}
-          <div className="flex gap-0.5 h-2.5 rounded-full overflow-hidden bg-gray-100 mb-3">
+          <div className="flex gap-0.5 h-2.5 rounded-full overflow-hidden bg-muted mb-3">
             <div 
               className="bg-emerald-500"
               style={{ width: `${((stock.gainPercent / stock.riskPercent) / (1 + (stock.gainPercent / stock.riskPercent))) * 100}%` }}
@@ -144,22 +144,22 @@ export default function StockCard({ stock, rank }: StockCardProps) {
           <div className="grid grid-cols-3 gap-2 items-start">
             {/* Gevinst */}
             <div>
-              <div className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">GEVINST</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1">GEVINST</div>
               <div className="text-base font-bold text-brand-emerald">+{stock.gainKr.toFixed(2)} kr</div>
               <div className="text-xs text-brand-emerald font-semibold">+{stock.gainPercent.toFixed(0)}%</div>
             </div>
             
             {/* Ratio i senter */}
             <div className="text-center">
-              <div className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">RATIO</div>
-              <div className="text-base font-semibold text-gray-400">
+              <div className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1">RATIO</div>
+              <div className="text-base font-semibold text-muted-foreground">
                 1:{(stock.gainPercent / stock.riskPercent).toFixed(2)}
               </div>
             </div>
             
             {/* Risiko */}
             <div className="text-right">
-              <div className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">RISIKO</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1">RISIKO</div>
               <div className="text-base font-bold text-brand-rose">-{stock.riskKr.toFixed(2)} kr</div>
               <div className="text-xs text-brand-rose font-semibold">-{stock.riskPercent.toFixed(1)}%</div>
             </div>
@@ -167,8 +167,8 @@ export default function StockCard({ stock, rank }: StockCardProps) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-          <span className="text-xs text-gray-500 uppercase tracking-wide font-semibold">TIDSHORISONT</span>
+        <div className="flex items-center justify-between pt-4 border-t border-border">
+          <span className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">TIDSHORISONT</span>
           <span className="text-base font-bold text-brand-emerald">{stock.timeHorizon}</span>
         </div>
       </div>

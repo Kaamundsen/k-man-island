@@ -45,16 +45,16 @@ export default function Sidebar() {
   const progressPercent = 45;
 
   return (
-    <div className="w-72 bg-surface dark:bg-dark-surface border-r border-surface-border dark:border-dark-border h-screen fixed left-0 top-0 flex flex-col">
+    <div className="w-72 bg-card border-r border-border h-screen fixed left-0 top-0 flex flex-col">
       {/* Logo */}
-      <div className="p-6 border-b border-surface-border dark:border-dark-border">
+      <div className="p-6 border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-brand-emerald flex items-center justify-center">
               <TrendingUp className="w-7 h-7 text-white" strokeWidth={2.5} />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-brand-slate dark:text-white">K-man Island</h1>
+              <h1 className="text-xl font-bold text-foreground">K-man Island</h1>
             </div>
           </div>
         </div>
@@ -74,8 +74,8 @@ export default function Sidebar() {
                   className={clsx(
                     'flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all',
                     isActive
-                      ? 'bg-brand-slate dark:bg-brand-emerald text-white shadow-md'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-border hover:text-brand-slate dark:hover:text-white'
+                      ? 'bg-primary text-primary-foreground shadow-md'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   )}
                 >
                   <item.icon className="w-5 h-5" strokeWidth={2} />
@@ -89,7 +89,7 @@ export default function Sidebar() {
 
       {/* Målet Accordion - always shows progress bar */}
       <div className="px-4 pb-6 space-y-3">
-        <div className="bg-gradient-to-br from-brand-slate to-gray-800 dark:from-dark-border dark:to-dark-surface rounded-2xl overflow-hidden">
+        <div className="bg-gradient-to-br from-brand-slate to-slate-800 rounded-2xl overflow-hidden">
           <button
             onClick={() => setIsGoalOpen(!isGoalOpen)}
             className="w-full p-4 text-white hover:bg-white/10 transition-colors"
@@ -128,14 +128,12 @@ export default function Sidebar() {
           )}
         </div>
         
-        <div className="pt-3 flex justify-center">
-          <ThemeToggle />
-        </div>
+        <ThemeToggle />
       </div>
 
       {/* Footer */}
       <div className="px-4 pb-4">
-        <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
+        <p className="text-xs text-muted-foreground text-center">
           © 2026 K-man Island · Aero v1
         </p>
       </div>
