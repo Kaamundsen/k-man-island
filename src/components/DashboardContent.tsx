@@ -8,10 +8,13 @@ import StockCardOriginal from '@/components/StockCardOriginal';
 import FilterBar, { MarketFilter, StrategyFilter } from '@/components/FilterBar';
 import MarketStatus from '@/components/MarketStatus';
 import { Stock } from '@/lib/types';
-import { TrendingUp, TrendingDown, Palette, AlertCircle, ChevronRight, LayoutGrid, List, Layers, Minus } from 'lucide-react';
+import { TrendingUp, TrendingDown, Palette, AlertCircle, ChevronRight, LayoutGrid, List, Layers, Minus, RefreshCcw, Loader2 } from 'lucide-react';
 
 interface DashboardContentProps {
   initialStocks: Stock[];
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
+  lastUpdated?: string;
 }
 
 // Beregn en sammensatt score for å rangere aksjer
@@ -55,7 +58,7 @@ const calculateCompositeScore = (stock: Stock, prioritizeInsider: boolean = fals
 
 type ViewMode = 'cards-and-list' | 'list-only' | 'cards-only';
 
-export default function DashboardContent({ initialStocks }: DashboardContentProps) {
+export default function DashboardContent({ initialStocks, onRefresh, isRefreshing, lastUpdated }: DashboardContentProps) {
   const [marketFilter, setMarketFilter] = useState<MarketFilter>('ALLE');
   const [strategyFilter, setStrategyFilter] = useState<StrategyFilter>('ALLE');
   const [useOriginalDesign, setUseOriginalDesign] = useState(false);
@@ -178,18 +181,44 @@ export default function DashboardContent({ initialStocks }: DashboardContentProp
           <MarketStatus />
         </div>
         
-        {/* Bottom row: Last updated + Signals */}
+        {/* Bottom row: Last updated + Refresh + Signals */}
         <div className="flex items-center justify-between">
-          <p className="text-gray-500 text-sm">
-            Sist oppdatert: {new Date().toLocaleDateString('nb-NO', { 
-              weekday: 'long', 
-              day: 'numeric', 
-              month: 'long', 
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
-          </p>
+          <div className="flex items-center gap-4">
+            <p className="text-gray-500 text-sm">
+              Sist oppdatert: {lastUpdated 
+                ? new Date(lastUpdated).toLocaleDateString('nb-NO', { 
+                    weekday: 'long', 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })
+                : new Date().toLocaleDateString('nb-NO', { 
+                    weekday: 'long', 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })
+              }
+            </p>
+            {onRefresh && (
+              <button
+                onClick={onRefresh}
+                disabled={isRefreshing}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-brand-slate bg-gray-100 hover:bg-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isRefreshing ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RefreshCcw className="w-4 h-4" />
+                )}
+                {isRefreshing ? 'Oppdaterer...' : 'Oppdater nå'}
+              </button>
+            )}
+          </div>
           
           {/* Kompakte signaler */}
           <div className="flex items-center gap-4">

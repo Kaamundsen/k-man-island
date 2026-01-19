@@ -1,7 +1,6 @@
 import { Suspense } from 'react';
-import DashboardContent from '@/components/DashboardContent';
-import { fetchAllStocksWithKMomentum } from '@/lib/api/stock-data-v2';
-import { fetchLiveStockData } from '@/lib/api/stock-data';
+import DashboardClient from '@/components/DashboardClient';
+import { fetchAllStocksWithKMomentum, fetchLiveStockData } from '@/lib/api/stock-data';
 import { mockStocks } from '@/lib/mock-data';
 
 // Disable caching for now - always fetch fresh data
@@ -56,11 +55,12 @@ export default async function Home() {
     stocks = mockStocks;
   }
 
-  console.log(`✅ Loaded ${stocks.length} stocks for dashboard`);
+  const timestamp = new Date().toISOString();
+  console.log(`✅ Loaded ${stocks.length} stocks for dashboard at ${timestamp}`);
 
   return (
     <Suspense fallback={<DashboardLoading />}>
-      <DashboardContent initialStocks={stocks} />
+      <DashboardClient initialStocks={stocks} initialTimestamp={timestamp} />
     </Suspense>
   );
 }

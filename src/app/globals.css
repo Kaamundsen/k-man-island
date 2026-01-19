@@ -4,10 +4,46 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
+/* Light mode (default) */
 :root {
   --foreground-rgb: 30, 41, 59;
   --background-start-rgb: 248, 250, 252;
   --background-end-rgb: 255, 255, 255;
+  
+  /* Surface tokens */
+  --surface: 255, 255, 255;
+  --surface-muted: 248, 250, 252;
+  --surface-border: 226, 232, 240;
+  
+  /* Text tokens */
+  --text-primary: 30, 41, 59;
+  --text-muted: 100, 116, 139;
+  
+  /* Scrollbar */
+  --scrollbar-track: #f1f5f9;
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb-hover: #94a3b8;
+}
+
+/* Dark mode */
+.dark {
+  --foreground-rgb: 229, 231, 235;
+  --background-start-rgb: 17, 24, 39;
+  --background-end-rgb: 11, 15, 25;
+  
+  /* Surface tokens */
+  --surface: 11, 15, 25;
+  --surface-muted: 17, 24, 39;
+  --surface-border: 31, 41, 55;
+  
+  /* Text tokens */
+  --text-primary: 229, 231, 235;
+  --text-muted: 156, 163, 175;
+  
+  /* Scrollbar */
+  --scrollbar-track: #1f2937;
+  --scrollbar-thumb: #374151;
+  --scrollbar-thumb-hover: #4b5563;
 }
 
 body {
@@ -28,17 +64,17 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: var(--scrollbar-track);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* K-Score progress bar animation */

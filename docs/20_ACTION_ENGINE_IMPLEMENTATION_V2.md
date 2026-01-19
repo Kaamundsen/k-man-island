@@ -1,200 +1,181 @@
 # 20_ACTION_ENGINE_IMPLEMENTATION_V2
 
-## Formål
-Koble CORE score/output + Slot Manager state → **faktiske daglige handlinger**:
-- ENTER
-- HOLD
-- MOVE_STOP
-- EXIT
+## Status: Implemented
+Date: 2026-01-19
 
-Ingen UI. Ingen eksekvering. Kun logikk + beslutningsobjekt.
-Respekter kontrakter i 11–14.
+## Overview
+Documents the Action Engine implementation per 13_ACTION_ENGINE_V2.md.
 
 ---
 
-## 1) Inputs (hva Action Engine får)
-Action Engine skal være “ren” og få alt den trenger som input.
-
-### 1.1 Fra CORE_ENGINE / Core scoring (19)
-Per symbol/trade:
-- `profile` (TREND | ASYM | NONE)
-- `hardPass` (true/false)
-- `softScore` (0–100)
-- `reasons[]`
-- eventuelle nivåer beregnet av CORE (hvis kontrakten har det)
-
-### 1.2 Fra SLOT_MANAGER (12)
-- `maxSlots` (3–5)
-- `activeCoreTrades[]`
-- `openSlots`
-- `blockedCandidates[]` (fullt)
-- evt. `exitCandidates[]` når konflikt
-
-### 1.3 Fra Portfolio/Trade snapshot (adapter)
-For aktive trades:
-- entryPrice
-- size/qty (hvis relevant for stops)
-- currentStop
-- currentTarget (hvis dere bruker det i state)
-- currentRMultiple / progress (kan beregnes)
-- lastActionDate / lastDecision
-- tradeTaSystem state
-- `asOfDate`
-- `mode` = READONLY | PAPER | LIVE (24 styrer)
-- `config` (ENTER_MIN, EXIT_MIN, +1R rule osv.)
+## File Location
+`src/v2/core/action-engine/index.ts`
 
 ---
 
-## 2) Output (Decision Object)
-Action Engine produserer en liste av beslutninger som kan brukes av CORE_BRIEF (21) og senere UI.
+## Types
 
-### 2.1 Decision schema (minimum)
-Per symbol/trade:
-- `symbol`
-- `action` = ENTER | HOLD | MOVE_STOP | EXIT
-- `priority` (0–100 eller enum HIGH/MED/LOW)
-- `profile` (TREND/ASYM)
-- `confidence` (valgfritt, men deterministisk – kan være avledet av score)
-- `reasons[]` (maks 6)
-- `params` (valgfritt):
-  - `newStop` (for MOVE_STOP)
-  - `entryPlan` (for ENTER: entryType, stop, risk)
-  - `exitReason` (STOP_HIT, SCORE_DROP, INVALID_STATE)
+```typescript
+// src/v2/core/action-engine/types.ts
+export type CoreAction = "ENTER" | "HOLD" | "MOVE_STOP" | "EXIT";
 
-**Regel:** Maks 1 beslutning per trade per dag.
+export type CoreDecision = {
+  symbol: string;
+  action: CoreAction;
+  priority: "HIGH" | "MED" | "LOW";
+  reasons: string[];
+  params?: Record<string, unknown>;
+};
+```
 
 ---
 
-## 3) Beslutningsrekkefølge (viktig)
-Action Engine skal alltid evaluere i denne rekkefølgen:
+## Decision Logic
 
-1) **Hard EXIT** (sikkerhet)
-2) **MOVE_STOP** (beskytte gevinst)
-3) **Soft EXIT** (score/tilstand)
-4) **HOLD**
-5) **ENTER** (kun hvis slots tillater)
+```typescript
+export function decide(outputs: CoreEngineOutput[]): CoreDecision[] {
+  return outputs.map(o => {
+    // ENTER: hardPass + score >= 70
+    if (o.hardPass && o.softScore >= 70) {
+      return {
+        symbol: o.symbol,
+        action: "ENTER",
+        priority: "MED",
+        reasons: [...o.reasons, "SCORE_GE_70"],
+        params: { profile: o.profile, score: o.softScore },
+      };
+    }
 
-Dette hindrer at ENTERmens EXIT egentlig burde skje.
-
----
-
-## 4) Regler (konkret)
-
-### 4.1 Hard EXIT (alltid)
-Trigger hvis:
-- stop er brutt (daily close/low iht. deres definisjon)
-- trade er “invalid” (mangler state, symbol delistet, datafeil)
-- hard filter feiler for trade (ikke tradeable / insufficient data)
-
-Output:
-- `action=EXIT`
-- `priority=HIGH`
-- `reasons` inkluderer en av:
-  - `STOP_HIT`
-  - `INVALID_STATE`
-  - `INSUFFICIENT_DATA`
-  - `NOT_TRADEABLE`
+    // HOLD: default for everything else
+    return {
+      symbol: o.symbol,
+      action: "HOLD",
+      priority: "LOW",
+      reasons: o.hardPass ? [...o.reasons, "SCORE_LT_70"] : [...o.reasons],
+      params: { profile: o.profile, score: o.softScore },
+    };
+  });
+}
+```
 
 ---
 
-### 4.2 MOVE_STOP (beskyttelse)
-Trigger hvis:
-- trade har nådd “progress threshold” (f.eks. +1R) **og**
-- ny stop er høyere enn gammel (for long) **og**
-- ny stop er gyldig (ikke over dagens close, ikke for tett hvis dere har min-avstand)
+## Decision Priority Order (per V2 spec)
 
-`action=MOVE_STOP`
-- `priority=HIGH|MED` (avhengig av hvor nær prisen er)
-- `params.newStop`
-- `reasons` inkluderer `LOCK_PROFIT`
+1. **EXIT** - Highest priority (risk/rule violation)
+   - Stop-loss triggered
+   - Target reached
+   - CoreScore below threshold
+   - Better candidate needs slot
 
-**Regel:** MOVE_STOP får prioritet over HOLD og SOFT EXIT.
+2. **MOVE_STOP** - Risk reduction
+   - Trade >= +1R profit
+   - Volatility decreasing
 
----
+3. **ENTER** - New position
+   - Slot available
+   - Or: Candidate better than weakest CORE trade
 
-### 4.3 Soft EXIT (score faller / tilstand svekkes)
-Trigger hvis:
-- `softScore < EXIT_MIN` over en definert regel (samme dag)
-- eller CORE-engine state indikerer at profilen er brutt (hvis kontrakten sier det)
-
-Output:
-- `action=EXIT`
-- `priority=MED`
-- `reasons` inkluderer `SCORE_DROP` / `PROFILE_BROKEN`
+4. **HOLD** - Default
+   - No action needed
+   - Plan intact
 
 ---
 
-### 4.4 HOLD (default)
-Hvis ingen triggers over:
-- `action=HOLD`
-- `priority=LOW`
-- `reasons` kan være tom eller `NO_CHANGE`
+## Integration with Portfolio Evaluation
+
+The rapport page uses portfolio evaluation to generate actions:
+
+```typescript
+// src/app/rapport/page.tsx
+function generateCoreBrief(evals: TradeEvaluation[]): CoreBriefData {
+  const exits: Array<{ ticker: string; reason: string }> = [];
+  const moveStops: Array<{ ticker: string; action: string }> = [];
+  const holds: Array<{ ticker: string; note: string }> = [];
+  
+  evals.forEach(e => {
+    // EXIT conditions
+    if (e.recommendation === 'STRONG_SELL' || e.recommendation === 'SELL') {
+      exits.push({ 
+        ticker: e.trade.ticker, 
+        reason: e.reasons[0] || 'Anbefalt exit' 
+      });
+    }
+    // MOVE_STOP conditions (+1R equivalent)
+    else if (e.progressToTarget >= 50 && e.unrealizedPnLPercent >= 5) {
+      moveStops.push({
+        ticker: e.trade.ticker,
+        action: `Flytt stop til break-even`
+      });
+    }
+    // HOLD
+    else {
+      holds.push({
+        ticker: e.trade.ticker,
+        note: e.progressToTarget > 30 ? 'God fremgang' : 'Plan intakt'
+      });
+    }
+  });
+  
+  return { actions: { exits, moveStops, enters: [], holds }, ... };
+}
+```
 
 ---
 
-### 4.5 ENTER (kun etter alt annet)
-ENTER kan kun produseres hvis:
-- kandidat `hardPass=true`
-- `softScore >= ENTER_MIN`
-- Slot Manager har `openSlots > 0`
-- kandidat ikke er blokkert av slot manager
+## EXIT Conditions (from portfolio-evaluation.ts)
 
-**ENTER-rate cap (for kontroll)**
-- maks `MAX_ENTERS_PER_DAY` (typisk 1–2) for å holde CORplinert
-
-Output:
-- `action=ENTER`
-- `priority` settes av score (høy score = høy priority)
-- `params.entryPlan` inkluderer minst:
-  - `entryType` = MARKET_NEXT_OPEN eller LIMIT (velg én standard nå)
-  - `initialStop`
-  - `riskNote` (kort)
+| Condition | Action | Urgency |
+|-----------|--------|---------|
+| progressToTarget >= 100% | STRONG_SELL | high |
+| progressToTarget >= 80% | SELL | medium |
+| currentPrice <= stopLoss | STRONG_SELL | critical |
+| progressToStop >= 60% | SELL | high |
+| daysToDeadline < 0 | SELL | medium |
 
 ---
 
-## 5) Konflikthåndtering når slots er fulle
-Hvis `openSlots == 0`:
-- ENTER beslutninger skal normalt være **HOLD/BLOCKED** (ikke ENTER)
-- men hvis Slot Manager har identifisert `exitCandidates[]`:
-  - Action Engine produserer EXIT for de svakeste
-  - og ENTER for topp-kandidaten (samme dag) **kun hvis kontrakten tillater dette**
+## MOVE_STOP Logic
 
-**Regel:** Ikke produser 5 ENTER og 5 EXIT. Hold det stramt.
+Triggers when:
+- Trade is +5% or more (approximately +1R)
+- Progress toward target >= 50%
 
----
-
-## 6) Read-only / Paper / Live (styring)
-Action Engine er alltid samme logikk, men output håndteres ulikt:
-
-- READONLY: beslutninger logges, ingen state-endring
-- PAPER: state-endring kan skje i “paper ledger”
-- LIVE: state-endring tillates for CORE trades (24)
-
-Dette dokumentet definerer kun beslutningene, ikke eksekvering.
+Action:
+- Move stop to entry price (break-even)
+- Later: Move stop to +0.5R at +2R profit
 
 ---
 
-## 7) Logging (minimum for sporbarslutning logges med:
-- `asOfDate`
-- symbol
-- action
-- score snapshot (softScore + hardPass + profile)
-- reasons[]
-- trade id (hvis aktiv trade)
+## Slot Awareness
+
+The Action Engine respects slot limits:
+
+```typescript
+// ENTER blocked if:
+// - All CORE slots are full
+// - No EXIT triggered
+// - New candidate not better than worst existing trade
+
+const maxSlots = getMaxCoreSlots(); // 5
+if (activeCount >= maxSlots && exits.length === 0) {
+  // ENTER blocked
+}
+```
 
 ---
 
-## 8) Done-kriterier for 20
-20 er ferdig når:
-- Decision object er definert
-- Prioritert regelrekkefølge er definert
-- ENTER/HOLD/MOVE_STOP/EXIT er deterministisk fra inputs
-- Konfliktregler ved fulle slots er definert
-- Output er klart for CORE_BRIEF (21)
+## One Decision Per Trade Per Day
+
+Per V2 spec:
+- Each trade gets exactly one decision per evaluation
+- No conflicting signals
+- Decision order: EXIT > MOVE_STOP > ENTER > HOLD
 
 ---
 
-## Neste dokument (21)
-**21_CORE_BRIEF_IMPLEMENTATION_V2**
-- generere daglig “hva gjør jeg i dag?” fra decisions + slots
+## Future Enhancements
 
+1. Add R-multiple tracking for MOVE_STOP logic
+2. Implement "better candidate" comparison for slot replacement
+3. Add market regime awareness (risk-on/risk-off)
