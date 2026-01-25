@@ -47,6 +47,7 @@ const WATCHLIST = [
 ];
 
 const STOCK_NAMES: Record<string, string> = {
+  // OBX / Top 50
   'EQNR.OL': 'Equinor ASA',
   'DNB.OL': 'DNB Bank ASA',
   'MOWI.OL': 'Mowi ASA',
@@ -58,42 +59,102 @@ const STOCK_NAMES: Record<string, string> = {
   'STB.OL': 'Storebrand ASA',
   'AKRBP.OL': 'Aker BP ASA',
   'SUBC.OL': 'Subsea 7 SA',
-  'KOG.OL': 'Kongsberg Gruppen',
+  'KOG.OL': 'Kongsberg Gruppen ASA',
   'SCATC.OL': 'Scatec ASA',
-  'GJF.OL': 'Gjensidige Forsikring',
+  'GJF.OL': 'Gjensidige Forsikring ASA',
   'NSKOG.OL': 'Norsk Skog ASA',
   'AKSO.OL': 'Aker Solutions ASA',
-  'MPCC.OL': 'MPC Container Ships',
+  'MPCC.OL': 'MPC Container Ships ASA',
   'TGS.OL': 'TGS ASA',
   'PGS.OL': 'PGS ASA',
   'REC.OL': 'REC Silicon ASA',
-  'NAPA.OL': 'Napier Energy',
+  'NAPA.OL': 'Napatech ASA',
   'XXL.OL': 'XXL ASA',
-  'AURG.OL': 'Aurubis AG',
-  'BEWI.OL': 'Bewi ASA',
+  'AURG.OL': 'Aurskog Sparebank',
+  'BEWI.OL': 'BEWI ASA',
   'VAR.OL': 'Vår Energi ASA',
   'OKEA.OL': 'OKEA ASA',
   'NEL.OL': 'Nel ASA',
-  'AFK.OL': 'Africa Energy Corp',
+  'AFK.OL': 'Arendals Fossekompani ASA',
   'AKER.OL': 'Aker ASA',
-  'BWO.OL': 'BW Offshore',
-  'FLNG.OL': 'Flex LNG',
-  'GOGL.OL': 'Golden Ocean Group',
+  'BWO.OL': 'BW Offshore Limited',
+  'FLNG.OL': 'Flex LNG Ltd',
+  'GOGL.OL': 'Golden Ocean Group Ltd',
   'HAFNI.OL': 'Hafnia Limited',
-  'HAVI.OL': 'Havila Shipping',
+  'HAVI.OL': 'Havila Shipping ASA',
   'KAHOT.OL': 'Kahoot! ASA',
-  'LSG.OL': 'Lerøy Seafood Group',
+  'LSG.OL': 'Lerøy Seafood Group ASA',
   'MULTI.OL': 'Multiconsult ASA',
-  'NAS.OL': 'Norwegian Air Shuttle',
-  'NONG.OL': 'Noreco ASA',
-  'NOD.OL': 'Nordic Semiconductor',
-  'NRS.OL': 'Norsk Renewables',
+  'NAS.OL': 'Norwegian Air Shuttle ASA',
+  'NONG.OL': 'Norwegian Energy Company ASA',
+  'NOD.OL': 'Nordic Semiconductor ASA',
+  'NRS.OL': 'Norway Royal Salmon ASA',
   'PARB.OL': 'Pareto Bank ASA',
   'RECSI.OL': 'REC Silicon ASA',
   'SDRL.OL': 'Seadrill Limited',
-  'SOFF.OL': 'Schibsted ASA',
-  'WSTEP.OL': 'Wallenius Wilhelmsen',
+  'SOFF.OL': 'Solstad Offshore ASA',
+  'WSTEP.OL': 'Wallenius Wilhelmsen ASA',
   'WAWI.OL': 'Wallenius Wilhelmsen ASA',
+  'BAKKA.OL': 'Bakkafrost P/F',
+  'COOL.OL': 'Cool Company Ltd',
+  'BORR.OL': 'Borr Drilling Limited',
+  // 51-100
+  'AGAS.OL': 'Avance Gas Holding Ltd',
+  'ARCH.OL': 'Archer Limited',
+  'AUTO.OL': 'Autostore Holdings Ltd',
+  'BELCO.OL': 'Belships ASA',
+  'BWLPG.OL': 'BW LPG Limited',
+  'CADLR.OL': 'Cadeler ASA',
+  'CRAYN.OL': 'Crayon Group Holding ASA',
+  'DNO.OL': 'DNO ASA',
+  'DOF.OL': 'DOF ASA',
+  'ELMRA.OL': 'Elmera Group ASA',
+  'EPR.OL': 'Europris ASA',
+  'FJORD.OL': 'Fjordkraft Holding ASA',
+  'FRO.OL': 'Frontline plc',
+  'HAUTO.OL': 'Höegh Autoliners ASA',
+  'HBC.OL': 'Huddlestock Fintech ASA',
+  'IDEX.OL': 'IDEX Biometrics ASA',
+  'INSR.OL': 'Insr Insurance Group ASA',
+  'KIT.OL': 'Kitron ASA',
+  'KVAER.OL': 'Kværner ASA',
+  'LINK.OL': 'Link Mobility Group Holding ASA',
+  'MEDI.OL': 'Medistim ASA',
+  'MING.OL': 'Mowi ASA',
+  'NANO.OL': 'NANO ASA',
+  'NEXT.OL': 'NEXT Biometrics Group ASA',
+  'NOM.OL': 'Nordic Mining ASA',
+  'NRC.OL': 'NRC Group ASA',
+  'OLT.OL': 'Olav Thon Eiendomsselskap ASA',
+  'OTS.OL': 'Otovo ASA',
+  'PHO.OL': 'Photocure ASA',
+  'PLAY.OL': 'Play Magnus AS',
+  'PROT.OL': 'Protector Forsikring ASA',
+  'PSKY.OL': 'PetroNor E&P Ltd',
+  'RAKP.OL': 'Rakkestad Sparebank',
+  'RING.OL': 'SpareBank 1 Ringerike Hadeland',
+  'SASNO.OL': 'SAS AB',
+  'SCHB.OL': 'Sparebanken Sør',
+  'SCHA.OL': 'Sparebank 1 Østlandet',
+  'SNI.OL': 'Stolt-Nielsen Limited',
+  'SRBNK.OL': 'SpareBank 1 SR-Bank ASA',
+  'TECH.OL': 'Techstep ASA',
+  'TOM.OL': 'Tomra Systems ASA',
+  'ULTI.OL': 'Ultimovacs ASA',
+  'VEI.OL': 'Veidekke ASA',
+  'VOW.OL': 'Vow ASA',
+  'WWI.OL': 'Wilh. Wilhelmsen Holding ASA',
+  'ZAL.OL': 'Zalaris ASA',
+  'ZWIPE.OL': 'Zwipe AS',
+  'B2H.OL': 'B2Holding ASA',
+  'AEGA.OL': 'Aega ASA',
+  // Additional commonly traded
+  'SATS.OL': 'Sats ASA',
+  'TRMED.OL': 'TietoEVRY Oyj',
+  'ENTRA.OL': 'Entra ASA',
+  'ATEA.OL': 'Atea ASA',
+  'AKVA.OL': 'AKVA Group ASA',
+  'BOUV.OL': 'Bouvet ASA',
 };
 
 // USA Stock Names (S&P 100 + NASDAQ 100)
@@ -481,15 +542,27 @@ function convertToStock(quote: YahooQuote): Stock {
   };
 }
 
+// In-memory cache for stock data
+let stockCache: { data: Stock[]; timestamp: number } | null = null;
+const CACHE_TTL_MS = 60 * 1000; // 60 seconds cache
+
 /**
  * CANONICAL: Fetch live stock data for the full watchlist (Oslo + USA)
  * Returns sorted list by K-Score
+ * Uses in-memory cache to avoid redundant API calls
  * 
  * @param limit - Optional limit on number of stocks to return (default: all)
  * @param market - Optional filter: 'OSLO', 'USA', or undefined for all
  */
 export async function fetchLiveStockData(limit?: number, market?: 'OSLO' | 'USA'): Promise<Stock[]> {
   try {
+    // Check cache first (only for full fetches without market filter)
+    if (!market && stockCache && (Date.now() - stockCache.timestamp) < CACHE_TTL_MS) {
+      console.log(`📦 Using cached stock data (${stockCache.data.length} stocks, age: ${Math.round((Date.now() - stockCache.timestamp) / 1000)}s)`);
+      const cached = stockCache.data;
+      return limit && limit > 0 ? cached.slice(0, limit) : cached;
+    }
+    
     // Determine which lists to fetch
     const osloList = market === 'USA' ? [] : getFullUniverse();
     const usaList = market === 'OSLO' ? [] : USA_CORE_STOCKS;
@@ -523,6 +596,11 @@ export async function fetchLiveStockData(limit?: number, market?: 'OSLO' | 'USA'
       .sort((a, b) => b.kScore - a.kScore);
     
     console.log(`✅ Fetched ${stocks.length} stocks from Yahoo Finance (Oslo: ${stocks.filter(s => s.market === 'OSLO').length}, USA: ${stocks.filter(s => s.market === 'USA').length})`);
+    
+    // Update cache (only for full fetches)
+    if (!market) {
+      stockCache = { data: stocks, timestamp: Date.now() };
+    }
     
     if (limit && limit > 0) {
       return stocks.slice(0, limit);
