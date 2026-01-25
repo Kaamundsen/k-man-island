@@ -662,7 +662,7 @@ export default function RapportPage() {
                         'px-2 py-1 rounded text-xs font-bold',
                         e.recommendation === 'STRONG_SELL' ? 'bg-red-600 text-white' : e.recommendation === 'SELL' ? 'bg-orange-500 text-white' : 'bg-green-500 text-white'
                       )}>
-                        {e.recommendation === 'STRONG_SELL' ? 'SELG' : e.recommendation === 'SELL' ? 'SELG' : e.recommendation}
+                        {e.recommendation === 'STRONG_SELL' ? 'SELG NÅ' : e.recommendation === 'SELL' ? 'SELG' : e.recommendation}
                       </span>
                     </div>
                     <ul className="space-y-1">
