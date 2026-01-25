@@ -39,7 +39,7 @@ export default function FilterBar({ onMarketChange, onStrategyChange, mineCount 
             : 'bg-card text-muted-foreground border border-border hover:bg-muted'
         )}
       >
-        ALL
+        Alle
       </button>
       <button
         onClick={() => handleMarketClick('OSLO')}

@@ -139,7 +139,7 @@ export default function ArticleTipsManager() {
 
       {/* Filter */}
       <div className="flex gap-2 flex-wrap">
-        {(['alle', 'Investtech', 'E24', 'DN', 'Finansavisen', 'Newsweb', 'Annet'] as const).map(source => (
+        {(['alle', 'Investtech', 'E24', 'DN', 'Finansavisen', 'Investornytt', 'Newsweb', 'Annet'] as const).map(source => (
           <button
             key={source}
             onClick={() => setFilterSource(source)}
@@ -148,6 +148,8 @@ export default function ArticleTipsManager() {
               filterSource === source
                 ? source === 'E24'
                   ? 'bg-black text-white'
+                  : source === 'Investornytt'
+                  ? 'bg-[#1a365d] text-white'
                   : 'bg-brand-emerald text-white'
                 : 'bg-muted text-muted-foreground hover:bg-muted/80'
             )}
@@ -186,6 +188,7 @@ export default function ArticleTipsManager() {
                         article.source === 'DN' ? 'bg-[#1e1e5c] text-white' :
                         article.source === 'Finansavisen' ? 'bg-[#2b5797] text-white font-bold' :
                         article.source === 'Investtech' ? 'bg-[#f5f5f5] text-[#5a5a5a] dark:bg-[#3a3a4a] dark:text-gray-200' :
+                        article.source === 'Investornytt' ? 'bg-[#1a365d] text-white' :
                         article.source === 'Newsweb' ? 'bg-[#003366] text-white' :
                         'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
                       )}>
@@ -412,6 +415,7 @@ function AddArticleModal({
                 <option value="E24">E24</option>
                 <option value="DN">DN</option>
                 <option value="Finansavisen">Finansavisen</option>
+                <option value="Investornytt">Investornytt</option>
                 <option value="Newsweb">Newsweb</option>
                 <option value="Annet">Annet</option>
               </select>

@@ -443,13 +443,35 @@ export default function PorteføljePage() {
       <div className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-        <div>
+        <div className="flex items-center gap-4">
           <h1 className="text-4xl font-extrabold text-foreground tracking-tight">
             Portefølje
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Administrer dine trades og porteføljer
-          </p>
+          {lastUpdated && (
+            <p className="text-muted-foreground text-sm">
+              Sist oppdatert: {lastUpdated.toLocaleString('nb-NO', { 
+                weekday: 'long', 
+                day: 'numeric', 
+                month: 'long', 
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </p>
+          )}
+          <button
+            onClick={handleRefreshQuotes}
+            disabled={quotesLoading}
+            className={clsx(
+              'flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors',
+              quotesLoading 
+                ? 'bg-muted text-muted-foreground cursor-not-allowed' 
+                : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30'
+            )}
+          >
+            <RefreshCw className={clsx('w-3.5 h-3.5', quotesLoading && 'animate-spin')} />
+            {quotesLoading ? 'Oppdaterer...' : 'Oppdater nå'}
+          </button>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
           <button
@@ -607,125 +629,116 @@ export default function PorteføljePage() {
         </div>
       </div>
 
-      {/* Date Filter Bar - Visible when not on closed tab */}
-      {selectedPortfolioId !== 'closed' && (
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-muted-foreground">Periode:</span>
-            <div className="relative date-picker-container">
-              <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
-                <button
-                  type="button"
-                  onClick={() => { setDateFilter('all'); setShowDatePicker(false); }}
-                  className={clsx(
-                    'px-2 py-1 text-xs font-semibold rounded-md transition-all',
-                    dateFilter === 'all' 
-                      ? 'bg-card text-foreground shadow-sm' 
-                      : 'text-muted-foreground hover:text-foreground'
-                  )}
-                >
-                  Alle
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setDateFilter('today'); setShowDatePicker(false); }}
-                  className={clsx(
-                    'px-2 py-1 text-xs font-semibold rounded-md transition-all',
-                    dateFilter === 'today' 
-                      ? 'bg-card text-foreground shadow-sm' 
-                      : 'text-muted-foreground hover:text-foreground'
-                  )}
-                >
-                  I dag
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setDateFilter('week'); setShowDatePicker(false); }}
-                  className={clsx(
-                    'px-2 py-1 text-xs font-semibold rounded-md transition-all',
-                    dateFilter === 'week' 
-                      ? 'bg-card text-foreground shadow-sm' 
-                      : 'text-muted-foreground hover:text-foreground'
-                  )}
-                >
-                  Uke
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setDateFilter('month'); setShowDatePicker(false); }}
-                  className={clsx(
-                    'px-2 py-1 text-xs font-semibold rounded-md transition-all',
-                    dateFilter === 'month' 
-                      ? 'bg-card text-foreground shadow-sm' 
-                      : 'text-muted-foreground hover:text-foreground'
-                  )}
-                >
-                  Måned
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setDateFilter('custom'); setShowDatePicker(true); }}
-                  className={clsx(
-                    'px-2 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1',
-                    dateFilter === 'custom' 
-                      ? 'bg-card text-foreground shadow-sm' 
-                      : 'text-muted-foreground hover:text-foreground'
-                  )}
-                >
-                  <Calendar className="w-3 h-3" />
-                </button>
-              </div>
-              
-              {/* Custom date picker dropdown */}
-              {showDatePicker && dateFilter === 'custom' && (
-                <div className="absolute top-full left-0 mt-2 p-3 bg-card border border-border rounded-xl shadow-lg z-50 min-w-[220px]">
-                  <div className="space-y-2">
-                    <div>
-                      <label className="block text-xs font-medium text-muted-foreground mb-1">Fra</label>
-                      <input
-                        type="date"
-                        value={customDateStart}
-                        onChange={(e) => setCustomDateStart(e.target.value)}
-                        className="w-full px-2 py-1.5 text-sm rounded-lg border border-border bg-background focus:border-brand-emerald focus:ring-1 focus:ring-brand-emerald/20 outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-muted-foreground mb-1">Til</label>
-                      <input
-                        type="date"
-                        value={customDateEnd}
-                        onChange={(e) => setCustomDateEnd(e.target.value)}
-                        className="w-full px-2 py-1.5 text-sm rounded-lg border border-border bg-background focus:border-brand-emerald focus:ring-1 focus:ring-brand-emerald/20 outline-none"
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowDatePicker(false)}
-                      className="w-full mt-2 px-3 py-1.5 text-xs font-semibold bg-brand-emerald text-white rounded-lg hover:bg-brand-emerald/90 transition-colors"
-                    >
-                      Bruk
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-          {dateFilter !== 'all' && (
-            <span className="text-xs text-muted-foreground">
-              Filtrerer på {dateFilter === 'today' ? 'i dag' : dateFilter === 'week' ? 'siste uke' : dateFilter === 'month' ? 'siste måned' : 'egendefinert periode'}
-            </span>
-          )}
-        </div>
-      )}
-
       {/* Active Trades - hide when viewing closed trades tab */}
-      {selectedPortfolioId !== 'closed' && activeTrades.length > 0 ? (
+      {selectedPortfolioId !== 'closed' && (activeTrades.length > 0 || (selectedPortfolioId !== 'all' && filteredClosedTrades.length > 0)) ? (
         <div className="mb-8">
+          {/* Only show Aktive Trades header if there are active trades */}
+          {activeTrades.length > 0 && (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <h2 className="text-lg sm:text-xl font-bold text-foreground flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-brand-emerald" />
-              Aktive Trades
-            </h2>
+            <div className="flex items-center gap-4">
+              <h2 className="text-lg sm:text-xl font-bold text-foreground flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-brand-emerald" />
+                Aktive Trades
+              </h2>
+              {/* Date Filter - inline with header */}
+              <div className="relative date-picker-container">
+                <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => { setDateFilter('all'); setShowDatePicker(false); }}
+                    className={clsx(
+                      'px-2 py-1 text-xs font-semibold rounded-md transition-all',
+                      dateFilter === 'all' 
+                        ? 'bg-card text-foreground shadow-sm' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    Alle
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setDateFilter('today'); setShowDatePicker(false); }}
+                    className={clsx(
+                      'px-2 py-1 text-xs font-semibold rounded-md transition-all',
+                      dateFilter === 'today' 
+                        ? 'bg-card text-foreground shadow-sm' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    I dag
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setDateFilter('week'); setShowDatePicker(false); }}
+                    className={clsx(
+                      'px-2 py-1 text-xs font-semibold rounded-md transition-all',
+                      dateFilter === 'week' 
+                        ? 'bg-card text-foreground shadow-sm' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    Uke
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setDateFilter('month'); setShowDatePicker(false); }}
+                    className={clsx(
+                      'px-2 py-1 text-xs font-semibold rounded-md transition-all',
+                      dateFilter === 'month' 
+                        ? 'bg-card text-foreground shadow-sm' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    Måned
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setDateFilter('custom'); setShowDatePicker(true); }}
+                    className={clsx(
+                      'px-2 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1',
+                      dateFilter === 'custom' 
+                        ? 'bg-card text-foreground shadow-sm' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    <Calendar className="w-3 h-3" />
+                  </button>
+                </div>
+                
+                {/* Custom date picker dropdown */}
+                {showDatePicker && dateFilter === 'custom' && (
+                  <div className="absolute top-full left-0 mt-2 p-3 bg-card border border-border rounded-xl shadow-lg z-50 min-w-[220px]">
+                    <div className="space-y-2">
+                      <div>
+                        <label className="block text-xs font-medium text-muted-foreground mb-1">Fra</label>
+                        <input
+                          type="date"
+                          value={customDateStart}
+                          onChange={(e) => setCustomDateStart(e.target.value)}
+                          className="w-full px-2 py-1.5 text-sm rounded-lg border border-border bg-background focus:border-brand-emerald focus:ring-1 focus:ring-brand-emerald/20 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-muted-foreground mb-1">Til</label>
+                        <input
+                          type="date"
+                          value={customDateEnd}
+                          onChange={(e) => setCustomDateEnd(e.target.value)}
+                          className="w-full px-2 py-1.5 text-sm rounded-lg border border-border bg-background focus:border-brand-emerald focus:ring-1 focus:ring-brand-emerald/20 outline-none"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowDatePicker(false)}
+                        className="w-full mt-2 px-3 py-1.5 text-xs font-semibold bg-brand-emerald text-white rounded-lg hover:bg-brand-emerald/90 transition-colors"
+                      >
+                        Bruk
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
             <div className="flex flex-wrap items-center gap-2 sm:gap-4">
               {/* Strategi-filter */}
               {uniqueStrategies.length > 1 && (
@@ -790,26 +803,9 @@ export default function PorteføljePage() {
                 </button>
               </div>
               
-              {lastUpdated && (
-                <span className="text-xs text-muted-foreground">
-                  {lastUpdated.toLocaleTimeString('nb-NO')}
-                </span>
-              )}
-              <button
-                onClick={handleRefreshQuotes}
-                disabled={quotesLoading}
-                className={clsx(
-                  'flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors',
-                  quotesLoading 
-                    ? 'bg-muted text-muted-foreground cursor-not-allowed' 
-                    : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30'
-                )}
-              >
-                <RefreshCw className={clsx('w-3.5 h-3.5', quotesLoading && 'animate-spin')} />
-                {quotesLoading ? '...' : 'Oppdater'}
-              </button>
             </div>
           </div>
+          )}
           
           {/* Separate tabeller per strategi */}
           <div className="space-y-6">
@@ -818,8 +814,8 @@ export default function PorteføljePage() {
               const strategyClosedTrades = filteredClosedTrades.filter(t => t.strategyId === strategyId);
               
               // Skip hvis ingen relevante trades
-              // På spesifikk portefølje: vis hvis det finnes lukkede trades (selv uten aktive)
-              // På "Alle": vis kun hvis det finnes aktive trades
+              // På "Alle": vis kun hvis det finnes aktive trades (lukkede vises ikke på Alle)
+              // På spesifikk portefølje: vis hvis det finnes aktive eller lukkede trades
               if (selectedPortfolioId === 'all') {
                 if (strategyActiveTrades.length === 0) return null;
               } else {
@@ -1112,146 +1108,335 @@ export default function PorteføljePage() {
                   </div>
                   )}
                   
-                  {/* Lukkede Trades for denne strategien - egen tabell (kun når en spesifikk portefølje er valgt, ikke på Alle eller Lukkede tab) */}
-                  {strategyClosedTrades.length > 0 && selectedPortfolioId !== 'all' && selectedPortfolioId !== 'closed' && (
-                    <div className="mt-4 bg-card rounded-2xl border border-border overflow-x-auto">
-                      <div className="px-4 py-2 border-b border-border">
-                        <span className="text-sm font-medium text-muted-foreground">📦 Lukkede trades ({strategyClosedTrades.length})</span>
-                      </div>
-                      <table className="w-full min-w-[800px]">
-                        <colgroup>
-                          <col className="w-[14%]" />
-                          <col className="w-[14%]" />
-                          <col className="w-[8%]" />
-                          <col className="w-[12%]" />
-                          <col className="w-[22%]" />
-                          <col className="w-[12%]" />
-                          <col className="w-[8%]" />
-                          <col className="w-[10%]" />
-                        </colgroup>
-                        <thead className="bg-muted/50 border-b border-border">
-                          <tr>
-                            <th className="text-left px-4 py-2 text-xs font-bold text-muted-foreground uppercase">Ticker</th>
-                            <th className="text-left px-4 py-2 text-xs font-bold text-muted-foreground uppercase">Strategi</th>
-                            <th className="text-right px-4 py-2 text-xs font-bold text-muted-foreground uppercase">Antall</th>
-                            <th className="text-right px-4 py-2 text-xs font-bold text-muted-foreground uppercase">Inngang</th>
-                            <th className="text-center px-4 py-2 text-xs font-bold text-muted-foreground uppercase">Utgang</th>
-                            <th className="text-right px-4 py-2 text-xs font-bold text-muted-foreground uppercase">Resultat</th>
-                            <th className="text-center px-4 py-2 text-xs font-bold text-muted-foreground uppercase">Dager</th>
-                            <th className="text-center px-4 py-2 text-xs font-bold text-muted-foreground uppercase">Aksjon</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border">
-                          {strategyClosedTrades.map(trade => {
-                            const tradeStrategy = STRATEGIES[trade.strategyId];
-                            const daysHeld = trade.exitDate
-                              ? Math.floor((new Date(trade.exitDate).getTime() - new Date(trade.entryDate).getTime()) / (1000 * 60 * 60 * 24))
-                              : Math.floor((Date.now() - new Date(trade.entryDate).getTime()) / (1000 * 60 * 60 * 24));
-                            
-                            const exitPrice = trade.exitPrice || trade.entryPrice;
-                            const pnl = trade.realizedPnL || (exitPrice - trade.entryPrice) * trade.quantity;
-                            const pnlPercent = trade.realizedPnLPercent || ((exitPrice - trade.entryPrice) / trade.entryPrice) * 100;
-                            const isProfit = pnl >= 0;
-                            
-                            return (
-                              <tr key={trade.id} className="hover:bg-muted/50 transition-colors">
-                                <td className="px-4 py-3">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="font-medium text-foreground">{trade.ticker}</span>
-                                    {trade.notes && (
-                                      <div className="relative group/note">
-                                        <span className="text-amber-500 cursor-help">
-                                          <StickyNote className="w-3.5 h-3.5" />
-                                        </span>
-                                        <div className="absolute left-0 top-5 z-50 w-52 px-2 py-1.5 bg-card rounded-lg shadow-md opacity-0 invisible group-hover/note:opacity-100 group-hover/note:visible transition-all duration-150 pointer-events-none border border-border">
-                                          <p className="text-xs text-foreground">{trade.notes}</p>
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                  {trade.name && <div className="text-xs text-muted-foreground">{trade.name}</div>}
-                                </td>
-                                <td className="px-4 py-3">
-                                  <span 
-                                    className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold opacity-60"
-                                    style={{ backgroundColor: `${tradeStrategy?.color}20`, color: tradeStrategy?.color }}
-                                  >
-                                    {tradeStrategy?.emoji} {tradeStrategy?.shortName || trade.strategyId}
-                                  </span>
-                                </td>
-                                <td className="px-4 py-3 text-right text-foreground">{trade.quantity}</td>
-                                <td className="px-4 py-3 text-right">
-                                  <div className="text-foreground">{trade.entryPrice.toFixed(2)} kr</div>
-                                  <div className="text-xs text-muted-foreground">{new Date(trade.entryDate).toLocaleDateString('nb-NO')}</div>
-                                </td>
-                                <td className="px-4 py-3 text-center">
-                                  <div className="text-foreground font-medium">→ {exitPrice.toFixed(2)} kr</div>
-                                  <div className="text-xs text-muted-foreground">
-                                    {trade.exitDate ? new Date(trade.exitDate).toLocaleDateString('nb-NO') : '—'}
-                                    {trade.exitReason && <span className="ml-1">({trade.exitReason})</span>}
-                                  </div>
-                                </td>
-                                <td className="px-4 py-3 text-right">
-                                  {displayMode === 'percent' ? (
-                                    <>
-                                      <div className={clsx('font-bold', isProfit ? 'text-brand-emerald' : 'text-brand-rose')}>{isProfit ? '+' : ''}{pnlPercent.toFixed(1)}%</div>
-                                      <div className={clsx('text-xs', isProfit ? 'text-brand-emerald/70' : 'text-brand-rose/70')}>{isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</div>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <div className={clsx('font-bold', isProfit ? 'text-brand-emerald' : 'text-brand-rose')}>{isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</div>
-                                      <div className={clsx('text-xs', isProfit ? 'text-brand-emerald/70' : 'text-brand-rose/70')}>{isProfit ? '+' : ''}{pnlPercent.toFixed(1)}%</div>
-                                    </>
-                                  )}
-                                </td>
-                                <td className="px-4 py-3 text-center text-muted-foreground">{daysHeld}d</td>
-                                <td className="px-4 py-3">
-                                  <div className="flex items-center justify-center gap-1">
-                                    <button onClick={() => { setEditingTrade(trade); setIsAddModalOpen(true); }} className="p-1.5 text-muted-foreground hover:text-brand-emerald hover:bg-muted rounded-lg transition-colors" title="Rediger"><Edit className="w-4 h-4" /></button>
-                                    <button onClick={() => handleDeleteTrade(trade.id)} className="p-1.5 text-muted-foreground hover:text-brand-rose hover:bg-brand-rose/10 rounded-lg transition-colors" title="Slett"><Trash2 className="w-4 h-4" /></button>
-                                  </div>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                        {/* Subtotal for closed trades */}
-                        {(() => {
-                          const closedInvested = strategyClosedTrades.reduce((sum, t) => sum + (t.entryPrice * t.quantity), 0);
-                          const closedExitValue = strategyClosedTrades.reduce((sum, t) => sum + ((t.exitPrice || t.entryPrice) * t.quantity), 0);
-                          const closedRealizedPnl = strategyClosedTrades.reduce((sum, t) => sum + (t.realizedPnL || 0), 0);
-                          const closedPnlPercent = closedInvested > 0 ? (closedRealizedPnl / closedInvested) * 100 : 0;
-                          const isClosedProfit = closedRealizedPnl >= 0;
-                          
-                          return (
-                            <tfoot className="bg-card dark:bg-[hsl(var(--subtotal-bg))] border-t-2 border-border">
-                              <tr>
-                                <td className="px-4 py-3 font-bold text-card-foreground dark:text-[hsl(var(--subtotal-text))]">📦 Subtotal:</td>
-                                <td className="px-4 py-3"></td>
-                                <td className="px-4 py-3 text-right font-semibold text-card-foreground dark:text-[hsl(var(--subtotal-text))]">{strategyClosedTrades.length}</td>
-                                <td className="px-4 py-3 text-right font-semibold text-card-foreground dark:text-[hsl(var(--subtotal-text))]">{closedInvested.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</td>
-                                <td className="px-4 py-3 text-center font-semibold text-card-foreground dark:text-[hsl(var(--subtotal-text))]">{closedExitValue.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</td>
-                                <td className="px-4 py-3 text-right">
-                                  <div className={clsx('font-bold', isClosedProfit ? 'text-brand-emerald' : 'text-brand-rose')}>
-                                    {isClosedProfit ? '+' : ''}{closedPnlPercent.toFixed(1)}%
-                                  </div>
-                                  <div className={clsx('text-xs', isClosedProfit ? 'text-brand-emerald/70' : 'text-brand-rose/70')}>
-                                    {isClosedProfit ? '+' : ''}{closedRealizedPnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr
-                                  </div>
-                                </td>
-                                <td className="px-4 py-3"></td>
-                                <td className="px-4 py-3"></td>
-                              </tr>
-                            </tfoot>
-                          );
-                        })()}
-                      </table>
-                    </div>
-                  )}
                 </div>
               );
             })}
           </div>
+          
+          {/* Lukkede Trades Section - Separat seksjon med egen overskrift (kun på spesifikke porteføljer) */}
+          {selectedPortfolioId !== 'all' && selectedPortfolioId !== 'closed' && filteredClosedTrades.length > 0 && (
+            <div className="mt-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <div className="flex items-center gap-4">
+                  <h2 className="text-lg sm:text-xl font-bold text-foreground flex items-center gap-2">
+                    <Archive className="w-5 h-5 text-muted-foreground" />
+                    Lukkede Trades
+                  </h2>
+                  {/* Date Filter - inline with header */}
+                  <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => { setDateFilter('all'); setShowDatePicker(false); }}
+                      className={clsx(
+                        'px-2 py-1 text-xs font-semibold rounded-md transition-all',
+                        dateFilter === 'all' 
+                          ? 'bg-card text-foreground shadow-sm' 
+                          : 'text-muted-foreground hover:text-foreground'
+                      )}
+                    >
+                      Alle
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setDateFilter('today'); setShowDatePicker(false); }}
+                      className={clsx(
+                        'px-2 py-1 text-xs font-semibold rounded-md transition-all',
+                        dateFilter === 'today' 
+                          ? 'bg-card text-foreground shadow-sm' 
+                          : 'text-muted-foreground hover:text-foreground'
+                      )}
+                    >
+                      I dag
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setDateFilter('week'); setShowDatePicker(false); }}
+                      className={clsx(
+                        'px-2 py-1 text-xs font-semibold rounded-md transition-all',
+                        dateFilter === 'week' 
+                          ? 'bg-card text-foreground shadow-sm' 
+                          : 'text-muted-foreground hover:text-foreground'
+                      )}
+                    >
+                      Uke
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setDateFilter('month'); setShowDatePicker(false); }}
+                      className={clsx(
+                        'px-2 py-1 text-xs font-semibold rounded-md transition-all',
+                        dateFilter === 'month' 
+                          ? 'bg-card text-foreground shadow-sm' 
+                          : 'text-muted-foreground hover:text-foreground'
+                      )}
+                    >
+                      Måned
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setDateFilter('custom'); setShowDatePicker(true); }}
+                      className={clsx(
+                        'px-2 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1',
+                        dateFilter === 'custom' 
+                          ? 'bg-card text-foreground shadow-sm' 
+                          : 'text-muted-foreground hover:text-foreground'
+                      )}
+                    >
+                      <Calendar className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+                  {/* Strategi-filter for closed trades */}
+                  {uniqueStrategies.length > 1 && (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setSelectedStrategies([])}
+                        className={clsx(
+                          'px-2 py-1 text-xs font-semibold rounded-md transition-all',
+                          selectedStrategies.length === 0 
+                            ? 'bg-brand-slate text-white' 
+                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                        )}
+                      >
+                        Alle
+                      </button>
+                      {uniqueStrategies.map(strategyId => {
+                        const strategy = STRATEGIES[strategyId];
+                        const isSelected = selectedStrategies.includes(strategyId);
+                        return (
+                          <button
+                            key={strategyId}
+                            onClick={() => toggleStrategy(strategyId)}
+                            className={clsx(
+                              'px-2 py-1 text-xs font-semibold rounded-md transition-all',
+                              isSelected 
+                                ? 'text-white shadow-sm' 
+                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                            )}
+                            style={isSelected ? { backgroundColor: strategy.color } : {}}
+                            title={strategy.name}
+                          >
+                            {strategy.emoji} {strategy.shortName}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  
+                  {/* Toggle kr/% */}
+                  <div className="flex items-center bg-muted rounded-lg p-0.5">
+                    <button
+                      onClick={() => setDisplayMode('percent')}
+                      className={clsx(
+                        'px-3 py-1 text-xs font-semibold rounded-md transition-all',
+                        displayMode === 'percent' 
+                          ? 'bg-card text-foreground shadow-sm' 
+                          : 'text-muted-foreground hover:text-foreground'
+                      )}
+                    >
+                      %
+                    </button>
+                    <button
+                      onClick={() => setDisplayMode('kr')}
+                      className={clsx(
+                        'px-3 py-1 text-xs font-semibold rounded-md transition-all',
+                        displayMode === 'kr' 
+                          ? 'bg-card text-foreground shadow-sm' 
+                          : 'text-muted-foreground hover:text-foreground'
+                      )}
+                    >
+                      Kr
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Lukkede trades per strategi */}
+              <div className="space-y-6">
+                {(selectedStrategies.length === 0 ? uniqueStrategies : selectedStrategies).map(strategyId => {
+                  const strategyClosedTrades = filteredClosedTrades.filter(t => t.strategyId === strategyId);
+                  if (strategyClosedTrades.length === 0) return null;
+                  
+                  const strategy = STRATEGIES[strategyId];
+                  
+                  return (
+                    <div key={`closed-${strategyId}`}>
+                      {/* Strategi-header */}
+                      {uniqueStrategies.length > 1 && (
+                        <div className="px-1 py-2 flex items-center gap-2">
+                          <span 
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold"
+                            style={{ backgroundColor: `${strategy?.color}15`, color: strategy?.color }}
+                          >
+                            {strategy?.emoji} {strategy?.name}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            ({strategyClosedTrades.length} lukket)
+                          </span>
+                        </div>
+                      )}
+                      
+                      <div className="bg-card rounded-2xl border border-border overflow-x-auto">
+                        <table className="w-full min-w-[900px]">
+                          <colgroup>
+                            <col className="w-[12%]" />
+                            <col className="w-[12%]" />
+                            <col className="w-[7%]" />
+                            <col className="w-[10%]" />
+                            <col className="w-[20%]" />
+                            <col className="w-[10%]" />
+                            <col className="w-[8%]" />
+                            <col className="w-[10%]" />
+                          </colgroup>
+                          <thead className="bg-card dark:bg-[hsl(var(--table-header-bg))] border-b border-border">
+                            <tr>
+                              <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Ticker</th>
+                              <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Strategi</th>
+                              <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Antall</th>
+                              <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Inngang</th>
+                              <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Utgang</th>
+                              <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Resultat</th>
+                              <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Tid</th>
+                              <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Aksjon</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border/50">
+                            {strategyClosedTrades.map(trade => {
+                              const tradeStrategy = STRATEGIES[trade.strategyId];
+                              const daysHeld = trade.exitDate
+                                ? Math.floor((new Date(trade.exitDate).getTime() - new Date(trade.entryDate).getTime()) / (1000 * 60 * 60 * 24))
+                                : Math.floor((Date.now() - new Date(trade.entryDate).getTime()) / (1000 * 60 * 60 * 24));
+                              
+                              const exitPrice = trade.exitPrice || trade.entryPrice;
+                              const pnl = trade.realizedPnL || (exitPrice - trade.entryPrice) * trade.quantity;
+                              const pnlPercent = trade.realizedPnLPercent || ((exitPrice - trade.entryPrice) / trade.entryPrice) * 100;
+                              const isProfit = pnl >= 0;
+                              
+                              return (
+                                <tr key={trade.id} className="hover:bg-muted transition-colors">
+                                  <td className="px-4 py-3">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="font-bold text-foreground">{trade.ticker}</span>
+                                      {trade.notes && (
+                                        <div className="relative group/note">
+                                          <span className="text-amber-500 cursor-help">
+                                            <StickyNote className="w-3.5 h-3.5" />
+                                          </span>
+                                          <div className="absolute left-0 top-5 z-50 w-52 px-2 py-1.5 bg-yellow-50 rounded-sm shadow-md opacity-0 invisible group-hover/note:opacity-100 group-hover/note:visible transition-all duration-150 pointer-events-none border border-yellow-200">
+                                            <p className="text-xs text-gray-700">{trade.notes}</p>
+                                            <div className="absolute -top-1 left-2 w-2 h-2 bg-yellow-50 border-l border-t border-yellow-200 rotate-45" />
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                    {trade.name && <div className="text-xs text-muted-foreground">{trade.name}</div>}
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <span 
+                                      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold"
+                                      style={{ backgroundColor: `${tradeStrategy?.color}20`, color: tradeStrategy?.color }}
+                                    >
+                                      {tradeStrategy?.emoji} {tradeStrategy?.shortName || trade.strategyId}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-3 text-right font-semibold text-foreground">{trade.quantity}</td>
+                                  <td className="px-4 py-3 text-right">
+                                    <div className="font-semibold text-foreground">{trade.entryPrice.toFixed(2)} kr</div>
+                                    <div className="text-xs text-muted-foreground">{new Date(trade.entryDate).toLocaleDateString('nb-NO')}</div>
+                                  </td>
+                                  <td className="px-4 py-3 text-center">
+                                    <div className="font-semibold text-foreground">→ {exitPrice.toFixed(2)} kr</div>
+                                    <div className="text-xs text-muted-foreground">
+                                      {trade.exitDate ? new Date(trade.exitDate).toLocaleDateString('nb-NO') : '—'}
+                                      {trade.exitReason && <span className="ml-1">({trade.exitReason})</span>}
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-3 text-right">
+                                    {displayMode === 'percent' ? (
+                                      <>
+                                        <div className={clsx('font-bold', isProfit ? 'text-brand-emerald' : 'text-brand-rose')}>{isProfit ? '+' : ''}{pnlPercent.toFixed(1)}%</div>
+                                        <div className={clsx('text-xs', isProfit ? 'text-brand-emerald/70' : 'text-brand-rose/70')}>{isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</div>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <div className={clsx('font-bold', isProfit ? 'text-brand-emerald' : 'text-brand-rose')}>{isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</div>
+                                        <div className={clsx('text-xs', isProfit ? 'text-brand-emerald/70' : 'text-brand-rose/70')}>{isProfit ? '+' : ''}{pnlPercent.toFixed(1)}%</div>
+                                      </>
+                                    )}
+                                  </td>
+                                  <td className="px-4 py-3 text-center">
+                                    <div className="text-sm font-medium text-foreground">{daysHeld}d</div>
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <div className="flex items-center justify-center gap-1">
+                                      <button onClick={() => { setEditingTrade(trade); setIsAddModalOpen(true); }} className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors" title="Rediger"><Edit className="w-4 h-4" /></button>
+                                      <button onClick={() => handleDeleteTrade(trade.id)} className="p-1.5 text-brand-rose hover:bg-brand-rose/10 rounded-lg transition-colors" title="Slett"><Trash2 className="w-4 h-4" /></button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                          {/* Subtotal for closed trades */}
+                          {(() => {
+                            const closedInvested = strategyClosedTrades.reduce((sum, t) => sum + (t.entryPrice * t.quantity), 0);
+                            const closedExitValue = strategyClosedTrades.reduce((sum, t) => sum + ((t.exitPrice || t.entryPrice) * t.quantity), 0);
+                            const closedRealizedPnl = strategyClosedTrades.reduce((sum, t) => sum + (t.realizedPnL || 0), 0);
+                            const closedPnlPercent = closedInvested > 0 ? (closedRealizedPnl / closedInvested) * 100 : 0;
+                            const isClosedProfit = closedRealizedPnl >= 0;
+                            
+                            return (
+                              <tfoot className="bg-card dark:bg-[hsl(var(--subtotal-bg))] border-t border-border">
+                                <tr>
+                                  <td className="px-4 py-3 text-left">
+                                    <span className="text-sm font-semibold text-card-foreground dark:text-[hsl(var(--subtotal-text))]">📦 Subtotal:</span>
+                                  </td>
+                                  <td className="px-4 py-3"></td>
+                                  <td className="px-4 py-3 text-right">
+                                    <span className="text-sm font-semibold text-card-foreground dark:text-[hsl(var(--subtotal-text))]">{strategyClosedTrades.length}</span>
+                                  </td>
+                                  <td className="px-4 py-3 text-right">
+                                    <span className="text-sm font-semibold text-card-foreground dark:text-[hsl(var(--subtotal-text))]">{closedInvested.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</span>
+                                  </td>
+                                  <td className="px-4 py-3 text-center">
+                                    <span className="text-sm font-semibold text-card-foreground dark:text-[hsl(var(--subtotal-text))]">{closedExitValue.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</span>
+                                  </td>
+                                  <td className="px-4 py-3 text-right">
+                                    {displayMode === 'percent' ? (
+                                      <>
+                                        <div className={clsx('text-base font-bold', isClosedProfit ? 'text-brand-emerald' : 'text-brand-rose')}>
+                                          {isClosedProfit ? '+' : ''}{closedPnlPercent.toFixed(1)}%
+                                        </div>
+                                        <div className={clsx('text-xs', isClosedProfit ? 'text-brand-emerald/70' : 'text-brand-rose/70')}>
+                                          {isClosedProfit ? '+' : ''}{closedRealizedPnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <div className={clsx('text-base font-bold', isClosedProfit ? 'text-brand-emerald' : 'text-brand-rose')}>
+                                          {isClosedProfit ? '+' : ''}{closedRealizedPnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr
+                                        </div>
+                                        <div className={clsx('text-xs', isClosedProfit ? 'text-brand-emerald/70' : 'text-brand-rose/70')}>
+                                          {isClosedProfit ? '+' : ''}{closedPnlPercent.toFixed(1)}%
+                                        </div>
+                                      </>
+                                    )}
+                                  </td>
+                                  <td className="px-4 py-3"></td>
+                                  <td className="px-4 py-3"></td>
+                                </tr>
+                              </tfoot>
+                            );
+                          })()}
+                        </table>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           
           {/* Grand Total - Egen tabell */}
           <div className="mt-6 bg-card rounded-2xl border border-border overflow-x-auto">
@@ -1275,8 +1460,8 @@ export default function PorteføljePage() {
                   <td className="px-4 py-4"></td>
                   <td className="px-4 py-4 text-right">
                     <span className="text-sm font-bold text-card-foreground dark:text-[hsl(var(--total-text))]">{grandTotal.activeCount}</span>
-                    {grandTotal.closedCount > 0 && selectedPortfolioId !== 'all' && (
-                      <span className="text-xs text-muted-foreground dark:text-[hsl(var(--total-text))]/70 ml-1">+{grandTotal.closedCount}</span>
+                    {grandTotal.closedCount > 0 && selectedPortfolioId !== 'all' && selectedPortfolioId !== 'closed' && (
+                      <span className="text-xs text-muted-foreground dark:text-[hsl(var(--total-text))]/70 ml-1">+{grandTotal.closedCount} lukket</span>
                     )}
                   </td>
                   <td className="px-4 py-4 text-right">
@@ -1349,7 +1534,6 @@ export default function PorteføljePage() {
           </button>
         </div>
       ) : null}
-      </div>{/* End max-w-7xl container */}
 
       {/* Add/Edit Trade Modal */}
       <AddTradeModal
@@ -1365,10 +1549,14 @@ export default function PorteføljePage() {
       {/* Closed Trades View - Shown when "Lukkede" tab is selected */}
       {selectedPortfolioId === 'closed' && (
         <div className="mb-8">
-          {/* Date Filter for Closed Trades */}
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-muted-foreground">Periode:</span>
+          {/* Closed Trades Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-4">
+              <h2 className="text-lg sm:text-xl font-bold text-foreground flex items-center gap-2">
+                <Archive className="w-5 h-5 text-muted-foreground" />
+                Lukkede Trades
+              </h2>
+              {/* Date Filter - inline with header */}
               <div className="relative date-picker-container">
                 <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
                   <button
@@ -1466,66 +1654,6 @@ export default function PorteføljePage() {
                 )}
               </div>
             </div>
-            {dateFilter !== 'all' && (
-              <span className="text-xs text-muted-foreground">
-                Filtrerer på {dateFilter === 'today' ? 'i dag' : dateFilter === 'week' ? 'siste uke' : dateFilter === 'month' ? 'siste måned' : 'egendefinert periode'}
-              </span>
-            )}
-          </div>
-
-          {/* Stats for Closed Trades */}
-          {(() => {
-            const totalClosedInvested = filteredClosedTrades.reduce((sum, t) => sum + (t.entryPrice * t.quantity), 0);
-            const totalClosedRealized = filteredClosedTrades.reduce((sum, t) => sum + (t.realizedPnL || 0), 0);
-            const closedWinCount = filteredClosedTrades.filter(t => (t.realizedPnL || 0) > 0).length;
-            const closedWinRate = filteredClosedTrades.length > 0 ? (closedWinCount / filteredClosedTrades.length) * 100 : 0;
-            const avgReturn = filteredClosedTrades.length > 0 
-              ? filteredClosedTrades.reduce((sum, t) => {
-                  const invested = t.entryPrice * t.quantity;
-                  return sum + ((t.realizedPnL || 0) / invested * 100);
-                }, 0) / filteredClosedTrades.length
-              : 0;
-            
-            return (
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-                <div className="bg-card rounded-2xl p-4 sm:p-5 border border-border">
-                  <div className="text-xs sm:text-sm text-muted-foreground mb-1">Lukkede Trades</div>
-                  <div className="text-2xl sm:text-3xl font-extrabold text-foreground">{filteredClosedTrades.length}</div>
-                </div>
-                <div className="bg-card rounded-2xl p-4 sm:p-5 border border-border">
-                  <div className="text-xs sm:text-sm text-muted-foreground mb-1">Total Investert</div>
-                  <div className="text-xl sm:text-3xl font-extrabold text-foreground">
-                    {totalClosedInvested.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr
-                  </div>
-                </div>
-                <div className="bg-card rounded-2xl p-4 sm:p-5 border border-border">
-                  <div className="text-xs sm:text-sm text-muted-foreground mb-1">Realisert P/L</div>
-                  <div className={clsx(
-                    'text-xl sm:text-3xl font-extrabold',
-                    totalClosedRealized >= 0 ? 'text-brand-emerald' : 'text-brand-rose'
-                  )}>
-                    {totalClosedRealized >= 0 ? '+' : ''}{totalClosedRealized.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr
-                  </div>
-                </div>
-                <div className="bg-card rounded-2xl p-4 sm:p-5 border border-border">
-                  <div className="text-xs sm:text-sm text-muted-foreground mb-1">Win Rate</div>
-                  <div className="text-2xl sm:text-3xl font-extrabold text-foreground">
-                    {closedWinRate.toFixed(0)}%
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    Snitt: {avgReturn >= 0 ? '+' : ''}{avgReturn.toFixed(1)}%
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* Closed Trades Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <h2 className="text-lg sm:text-xl font-bold text-foreground flex items-center gap-2">
-              <Archive className="w-5 h-5 text-muted-foreground" />
-              Alle lukkede trades
-            </h2>
             <div className="flex flex-wrap items-center gap-2 sm:gap-4">
               {/* Strategi-filter for closed trades */}
               {(() => {
@@ -1608,82 +1736,100 @@ export default function PorteføljePage() {
               <p className="text-muted-foreground">Lukkede trades vises her når du lukker en trade</p>
             </div>
           ) : (
-            <div className="bg-card rounded-2xl border border-border overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-muted">
+            <div className="bg-card rounded-2xl border border-border overflow-x-auto">
+              <table className="w-full min-w-[900px]">
+                <colgroup>
+                  <col className="w-[12%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[7%]" />
+                  <col className="w-[10%]" />
+                  <col className="w-[20%]" />
+                  <col className="w-[10%]" />
+                  <col className="w-[8%]" />
+                  <col className="w-[10%]" />
+                </colgroup>
+                <thead className="bg-card dark:bg-[hsl(var(--table-header-bg))] border-b border-border">
                   <tr>
-                    <th className="text-left p-4 text-xs font-bold text-muted-foreground uppercase">Ticker</th>
-                    <th className="text-left p-4 text-xs font-bold text-muted-foreground uppercase">Strategi</th>
-                    <th className="text-right p-4 text-xs font-bold text-muted-foreground uppercase">Kjøp</th>
-                    <th className="text-right p-4 text-xs font-bold text-muted-foreground uppercase">Salg</th>
-                    <th className="text-right p-4 text-xs font-bold text-muted-foreground uppercase">Antall</th>
-                    <th className="text-right p-4 text-xs font-bold text-muted-foreground uppercase">P/L</th>
-                    <th className="text-right p-4 text-xs font-bold text-muted-foreground uppercase">Dato</th>
-                    <th className="text-center p-4 text-xs font-bold text-muted-foreground uppercase">Aksjon</th>
+                    <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Ticker</th>
+                    <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Strategi</th>
+                    <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Antall</th>
+                    <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Inngang</th>
+                    <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Utgang</th>
+                    <th className="text-right px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Resultat</th>
+                    <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Tid</th>
+                    <th className="text-center px-4 py-3 text-xs font-bold text-muted-foreground uppercase">Aksjon</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody className="divide-y divide-border/50">
                   {filteredClosedTrades.map(trade => {
                     const strategy = STRATEGIES[trade.strategyId];
-                    const pnl = trade.realizedPnL || 0;
-                    const pnlPercent = ((trade.exitPrice || trade.entryPrice) - trade.entryPrice) / trade.entryPrice * 100;
+                    const daysHeld = trade.exitDate
+                      ? Math.floor((new Date(trade.exitDate).getTime() - new Date(trade.entryDate).getTime()) / (1000 * 60 * 60 * 24))
+                      : Math.floor((Date.now() - new Date(trade.entryDate).getTime()) / (1000 * 60 * 60 * 24));
+                    const exitPrice = trade.exitPrice || trade.entryPrice;
+                    const pnl = trade.realizedPnL || (exitPrice - trade.entryPrice) * trade.quantity;
+                    const pnlPercent = trade.realizedPnLPercent || ((exitPrice - trade.entryPrice) / trade.entryPrice) * 100;
                     const isProfit = pnl >= 0;
                     
                     return (
-                      <tr key={trade.id} className="hover:bg-muted/50 transition-colors">
-                        <td className="p-4">
-                          <div className="font-bold text-foreground">{trade.ticker.replace('.OL', '')}</div>
-                        </td>
-                        <td className="p-4">
-                          <span 
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
-                            style={{ backgroundColor: `${strategy?.color}20`, color: strategy?.color }}
-                          >
-                            {strategy?.emoji} {strategy?.shortName}
-                          </span>
-                        </td>
-                        <td className="p-4 text-right font-medium text-foreground">
-                          {trade.entryPrice.toFixed(2)} kr
-                        </td>
-                        <td className="p-4 text-right font-medium text-foreground">
-                          {trade.exitPrice?.toFixed(2) || '-'} kr
-                        </td>
-                        <td className="p-4 text-right text-foreground">{trade.quantity}</td>
-                        <td className="p-4 text-right">
-                          <div className={clsx(
-                            'font-bold',
-                            isProfit ? 'text-brand-emerald' : 'text-brand-rose'
-                          )}>
-                            {displayMode === 'kr' ? (
-                              <>
-                                {isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr
-                              </>
-                            ) : (
-                              <>
-                                {isProfit ? '+' : ''}{pnlPercent.toFixed(1)}%
-                              </>
+                      <tr key={trade.id} className="hover:bg-muted transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-foreground">{trade.ticker}</span>
+                            {trade.notes && (
+                              <div className="relative group/note">
+                                <span className="text-amber-500 cursor-help">
+                                  <StickyNote className="w-3.5 h-3.5" />
+                                </span>
+                                <div className="absolute left-0 top-5 z-50 w-52 px-2 py-1.5 bg-yellow-50 rounded-sm shadow-md opacity-0 invisible group-hover/note:opacity-100 group-hover/note:visible transition-all duration-150 pointer-events-none border border-yellow-200">
+                                  <p className="text-xs text-gray-700">{trade.notes}</p>
+                                  <div className="absolute -top-1 left-2 w-2 h-2 bg-yellow-50 border-l border-t border-yellow-200 rotate-45" />
+                                </div>
+                              </div>
                             )}
                           </div>
+                          {trade.name && <div className="text-xs text-muted-foreground">{trade.name}</div>}
                         </td>
-                        <td className="p-4 text-right text-sm text-muted-foreground">
-                          {trade.exitDate ? new Date(trade.exitDate).toLocaleDateString('nb-NO') : '-'}
+                        <td className="px-4 py-3">
+                          <span 
+                            className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold"
+                            style={{ backgroundColor: `${strategy?.color}20`, color: strategy?.color }}
+                          >
+                            {strategy?.emoji} {strategy?.shortName || trade.strategyId}
+                          </span>
                         </td>
-                        <td className="p-4 text-center">
+                        <td className="px-4 py-3 text-right font-semibold text-foreground">{trade.quantity}</td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="font-semibold text-foreground">{trade.entryPrice.toFixed(2)} kr</div>
+                          <div className="text-xs text-muted-foreground">{new Date(trade.entryDate).toLocaleDateString('nb-NO')}</div>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <div className="font-semibold text-foreground">→ {exitPrice.toFixed(2)} kr</div>
+                          <div className="text-xs text-muted-foreground">
+                            {trade.exitDate ? new Date(trade.exitDate).toLocaleDateString('nb-NO') : '—'}
+                            {trade.exitReason && <span className="ml-1">({trade.exitReason})</span>}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {displayMode === 'percent' ? (
+                            <>
+                              <div className={clsx('font-bold', isProfit ? 'text-brand-emerald' : 'text-brand-rose')}>{isProfit ? '+' : ''}{pnlPercent.toFixed(1)}%</div>
+                              <div className={clsx('text-xs', isProfit ? 'text-brand-emerald/70' : 'text-brand-rose/70')}>{isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</div>
+                            </>
+                          ) : (
+                            <>
+                              <div className={clsx('font-bold', isProfit ? 'text-brand-emerald' : 'text-brand-rose')}>{isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</div>
+                              <div className={clsx('text-xs', isProfit ? 'text-brand-emerald/70' : 'text-brand-rose/70')}>{isProfit ? '+' : ''}{pnlPercent.toFixed(1)}%</div>
+                            </>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <div className="text-sm font-medium text-foreground">{daysHeld}d</div>
+                        </td>
+                        <td className="px-4 py-3">
                           <div className="flex items-center justify-center gap-1">
-                            <button
-                              onClick={() => { setEditingTrade(trade); setIsAddModalOpen(true); }}
-                              className="p-1.5 text-muted-foreground hover:text-brand-emerald transition-colors"
-                              title="Rediger"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteTrade(trade.id)}
-                              className="p-1.5 text-muted-foreground hover:text-brand-rose transition-colors"
-                              title="Slett"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            <button onClick={() => { setEditingTrade(trade); setIsAddModalOpen(true); }} className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors" title="Rediger"><Edit className="w-4 h-4" /></button>
+                            <button onClick={() => handleDeleteTrade(trade.id)} className="p-1.5 text-brand-rose hover:bg-brand-rose/10 rounded-lg transition-colors" title="Slett"><Trash2 className="w-4 h-4" /></button>
                           </div>
                         </td>
                       </tr>
@@ -1691,7 +1837,7 @@ export default function PorteføljePage() {
                   })}
                 </tbody>
                 {/* Total row for closed trades */}
-                <tfoot className="bg-muted/50 border-t-2 border-border">
+                <tfoot className="bg-card dark:bg-[hsl(var(--subtotal-bg))] border-t border-border">
                   {(() => {
                     const totalInvested = filteredClosedTrades.reduce((sum, t) => sum + (t.entryPrice * t.quantity), 0);
                     const totalExit = filteredClosedTrades.reduce((sum, t) => sum + ((t.exitPrice || t.entryPrice) * t.quantity), 0);
@@ -1701,30 +1847,42 @@ export default function PorteføljePage() {
                     
                     return (
                       <tr>
-                        <td className="p-4 font-bold text-foreground">TOTAL</td>
-                        <td className="p-4 text-sm text-muted-foreground">{filteredClosedTrades.length} trades</td>
-                        <td className="p-4 text-right font-semibold text-foreground">
-                          {totalInvested.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr
+                        <td className="px-4 py-3 text-left">
+                          <span className="text-sm font-semibold text-card-foreground dark:text-[hsl(var(--subtotal-text))]">📦 Total:</span>
                         </td>
-                        <td className="p-4 text-right font-semibold text-foreground">
-                          {totalExit.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr
+                        <td className="px-4 py-3"></td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="text-sm font-semibold text-card-foreground dark:text-[hsl(var(--subtotal-text))]">{filteredClosedTrades.length}</span>
                         </td>
-                        <td className="p-4"></td>
-                        <td className="p-4 text-right">
-                          <div className={clsx('font-bold', isTotalProfit ? 'text-brand-emerald' : 'text-brand-rose')}>
-                            {displayMode === 'kr' ? (
-                              <>
-                                {isTotalProfit ? '+' : ''}{totalPnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr
-                              </>
-                            ) : (
-                              <>
+                        <td className="px-4 py-3 text-right">
+                          <span className="text-sm font-semibold text-card-foreground dark:text-[hsl(var(--subtotal-text))]">{totalInvested.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className="text-sm font-semibold text-card-foreground dark:text-[hsl(var(--subtotal-text))]">{totalExit.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {displayMode === 'percent' ? (
+                            <>
+                              <div className={clsx('text-base font-bold', isTotalProfit ? 'text-brand-emerald' : 'text-brand-rose')}>
                                 {isTotalProfit ? '+' : ''}{totalPnlPercent.toFixed(1)}%
-                              </>
-                            )}
-                          </div>
+                              </div>
+                              <div className={clsx('text-xs', isTotalProfit ? 'text-brand-emerald/70' : 'text-brand-rose/70')}>
+                                {isTotalProfit ? '+' : ''}{totalPnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className={clsx('text-base font-bold', isTotalProfit ? 'text-brand-emerald' : 'text-brand-rose')}>
+                                {isTotalProfit ? '+' : ''}{totalPnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr
+                              </div>
+                              <div className={clsx('text-xs', isTotalProfit ? 'text-brand-emerald/70' : 'text-brand-rose/70')}>
+                                {isTotalProfit ? '+' : ''}{totalPnlPercent.toFixed(1)}%
+                              </div>
+                            </>
+                          )}
                         </td>
-                        <td className="p-4"></td>
-                        <td className="p-4"></td>
+                        <td className="px-4 py-3"></td>
+                        <td className="px-4 py-3"></td>
                       </tr>
                     );
                   })()}
@@ -1734,6 +1892,7 @@ export default function PorteføljePage() {
           )}
         </div>
       )}
+      </div>{/* End max-w-7xl container */}
 
       {/* Bulk Import Modal */}
       <BulkImportModal

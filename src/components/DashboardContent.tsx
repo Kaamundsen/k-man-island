@@ -9,7 +9,7 @@ import StockCardOriginal from '@/components/StockCardOriginal';
 import FilterBar, { MarketFilter, StrategyFilter } from '@/components/FilterBar';
 import MarketStatus from '@/components/MarketStatus';
 import { Stock } from '@/lib/types';
-import { TrendingUp, TrendingDown, Minus, RefreshCcw, Loader2, Search, X, Plus, Check, AlertCircle, ChevronRight, LayoutGrid, List, Layers, StickyNote, Trash2, Calendar, Bell, Edit2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, RefreshCcw, Loader2, Search, X, Plus, Check, AlertCircle, ChevronRight, LayoutGrid, List, Layers, StickyNote, Trash2, Calendar, Bell, Edit2, Zap, Shield, ArrowUpCircle, Users } from 'lucide-react';
 import { getCustomTickers, addCustomTicker, removeCustomTicker, isInBaseUniverse, getUniverseSize, setUniverseSize, type UniverseSize } from '@/lib/store/universe-store';
 import { getNotes, addNote, updateNote, deleteNote, type StockNote } from '@/lib/store/notes-store';
 import { toast } from 'sonner';
@@ -580,7 +580,7 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
                       <div
                         key={ticker}
                         className="flex items-center justify-between px-4 py-3 hover:bg-muted cursor-pointer border-b border-border last:border-0"
-                        onClick={() => handleSelectTicker(ticker, false)}
+                        onClick={() => handleSelectTicker(ticker, true)}
                       >
                         <div>
                           <div className="font-bold text-foreground">{ticker.replace('.OL', '')}</div>
@@ -589,11 +589,11 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
                         </div>
                         <div className="flex items-center gap-2">
                           {inCustom ? (
-                            <span className="text-xs text-brand-emerald flex items-center gap-1 font-semibold">
+                            <span className="text-xs text-brand-emerald flex items-center gap-1">
                               <Check className="w-3 h-3" /> I Mine
                             </span>
                           ) : (
-                            <span className="px-2 py-1 text-xs bg-brand-emerald text-white rounded-lg flex items-center gap-1 font-semibold">
+                            <span className="text-xs text-brand-emerald flex items-center gap-1">
                               <Plus className="w-3 h-3" /> Legg til
                             </span>
                           )}
@@ -775,15 +775,18 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
 
           <div className="bg-card rounded-3xl border border-border overflow-hidden">
             {/* Table Header */}
-            <div className="grid grid-cols-[0.5fr,2fr,1fr,1.5fr,1fr,1.5fr,1fr,0.5fr] gap-4 px-6 py-4 bg-muted border-b border-border">
-              <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">#</div>
-              <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">TICKER</div>
-              <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">PRIS</div>
-              <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">STATUS</div>
-              <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">RSI</div>
-              <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">K-SCORE</div>
-              <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">NOTAT</div>
-              <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">AKSJON</div>
+            <div className="grid grid-cols-[2.5rem,1fr,1fr,0.8fr,0.5fr,1.4fr,1.4fr,0.7fr,0.8fr,0.5fr,0.5fr] px-6 py-3 bg-muted border-b border-border">
+              <div className="text-xs font-bold text-muted-foreground uppercase">#</div>
+              <div className="text-xs font-bold text-muted-foreground uppercase">Ticker</div>
+              <div className="text-xs font-bold text-muted-foreground uppercase">Pris</div>
+              <div className="text-xs font-bold text-muted-foreground uppercase">Status</div>
+              <div className="text-xs font-bold text-muted-foreground uppercase">RSI</div>
+              <div className="text-xs font-bold text-muted-foreground uppercase">K-Score</div>
+              <div className="text-xs font-bold text-muted-foreground uppercase pl-6">Risk/Reward</div>
+              <div className="text-xs font-bold text-muted-foreground uppercase pl-4">Tid</div>
+              <div className="text-xs font-bold text-muted-foreground uppercase">Strategi</div>
+              <div className="text-xs font-bold text-muted-foreground uppercase text-center">Notat</div>
+              <div className="text-xs font-bold text-muted-foreground uppercase text-right">Aksjon</div>
             </div>
 
             {/* Table Body */}
@@ -815,131 +818,190 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
                 const notes = stockNotes[stock.ticker] || [];
                 const isInMine = customTickers.some(t => t.toUpperCase() === stock.ticker.toUpperCase());
 
+                // Calculate ratio
+                const ratioValue = stock.riskPercent > 0 ? stock.gainPercent / stock.riskPercent : 0;
+                const ratioDisplay = ratioValue > 0 ? `1:${ratioValue.toFixed(1)}` : '-';
+                
+                // Strategy icons mapping
+                const getStrategyIcon = (strategy: string) => {
+                  switch(strategy) {
+                    case 'MOMENTUM':
+                    case 'MOMENTUM_TREND':
+                    case 'MOMENTUM_ASYM':
+                      return <Zap className="w-4 h-4 text-yellow-500" />;
+                    case 'BUFFETT':
+                      return <Shield className="w-4 h-4 text-blue-500" />;
+                    case 'TVEITEREID':
+                      return <TrendingUp className="w-4 h-4 text-green-500" />;
+                    case 'REBOUND':
+                      return <ArrowUpCircle className="w-4 h-4 text-purple-500" />;
+                    case 'INSIDER':
+                      return <Users className="w-4 h-4 text-orange-500" />;
+                    default:
+                      return null;
+                  }
+                };
+
                 return (
                   <div
                     key={stock.ticker}
-                    className="grid grid-cols-[0.5fr,2fr,1fr,1.5fr,1fr,1.5fr,1fr,0.5fr] gap-4 px-6 py-5 hover:bg-muted transition-colors group"
+                    className="grid grid-cols-[2.5rem,1fr,1fr,0.8fr,0.5fr,1.4fr,1.4fr,0.7fr,0.8fr,0.5fr,0.5fr] px-6 py-4 hover:bg-muted transition-colors group"
                   >
                     {/* Ranking */}
                     <div className="flex items-center">
-                      <span className="text-lg font-extrabold text-muted-foreground">
+                      <span className="text-sm font-bold text-muted-foreground">
                         {rank}
                       </span>
                     </div>
 
                     {/* Ticker */}
-                    <Link href={`/analyse/${stock.ticker}`} className="block">
-                      <div className="text-lg font-bold text-foreground group-hover:text-brand-emerald transition-colors">
+                    <Link href={`/analyse/${stock.ticker}`} className="flex flex-col justify-center min-w-0">
+                      <div className="text-sm font-bold text-foreground group-hover:text-brand-emerald transition-colors truncate">
                         {tickerShort}
                       </div>
-                      <div className="text-sm text-muted-foreground mt-0.5">{stock.name}</div>
+                      <div className="text-[10px] text-muted-foreground truncate">{stock.name}</div>
                     </Link>
 
                     {/* Price */}
-                    <div>
-                      <div className="text-lg font-bold text-foreground">
-                        {stock.price.toFixed(2)} kr
+                    <div className="flex flex-col justify-center">
+                      <div className="text-sm font-bold text-foreground">
+                        {stock.price.toFixed(2)}
                       </div>
-                      <div className={clsx('text-sm font-semibold mt-0.5', priceChangeColor)}>
-                        {stock.changePercent > 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%
+                      <div className={clsx('text-[10px] font-semibold', priceChangeColor)}>
+                        {stock.changePercent > 0 ? '+' : ''}{stock.changePercent.toFixed(1)}%
                       </div>
                     </div>
 
                     {/* Status */}
                     <div className="flex items-center">
-                      <span className={config.className}>
+                      <span className={clsx(config.className, 'text-[10px] px-1.5 py-0.5')}>
                         {config.label}
                       </span>
                     </div>
 
                     {/* RSI */}
-                    <div className="flex items-center">
-                      <span className="text-lg font-semibold text-muted-foreground">
-                        {stock.rsi.toFixed(1)}
+                    <div className="flex items-center -ml-2">
+                      <span className="text-xs font-semibold text-muted-foreground">
+                        {stock.rsi.toFixed(0)}
                       </span>
                     </div>
 
-                    {/* K-Score */}
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl font-extrabold text-brand-emerald">
+                    {/* K-Score with number in front of bar */}
+                    <div className="flex items-center gap-2 -ml-2">
+                      <span className="text-sm font-bold text-brand-emerald w-7">
                         {stock.kScore}
                       </span>
-                      <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden max-w-[80px]">
+                      <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
                         <div 
                           className={clsx('h-full rounded-full', kScoreColor)}
                           style={{ width: `${stock.kScore}%` }}
-                        ></div>
+                        />
                       </div>
                     </div>
 
-                    {/* Note */}
-                    <div className="flex items-center relative">
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setNoteModalTicker(stock.ticker);
-                        }}
-                        onMouseEnter={() => notes.length > 0 && setHoveredNoteTicker(stock.ticker)}
-                        onMouseLeave={() => setHoveredNoteTicker(null)}
-                        className={clsx(
-                          'p-2 rounded-lg transition-colors relative',
-                          notes.length > 0 
-                            ? 'text-amber-500 hover:bg-amber-50' 
-                            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                        )}
-                      >
-                        <StickyNote className="w-5 h-5" />
-                        {notes.length > 0 && (
-                          <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 text-white text-xs rounded-full flex items-center justify-center">
-                            {notes.length}
-                          </span>
-                        )}
-                      </button>
-                      
-                      {/* Hover tooltip showing notes */}
-                      {hoveredNoteTicker === stock.ticker && notes.length > 0 && (
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 w-64 bg-card border border-border rounded-xl shadow-lg p-3 pointer-events-none">
-                          <div className="text-xs font-bold text-foreground mb-2">📝 Notater ({notes.length})</div>
-                          <div className="space-y-2 max-h-40 overflow-y-auto">
-                            {notes.slice(0, 3).map(note => (
-                              <div key={note.id} className="text-xs">
-                                <p className="text-foreground line-clamp-2">{note.note}</p>
-                                <div className="flex items-center gap-2 mt-1">
-                                  {note.tags?.map(tag => {
-                                    const tagConfig = TAG_OPTIONS.find(t => t.value === tag);
-                                    return (
-                                      <span key={tag} className={clsx('px-1.5 py-0.5 rounded text-[10px]', tagConfig?.color)}>
-                                        {tagConfig?.label}
-                                      </span>
-                                    );
-                                  })}
-                                  {note.reminder && (
-                                    <span className="text-muted-foreground flex items-center gap-0.5">
-                                      <Calendar className="w-3 h-3" />
-                                      {new Date(note.reminder).toLocaleDateString('nb-NO')}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                          {notes.length > 3 && (
-                            <div className="text-xs text-muted-foreground mt-2">+{notes.length - 3} flere...</div>
-                          )}
-                          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-border"></div>
-                        </div>
+                    {/* R/R with kr above, graph in middle, % below */}
+                    <div className="flex flex-col pl-10">
+                      {/* Gevinst kr | Ratio | Risiko kr - above */}
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="text-brand-emerald font-semibold">+{stock.gainKr.toFixed(0)}kr</span>
+                        <span className={clsx(
+                          'font-bold',
+                          ratioValue >= 2 ? 'text-brand-emerald' : 
+                          ratioValue >= 1 ? 'text-yellow-500' : 'text-muted-foreground'
+                        )}>
+                          {ratioDisplay}
+                        </span>
+                        <span className="text-brand-rose font-semibold">-{stock.riskKr.toFixed(0)}kr</span>
+                      </div>
+                      {/* R/R bar */}
+                      <div className="w-full h-2 bg-muted rounded-full overflow-hidden flex mt-0.5">
+                        <div 
+                          className="h-full bg-emerald-500"
+                          style={{ width: `${(ratioValue / (1 + ratioValue)) * 100}%` }}
+                        />
+                        <div 
+                          className="h-full bg-rose-400"
+                          style={{ width: `${(1 / (1 + ratioValue)) * 100}%` }}
+                        />
+                      </div>
+                      {/* Gevinst % | Risiko % - below */}
+                      <div className="flex items-center justify-between text-[10px] mt-0.5">
+                        <span className="text-brand-emerald font-semibold">+{stock.gainPercent.toFixed(0)}%</span>
+                        <span className="text-brand-rose font-semibold">-{stock.riskPercent.toFixed(0)}%</span>
+                      </div>
+                    </div>
+
+                    {/* Tid */}
+                    <div className="flex items-center pl-6">
+                      <span className="text-sm font-medium text-muted-foreground">
+                        {stock.timeHorizon}
+                      </span>
+                    </div>
+
+                    {/* Strategi */}
+                    <div className="flex items-center gap-1">
+                      {stock.strategies.slice(0, 3).map((strategy, i) => (
+                        <span key={i} title={strategy}>
+                          {getStrategyIcon(strategy)}
+                        </span>
+                      ))}
+                      {stock.strategies.length > 3 && (
+                        <span className="text-[10px] text-muted-foreground">+{stock.strategies.length - 3}</span>
                       )}
+                    </div>
+                    
+                    {/* Notat */}
+                    <div className="flex items-center justify-center">
+                      <div className="relative">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setNoteModalTicker(stock.ticker);
+                          }}
+                          onMouseEnter={() => notes.length > 0 && setHoveredNoteTicker(stock.ticker)}
+                          onMouseLeave={() => setHoveredNoteTicker(null)}
+                          className={clsx(
+                            'p-1 rounded transition-colors relative',
+                            notes.length > 0 
+                              ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20' 
+                              : 'text-gray-300 hover:text-gray-400'
+                          )}
+                          title={notes.length > 0 ? `${notes.length} notat(er)` : 'Legg til notat'}
+                        >
+                          {notes.length > 0 ? (
+                            <StickyNote className="w-4 h-4" />
+                          ) : (
+                            <Plus className="w-4 h-4" />
+                          )}
+                          {notes.length > 0 && (
+                            <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-amber-500 text-white text-[8px] rounded-full flex items-center justify-center">
+                              {notes.length}
+                            </span>
+                          )}
+                        </button>
+                        
+                        {/* Note tooltip */}
+                        {hoveredNoteTicker === stock.ticker && notes.length > 0 && (
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 w-48 bg-yellow-50 border border-yellow-200 rounded-sm shadow-md p-2 pointer-events-none">
+                            <div className="space-y-1 max-h-20 overflow-y-auto">
+                              {notes.slice(0, 2).map(note => (
+                                <p key={note.id} className="text-[10px] text-gray-700 line-clamp-2">{note.note}</p>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Action */}
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-1">
                       {strategyFilter === 'MINE' && (
                         <button
                           onClick={(e) => {
                             e.preventDefault();
                             handleRemoveFromMine(stock.ticker);
                           }}
-                          className="p-1.5 text-muted-foreground hover:text-brand-rose transition-colors"
+                          className="p-1 text-muted-foreground hover:text-brand-rose transition-colors"
                           title="Fjern fra Mine"
                         >
                           <Trash2 className="w-4 h-4" />

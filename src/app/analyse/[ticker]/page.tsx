@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import StockAnalyseContent from '@/components/StockAnalyseContent';
-import { fetchLiveStockData } from '@/lib/api/stock-data';
+import { fetchLiveStockData, fetchSingleStockData } from '@/lib/api/stock-data';
 import { mockStocks } from '@/lib/mock-data';
 
 // Disable caching - always fetch fresh data
@@ -9,12 +9,14 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 interface AnalysePageProps {
-  params: {
+  params: Promise<{
     ticker: string;
-  };
+  }>;
 }
 
 export default async function AnalysePage({ params }: AnalysePageProps) {
+  const { ticker } = await params;
+  
   // Fetch live data, fallback to mock if fails
   let stocks = await fetchLiveStockData();
   
@@ -24,12 +26,28 @@ export default async function AnalysePage({ params }: AnalysePageProps) {
   }
 
   // Find the stock - try with and without .OL suffix
-  const ticker = params.ticker;
-  const stock = stocks.find(s => 
+  let stock = stocks.find(s => 
     s.ticker === ticker || 
     s.ticker === `${ticker}.OL` ||
     s.ticker.replace('.OL', '') === ticker
   );
+
+  // If not found in main list, try to fetch single stock data
+  if (!stock) {
+    const normalizedTicker = ticker.toUpperCase().endsWith('.OL') 
+      ? ticker.toUpperCase() 
+      : `${ticker.toUpperCase()}.OL`;
+    
+    console.log(`Stock ${normalizedTicker} not in main list, fetching single stock data...`);
+    
+    const singleStockData = await fetchSingleStockData(normalizedTicker);
+    
+    if (singleStockData) {
+      stock = singleStockData;
+      // Add to stocks array for context
+      stocks = [...stocks, singleStockData];
+    }
+  }
 
   if (!stock) {
     notFound();
