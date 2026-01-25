@@ -1,16 +1,18 @@
 'use client';
 
 import { Stock } from '@/lib/types';
-import { TrendingUp, Shield, Zap, ArrowUpCircle, Users, CircleCheck, CircleX } from 'lucide-react';
+import { TrendingUp, Shield, Zap, ArrowUpCircle, Users, CircleCheck, CircleX, Bell, StickyNote } from 'lucide-react';
 import Link from 'next/link';
 import { clsx } from 'clsx';
 
 interface StockCardProps {
   stock: Stock;
   rank?: number;
+  reminder?: string;  // ISO date string for påminnelse
+  hasNote?: boolean;  // Om aksjen har et notat
 }
 
-export default function StockCard({ stock, rank }: StockCardProps) {
+export default function StockCard({ stock, rank, reminder, hasNote }: StockCardProps) {
   const isPositive = stock.changePercent >= 0;
   
   const signalConfig = {
@@ -48,9 +50,23 @@ export default function StockCard({ stock, rank }: StockCardProps) {
           <div className="flex flex-col items-end gap-2">
             {/* Strategy Icons */}
             <div className="flex gap-1.5">
-              {stock.strategies.includes('MOMENTUM') && (
-                <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center" title="Momentum">
-                  <Zap className="w-4 h-4 text-white" strokeWidth={2.5} />
+              {/* Momentum: TREND=hvit, ASYM=oransje, BEGGE=helfylt gul */}
+              {(stock.strategies.includes('MOMENTUM_TREND') || stock.strategies.includes('MOMENTUM_ASYM') || stock.strategies.includes('MOMENTUM')) && (
+                <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center" title={
+                  stock.strategies.includes('MOMENTUM_TREND') && stock.strategies.includes('MOMENTUM_ASYM') 
+                    ? "Momentum (Trend + Asym)" 
+                    : stock.strategies.includes('MOMENTUM_ASYM') 
+                      ? "Momentum Asym" 
+                      : "Momentum Trend"
+                }>
+                  <Zap 
+                    className={clsx('w-4 h-4', {
+                      'text-amber-300 fill-amber-300': stock.strategies.includes('MOMENTUM_TREND') && stock.strategies.includes('MOMENTUM_ASYM'),
+                      'text-orange-500': stock.strategies.includes('MOMENTUM_ASYM') && !stock.strategies.includes('MOMENTUM_TREND'),
+                      'text-white': (!stock.strategies.includes('MOMENTUM_ASYM') && stock.strategies.includes('MOMENTUM_TREND')) || stock.strategies.includes('MOMENTUM'),
+                    })}
+                    strokeWidth={2.5} 
+                  />
                 </div>
               )}
               {stock.strategies.includes('BUFFETT') && (
@@ -71,6 +87,21 @@ export default function StockCard({ stock, rank }: StockCardProps) {
               {stock.strategies.includes('INSIDER') && (
                 <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center" title="Insider Kjøp">
                   <Users className="w-4 h-4 text-white" strokeWidth={2.5} />
+                </div>
+              )}
+              {/* Note icon */}
+              {hasNote && !reminder && (
+                <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center" title="Har notat">
+                  <StickyNote className="w-4 h-4 text-white" strokeWidth={2.5} />
+                </div>
+              )}
+              {/* Reminder icon with date */}
+              {reminder && (
+                <div 
+                  className="w-7 h-7 rounded-lg bg-amber-400/30 flex items-center justify-center" 
+                  title={`Påminnelse: ${new Date(reminder).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' })}${new Date(reminder).toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' }) !== '00:00' ? ' kl. ' + new Date(reminder).toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' }) : ''}`}
+                >
+                  <Bell className="w-4 h-4 text-amber-300 fill-amber-300" strokeWidth={2.5} />
                 </div>
               )}
             </div>

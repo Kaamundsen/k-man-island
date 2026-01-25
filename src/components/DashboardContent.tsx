@@ -745,11 +745,14 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredStocks.map((stock, index) => {
             const rank = index + 1;
+            const notes = stockNotes[stock.ticker] || [];
+            const activeReminder = notes.find(n => n.reminder && n.alertEnabled)?.reminder;
+            const hasNote = notes.length > 0;
             
             return useOriginalDesign ? (
-              <StockCardOriginal key={stock.ticker} stock={stock} rank={rank} />
+              <StockCardOriginal key={stock.ticker} stock={stock} rank={rank} reminder={activeReminder} hasNote={hasNote} />
             ) : (
-              <StockCard key={stock.ticker} stock={stock} rank={rank} />
+              <StockCard key={stock.ticker} stock={stock} rank={rank} reminder={activeReminder} hasNote={hasNote} />
             );
           })}
         </div>
@@ -973,19 +976,32 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
                           onMouseLeave={() => setHoveredNoteTicker(null)}
                           className={clsx(
                             'p-1 rounded transition-colors relative',
-                            notes.length > 0 
-                              ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20' 
-                              : 'text-gray-300 hover:text-gray-400'
+                            notes.some(n => n.reminder && n.alertEnabled)
+                              ? 'text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                              : notes.length > 0 
+                                ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20' 
+                                : 'text-gray-300 hover:text-gray-400'
                           )}
-                          title={notes.length > 0 ? `${notes.length} notat(er)` : 'Legg til notat'}
+                          title={
+                            notes.some(n => n.reminder && n.alertEnabled)
+                              ? `${notes.length} notat(er) - Har påminnelse`
+                              : notes.length > 0 
+                                ? `${notes.length} notat(er)` 
+                                : 'Legg til notat'
+                          }
                         >
-                          {notes.length > 0 ? (
+                          {notes.some(n => n.reminder && n.alertEnabled) ? (
+                            <Bell className="w-4 h-4 fill-amber-400" />
+                          ) : notes.length > 0 ? (
                             <StickyNote className="w-4 h-4" />
                           ) : (
                             <Plus className="w-4 h-4" />
                           )}
                           {notes.length > 0 && (
-                            <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-amber-500 text-white text-[8px] rounded-full flex items-center justify-center">
+                            <span className={clsx(
+                              'absolute -top-0.5 -right-0.5 w-3 h-3 text-white text-[8px] rounded-full flex items-center justify-center',
+                              notes.some(n => n.reminder && n.alertEnabled) ? 'bg-amber-600' : 'bg-amber-500'
+                            )}>
                               {notes.length}
                             </span>
                           )}
@@ -1019,12 +1035,34 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
                                       })}
                                     </div>
                                   )}
-                                  <div className="text-[10px] text-muted-foreground mt-1">
-                                    {new Date(note.createdAt).toLocaleDateString('nb-NO', { 
-                                      day: 'numeric', 
-                                      month: 'short',
-                                      year: 'numeric'
-                                    })}
+                                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-1">
+                                    <span>
+                                      {new Date(note.createdAt).toLocaleDateString('nb-NO', { 
+                                        day: 'numeric', 
+                                        month: 'short',
+                                        year: 'numeric'
+                                      })}
+                                    </span>
+                                    {note.reminder && note.alertEnabled && (
+                                      <span className="flex items-center gap-1 text-amber-600 font-medium">
+                                        <Bell className="w-3 h-3" />
+                                        {new Date(note.reminder).toLocaleDateString('nb-NO', { 
+                                          day: 'numeric', 
+                                          month: 'short'
+                                        })}
+                                        {new Date(note.reminder).toLocaleTimeString('nb-NO', { 
+                                          hour: '2-digit', 
+                                          minute: '2-digit' 
+                                        }) !== '00:00' && (
+                                          <span>
+                                            {new Date(note.reminder).toLocaleTimeString('nb-NO', { 
+                                              hour: '2-digit', 
+                                              minute: '2-digit' 
+                                            })}
+                                          </span>
+                                        )}
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
                               ))}

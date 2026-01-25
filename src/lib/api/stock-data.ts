@@ -255,7 +255,8 @@ function convertToStock(quote: YahooQuote): Stock {
   // V2: Use registry to determine qualifying strategies
   const strategies: StockStrategy[] = [];
   const strategyChecks: Array<{ id: StrategyId; mapped: StockStrategy }> = [
-    { id: 'MOMENTUM_TREND', mapped: 'MOMENTUM' },
+    { id: 'MOMENTUM_TREND', mapped: 'MOMENTUM_TREND' },
+    { id: 'MOMENTUM_ASYM', mapped: 'MOMENTUM_ASYM' },
     { id: 'BUFFETT', mapped: 'BUFFETT' },
     { id: 'TVEITEREID', mapped: 'TVEITEREID' },
     { id: 'REBOUND', mapped: 'REBOUND' },
@@ -288,7 +289,7 @@ function convertToStock(quote: YahooQuote): Stock {
   return {
     ...prelimStock,
     signal: finalSignal,
-    strategies: strategies.length > 0 ? strategies : ['MOMENTUM'],
+    strategies: strategies.length > 0 ? strategies : ['MOMENTUM_TREND'],
     timeHorizon: finalSignal === 'BUY' ? '2-6 uker' : '4-8 uker',
     // Data quality flags - quick scan has limited data
     dataSource: 'yahoo',

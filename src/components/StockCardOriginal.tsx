@@ -1,16 +1,18 @@
 'use client';
 
 import { Stock } from '@/lib/types';
-import { Zap, Shield, TrendingUp as TrendingUpIcon, ArrowUpCircle, Users, CircleCheck, CircleX } from 'lucide-react';
+import { Zap, Shield, TrendingUp as TrendingUpIcon, ArrowUpCircle, Users, CircleCheck, CircleX, Bell, StickyNote } from 'lucide-react';
 import Link from 'next/link';
 import { clsx } from 'clsx';
 
 interface StockCardOriginalProps {
   stock: Stock;
   rank?: number;
+  reminder?: string;  // ISO date string for påminnelse
+  hasNote?: boolean;  // Om aksjen har et notat
 }
 
-export default function StockCardOriginal({ stock, rank }: StockCardOriginalProps) {
+export default function StockCardOriginal({ stock, rank, reminder, hasNote }: StockCardOriginalProps) {
   const signalConfig = {
     BUY: { bg: 'bg-[#10B981]', text: 'BUY', textColor: 'text-white' },
     SELL: { bg: 'bg-[#EF4444]', text: 'SELL', textColor: 'text-white' },
@@ -46,9 +48,25 @@ export default function StockCardOriginal({ stock, rank }: StockCardOriginalProp
           <div className="flex flex-col items-end gap-2">
             {/* Strategy Icons */}
             <div className="flex gap-1.5">
-              {stock.strategies.includes('MOMENTUM') && (
-                <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center" title="Momentum">
-                  <Zap className="w-4 h-4 text-gray-600" strokeWidth={2} />
+              {/* Momentum: TREND=grå, ASYM=oransje, BEGGE=helfylt gul */}
+              {(stock.strategies.includes('MOMENTUM_TREND') || stock.strategies.includes('MOMENTUM_ASYM') || stock.strategies.includes('MOMENTUM')) && (
+                <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center" title={
+                  stock.strategies.includes('MOMENTUM_TREND') && stock.strategies.includes('MOMENTUM_ASYM') 
+                    ? "Momentum (Trend + Asym)" 
+                    : stock.strategies.includes('MOMENTUM_ASYM') 
+                      ? "Momentum Asym" 
+                      : "Momentum Trend"
+                }>
+                  <Zap 
+                    className={
+                      stock.strategies.includes('MOMENTUM_TREND') && stock.strategies.includes('MOMENTUM_ASYM')
+                        ? 'w-4 h-4 text-amber-400 fill-amber-400'
+                        : stock.strategies.includes('MOMENTUM_ASYM') && !stock.strategies.includes('MOMENTUM_TREND')
+                          ? 'w-4 h-4 text-orange-500'
+                          : 'w-4 h-4 text-gray-600'
+                    }
+                    strokeWidth={2} 
+                  />
                 </div>
               )}
               {stock.strategies.includes('BUFFETT') && (
@@ -69,6 +87,21 @@ export default function StockCardOriginal({ stock, rank }: StockCardOriginalProp
               {stock.strategies.includes('INSIDER') && (
                 <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center" title="Insider Kjøp">
                   <Users className="w-4 h-4 text-gray-600" strokeWidth={2} />
+                </div>
+              )}
+              {/* Note icon */}
+              {hasNote && !reminder && (
+                <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center" title="Har notat">
+                  <StickyNote className="w-4 h-4 text-gray-600" strokeWidth={2} />
+                </div>
+              )}
+              {/* Reminder icon with date */}
+              {reminder && (
+                <div 
+                  className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center" 
+                  title={`Påminnelse: ${new Date(reminder).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' })}${new Date(reminder).toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' }) !== '00:00' ? ' kl. ' + new Date(reminder).toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' }) : ''}`}
+                >
+                  <Bell className="w-4 h-4 text-amber-600 fill-amber-400" strokeWidth={2} />
                 </div>
               )}
             </div>

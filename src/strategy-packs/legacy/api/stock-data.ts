@@ -219,11 +219,20 @@ function convertToStock(quote: YahooQuote): Stock {
   const isOslo = quote.symbol.endsWith('.OL');
   
   // Strategies basert på signal og karakteristikker
-  const strategies: ('MOMENTUM' | 'BUFFETT' | 'TVEITEREID' | 'REBOUND')[] = [];
+  const strategies: ('MOMENTUM_TREND' | 'MOMENTUM_ASYM' | 'BUFFETT' | 'TVEITEREID' | 'REBOUND')[] = [];
   
-  // MOMENTUM: Strong uptrend with good K-Score
-  if (indicators.signal === 'BUY' && quote.regularMarketChangePercent > 1) {
-    strategies.push('MOMENTUM');
+  // Beregn volatilitet for ASYM-vurdering
+  const volatilityPercent = ((quote.fiftyTwoWeekHigh - quote.fiftyTwoWeekLow) / quote.regularMarketPrice) * 100;
+  const distanceTo52High = ((quote.fiftyTwoWeekHigh - quote.regularMarketPrice) / quote.regularMarketPrice) * 100;
+  
+  // MOMENTUM_TREND: Trygg trend-følging
+  if (indicators.signal === 'BUY' && indicators.kScore >= 70 && indicators.rsi < 65) {
+    strategies.push('MOMENTUM_TREND');
+  }
+  
+  // MOMENTUM_ASYM: Høy volatilitet + stor oppside (asym R/R)
+  if (indicators.kScore >= 60 && volatilityPercent > 30 && distanceTo52High > 15 && indicators.rsi < 70) {
+    strategies.push('MOMENTUM_ASYM');
   }
   
   // BUFFETT: High quality (K-Score) regardless of short-term movement
@@ -259,7 +268,7 @@ function convertToStock(quote: YahooQuote): Stock {
     riskPercent: indicators.riskPercent,
     timeHorizon: indicators.signal === 'BUY' ? '2-6 uker' : '4-8 uker',
     market: isOslo ? 'OSLO' : 'USA',
-    strategies: strategies.length > 0 ? strategies : ['MOMENTUM'],
+    strategies: strategies.length > 0 ? strategies : ['MOMENTUM_TREND'],
   };
 }
 
