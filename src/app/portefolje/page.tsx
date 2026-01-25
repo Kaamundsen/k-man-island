@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Briefcase, TrendingUp, Target, Trash2, Edit, RefreshCw, X, Settings, Upload, StickyNote } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Plus, Briefcase, TrendingUp, Target, Trash2, Edit, RefreshCw, X, Settings, Upload, StickyNote, Archive, Calendar } from 'lucide-react';
 import { clsx } from 'clsx';
+
+type DateFilterType = 'all' | 'today' | 'week' | 'month' | 'custom';
 import AddTradeModal from '@/components/AddTradeModal';
 import BulkImportModal from '@/components/BulkImportModal';
 import { 
@@ -34,7 +36,7 @@ interface LiveQuote {
 
 export default function PorteføljePage() {
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
-  const [selectedPortfolioId, setSelectedPortfolioId] = useState<string | 'all'>('all'); // 'all' = alle porteføljer
+  const [selectedPortfolioId, setSelectedPortfolioId] = useState<string | 'all' | 'closed'>('all'); // 'all' = alle porteføljer, 'closed' = alle lukkede
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,6 +50,12 @@ export default function PorteføljePage() {
   const [editingPortfolio, setEditingPortfolio] = useState<Portfolio | null>(null);
   const [totalDividends, setTotalDividends] = useState(0);
   const [dividendSummary, setDividendSummary] = useState<DividendSummary[]>([]);
+  
+  // Date filter state
+  const [dateFilter, setDateFilter] = useState<DateFilterType>('all');
+  const [customDateStart, setCustomDateStart] = useState('');
+  const [customDateEnd, setCustomDateEnd] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [newPortfolioData, setNewPortfolioData] = useState({
     name: '',
     description: '',
@@ -156,27 +164,90 @@ export default function PorteføljePage() {
     fetchLiveQuotes(uniqueTickers);
   };
 
+  // Date filter helper function
+  const getDateFilterRange = useMemo(() => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    switch (dateFilter) {
+      case 'today':
+        return { start: today, end: now };
+      case 'week':
+        const weekAgo = new Date(today);
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        return { start: weekAgo, end: now };
+      case 'month':
+        const monthAgo = new Date(today);
+        monthAgo.setMonth(monthAgo.getMonth() - 1);
+        return { start: monthAgo, end: now };
+      case 'custom':
+        return {
+          start: customDateStart ? new Date(customDateStart) : new Date(0),
+          end: customDateEnd ? new Date(customDateEnd + 'T23:59:59') : now,
+        };
+      default:
+        return null;
+    }
+  }, [dateFilter, customDateStart, customDateEnd]);
+
+  const isTradeInDateRange = useCallback((trade: Trade, useExitDate: boolean = false) => {
+    if (!getDateFilterRange) return true;
+    
+    const dateToCheck = useExitDate && trade.exitDate 
+      ? new Date(trade.exitDate) 
+      : new Date(trade.entryDate);
+    
+    return dateToCheck >= getDateFilterRange.start && dateToCheck <= getDateFilterRange.end;
+  }, [getDateFilterRange]);
+
   // Hent trades basert på valgt portefølje eller alle
-  const selectedPortfolio = selectedPortfolioId === 'all' 
-    ? null 
-    : portfolios.find(p => p.id === selectedPortfolioId);
+  const selectedPortfolio = useMemo(() => {
+    if (selectedPortfolioId === 'all' || selectedPortfolioId === 'closed') return null;
+    return portfolios.find(p => p.id === selectedPortfolioId);
+  }, [selectedPortfolioId, portfolios]);
   
-  const allActiveTrades = selectedPortfolioId === 'all'
-    ? portfolios.flatMap(p => p.trades.filter(t => t.status === 'ACTIVE'))
-    : selectedPortfolio?.trades.filter(t => t.status === 'ACTIVE') || [];
+  // Alle lukkede trades (for "Lukkede" tab)
+  const allClosedTrades = useMemo(() => 
+    portfolios.flatMap(p => p.trades.filter(t => t.status !== 'ACTIVE')),
+    [portfolios]
+  );
   
-  const closedTrades = selectedPortfolioId === 'all'
-    ? portfolios.flatMap(p => p.trades.filter(t => t.status !== 'ACTIVE'))
-    : selectedPortfolio?.trades.filter(t => t.status !== 'ACTIVE') || [];
+  const allActiveTrades = useMemo(() => {
+    if (selectedPortfolioId === 'closed') return [];
+    if (selectedPortfolioId === 'all') {
+      return portfolios.flatMap(p => p.trades.filter(t => t.status === 'ACTIVE'));
+    }
+    return selectedPortfolio?.trades.filter(t => t.status === 'ACTIVE') || [];
+  }, [selectedPortfolioId, portfolios, selectedPortfolio]);
   
-  // Filtrer trades basert på valgte strategier
-  const activeTrades = selectedStrategies.length === 0 
-    ? allActiveTrades 
-    : allActiveTrades.filter(t => selectedStrategies.includes(t.strategyId));
+  const closedTrades = useMemo(() => {
+    if (selectedPortfolioId === 'closed') return allClosedTrades;
+    if (selectedPortfolioId === 'all') {
+      return portfolios.flatMap(p => p.trades.filter(t => t.status !== 'ACTIVE'));
+    }
+    return selectedPortfolio?.trades.filter(t => t.status !== 'ACTIVE') || [];
+  }, [selectedPortfolioId, portfolios, selectedPortfolio, allClosedTrades]);
   
-  const filteredClosedTrades = selectedStrategies.length === 0
-    ? closedTrades
-    : closedTrades.filter(t => selectedStrategies.includes(t.strategyId));
+  // Filtrer trades basert på valgte strategier og dato
+  const activeTrades = useMemo(() => {
+    let trades = allActiveTrades;
+    if (selectedStrategies.length > 0) {
+      trades = trades.filter(t => selectedStrategies.includes(t.strategyId));
+    }
+    // Apply date filter to entry date
+    trades = trades.filter(t => isTradeInDateRange(t, false));
+    return trades;
+  }, [allActiveTrades, selectedStrategies, isTradeInDateRange]);
+  
+  const filteredClosedTrades = useMemo(() => {
+    let trades = closedTrades;
+    if (selectedStrategies.length > 0) {
+      trades = trades.filter(t => selectedStrategies.includes(t.strategyId));
+    }
+    // Apply date filter to exit date for closed trades
+    trades = trades.filter(t => isTradeInDateRange(t, true));
+    return trades;
+  }, [closedTrades, selectedStrategies, isTradeInDateRange]);
   
   // Finn alle unike strategier fra BÅDE aktive og lukkede trades
   const allTrades = [...allActiveTrades, ...closedTrades];
@@ -468,6 +539,29 @@ export default function PorteføljePage() {
           );
         })}
         
+        {/* Separator før Lukkede */}
+        <div className="w-px h-5 bg-border mx-1"></div>
+        
+        {/* Lukkede trades tab */}
+        <button
+          onClick={() => setSelectedPortfolioId('closed')}
+          className={clsx(
+            'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold transition-all',
+            selectedPortfolioId === 'closed' 
+              ? 'bg-gray-600 text-white shadow-md' 
+              : 'bg-card border border-border text-muted-foreground hover:border-border/80'
+          )}
+        >
+          <Archive className="w-4 h-4" />
+          <span>Lukkede</span>
+          <span className={clsx(
+            'text-xs',
+            selectedPortfolioId === 'closed' ? 'text-white/70' : 'text-gray-400'
+          )}>
+            {allClosedTrades.length}
+          </span>
+        </button>
+        
         {/* Ny portefølje knapp */}
         <button
           onClick={() => setIsCreatePortfolioModalOpen(true)}
@@ -513,8 +607,119 @@ export default function PorteføljePage() {
         </div>
       </div>
 
-      {/* Active Trades */}
-      {activeTrades.length > 0 ? (
+      {/* Date Filter Bar - Visible when not on closed tab */}
+      {selectedPortfolioId !== 'closed' && (
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-muted-foreground">Periode:</span>
+            <div className="relative date-picker-container">
+              <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+                <button
+                  type="button"
+                  onClick={() => { setDateFilter('all'); setShowDatePicker(false); }}
+                  className={clsx(
+                    'px-2 py-1 text-xs font-semibold rounded-md transition-all',
+                    dateFilter === 'all' 
+                      ? 'bg-card text-foreground shadow-sm' 
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  Alle
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setDateFilter('today'); setShowDatePicker(false); }}
+                  className={clsx(
+                    'px-2 py-1 text-xs font-semibold rounded-md transition-all',
+                    dateFilter === 'today' 
+                      ? 'bg-card text-foreground shadow-sm' 
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  I dag
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setDateFilter('week'); setShowDatePicker(false); }}
+                  className={clsx(
+                    'px-2 py-1 text-xs font-semibold rounded-md transition-all',
+                    dateFilter === 'week' 
+                      ? 'bg-card text-foreground shadow-sm' 
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  Uke
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setDateFilter('month'); setShowDatePicker(false); }}
+                  className={clsx(
+                    'px-2 py-1 text-xs font-semibold rounded-md transition-all',
+                    dateFilter === 'month' 
+                      ? 'bg-card text-foreground shadow-sm' 
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  Måned
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setDateFilter('custom'); setShowDatePicker(true); }}
+                  className={clsx(
+                    'px-2 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1',
+                    dateFilter === 'custom' 
+                      ? 'bg-card text-foreground shadow-sm' 
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  <Calendar className="w-3 h-3" />
+                </button>
+              </div>
+              
+              {/* Custom date picker dropdown */}
+              {showDatePicker && dateFilter === 'custom' && (
+                <div className="absolute top-full left-0 mt-2 p-3 bg-card border border-border rounded-xl shadow-lg z-50 min-w-[220px]">
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-xs font-medium text-muted-foreground mb-1">Fra</label>
+                      <input
+                        type="date"
+                        value={customDateStart}
+                        onChange={(e) => setCustomDateStart(e.target.value)}
+                        className="w-full px-2 py-1.5 text-sm rounded-lg border border-border bg-background focus:border-brand-emerald focus:ring-1 focus:ring-brand-emerald/20 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-muted-foreground mb-1">Til</label>
+                      <input
+                        type="date"
+                        value={customDateEnd}
+                        onChange={(e) => setCustomDateEnd(e.target.value)}
+                        className="w-full px-2 py-1.5 text-sm rounded-lg border border-border bg-background focus:border-brand-emerald focus:ring-1 focus:ring-brand-emerald/20 outline-none"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowDatePicker(false)}
+                      className="w-full mt-2 px-3 py-1.5 text-xs font-semibold bg-brand-emerald text-white rounded-lg hover:bg-brand-emerald/90 transition-colors"
+                    >
+                      Bruk
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          {dateFilter !== 'all' && (
+            <span className="text-xs text-muted-foreground">
+              Filtrerer på {dateFilter === 'today' ? 'i dag' : dateFilter === 'week' ? 'siste uke' : dateFilter === 'month' ? 'siste måned' : 'egendefinert periode'}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Active Trades - hide when viewing closed trades tab */}
+      {selectedPortfolioId !== 'closed' && activeTrades.length > 0 ? (
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <h2 className="text-lg sm:text-xl font-bold text-foreground flex items-center gap-2">
@@ -1157,6 +1362,340 @@ export default function PorteføljePage() {
         onSuccess={loadData}
         editTrade={editingTrade}
       />
+
+      {/* Closed Trades View - Shown when "Lukkede" tab is selected */}
+      {selectedPortfolioId === 'closed' && (
+        <div className="mb-8">
+          {/* Date Filter for Closed Trades */}
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-muted-foreground">Periode:</span>
+              <div className="relative date-picker-container">
+                <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => { setDateFilter('all'); setShowDatePicker(false); }}
+                    className={clsx(
+                      'px-2 py-1 text-xs font-semibold rounded-md transition-all',
+                      dateFilter === 'all' 
+                        ? 'bg-card text-foreground shadow-sm' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    Alle
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setDateFilter('today'); setShowDatePicker(false); }}
+                    className={clsx(
+                      'px-2 py-1 text-xs font-semibold rounded-md transition-all',
+                      dateFilter === 'today' 
+                        ? 'bg-card text-foreground shadow-sm' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    I dag
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setDateFilter('week'); setShowDatePicker(false); }}
+                    className={clsx(
+                      'px-2 py-1 text-xs font-semibold rounded-md transition-all',
+                      dateFilter === 'week' 
+                        ? 'bg-card text-foreground shadow-sm' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    Uke
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setDateFilter('month'); setShowDatePicker(false); }}
+                    className={clsx(
+                      'px-2 py-1 text-xs font-semibold rounded-md transition-all',
+                      dateFilter === 'month' 
+                        ? 'bg-card text-foreground shadow-sm' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    Måned
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setDateFilter('custom'); setShowDatePicker(true); }}
+                    className={clsx(
+                      'px-2 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1',
+                      dateFilter === 'custom' 
+                        ? 'bg-card text-foreground shadow-sm' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    <Calendar className="w-3 h-3" />
+                  </button>
+                </div>
+                
+                {showDatePicker && dateFilter === 'custom' && (
+                  <div className="absolute top-full left-0 mt-2 p-3 bg-card border border-border rounded-xl shadow-lg z-50 min-w-[220px]">
+                    <div className="space-y-2">
+                      <div>
+                        <label className="block text-xs font-medium text-muted-foreground mb-1">Fra</label>
+                        <input
+                          type="date"
+                          value={customDateStart}
+                          onChange={(e) => setCustomDateStart(e.target.value)}
+                          className="w-full px-2 py-1.5 text-sm rounded-lg border border-border bg-background focus:border-brand-emerald focus:ring-1 focus:ring-brand-emerald/20 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-muted-foreground mb-1">Til</label>
+                        <input
+                          type="date"
+                          value={customDateEnd}
+                          onChange={(e) => setCustomDateEnd(e.target.value)}
+                          className="w-full px-2 py-1.5 text-sm rounded-lg border border-border bg-background focus:border-brand-emerald focus:ring-1 focus:ring-brand-emerald/20 outline-none"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowDatePicker(false)}
+                        className="w-full mt-2 px-3 py-1.5 text-xs font-semibold bg-brand-emerald text-white rounded-lg hover:bg-brand-emerald/90 transition-colors"
+                      >
+                        Bruk
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            {dateFilter !== 'all' && (
+              <span className="text-xs text-muted-foreground">
+                Filtrerer på {dateFilter === 'today' ? 'i dag' : dateFilter === 'week' ? 'siste uke' : dateFilter === 'month' ? 'siste måned' : 'egendefinert periode'}
+              </span>
+            )}
+          </div>
+
+          {/* Stats for Closed Trades */}
+          {(() => {
+            const totalClosedInvested = filteredClosedTrades.reduce((sum, t) => sum + (t.entryPrice * t.quantity), 0);
+            const totalClosedRealized = filteredClosedTrades.reduce((sum, t) => sum + (t.realizedPnL || 0), 0);
+            const closedWinCount = filteredClosedTrades.filter(t => (t.realizedPnL || 0) > 0).length;
+            const closedWinRate = filteredClosedTrades.length > 0 ? (closedWinCount / filteredClosedTrades.length) * 100 : 0;
+            const avgReturn = filteredClosedTrades.length > 0 
+              ? filteredClosedTrades.reduce((sum, t) => {
+                  const invested = t.entryPrice * t.quantity;
+                  return sum + ((t.realizedPnL || 0) / invested * 100);
+                }, 0) / filteredClosedTrades.length
+              : 0;
+            
+            return (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+                <div className="bg-card rounded-2xl p-4 sm:p-5 border border-border">
+                  <div className="text-xs sm:text-sm text-muted-foreground mb-1">Lukkede Trades</div>
+                  <div className="text-2xl sm:text-3xl font-extrabold text-foreground">{filteredClosedTrades.length}</div>
+                </div>
+                <div className="bg-card rounded-2xl p-4 sm:p-5 border border-border">
+                  <div className="text-xs sm:text-sm text-muted-foreground mb-1">Total Investert</div>
+                  <div className="text-xl sm:text-3xl font-extrabold text-foreground">
+                    {totalClosedInvested.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr
+                  </div>
+                </div>
+                <div className="bg-card rounded-2xl p-4 sm:p-5 border border-border">
+                  <div className="text-xs sm:text-sm text-muted-foreground mb-1">Realisert P/L</div>
+                  <div className={clsx(
+                    'text-xl sm:text-3xl font-extrabold',
+                    totalClosedRealized >= 0 ? 'text-brand-emerald' : 'text-brand-rose'
+                  )}>
+                    {totalClosedRealized >= 0 ? '+' : ''}{totalClosedRealized.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr
+                  </div>
+                </div>
+                <div className="bg-card rounded-2xl p-4 sm:p-5 border border-border">
+                  <div className="text-xs sm:text-sm text-muted-foreground mb-1">Win Rate</div>
+                  <div className="text-2xl sm:text-3xl font-extrabold text-foreground">
+                    {closedWinRate.toFixed(0)}%
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Snitt: {avgReturn >= 0 ? '+' : ''}{avgReturn.toFixed(1)}%
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Closed Trades Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <h2 className="text-lg sm:text-xl font-bold text-foreground flex items-center gap-2">
+              <Archive className="w-5 h-5 text-muted-foreground" />
+              Alle lukkede trades
+            </h2>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+              {/* Strategi-filter for closed trades */}
+              {(() => {
+                const closedStrategies = Array.from(new Set(allClosedTrades.map(t => t.strategyId).filter(Boolean))) as StrategyId[];
+                if (closedStrategies.length <= 1) return null;
+                return (
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedStrategies([])}
+                      className={clsx(
+                        'px-2 py-1 text-xs font-semibold rounded-md transition-all',
+                        selectedStrategies.length === 0 
+                          ? 'bg-brand-slate text-white' 
+                          : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                      )}
+                    >
+                      Alle strategier
+                    </button>
+                    {closedStrategies.map(strategyId => {
+                      const strategy = STRATEGIES[strategyId];
+                      const isSelected = selectedStrategies.includes(strategyId);
+                      return (
+                        <button
+                          type="button"
+                          key={strategyId}
+                          onClick={() => toggleStrategy(strategyId)}
+                          className={clsx(
+                            'px-2 py-1 text-xs font-semibold rounded-md transition-all',
+                            isSelected 
+                              ? 'text-white shadow-sm' 
+                              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                          )}
+                          style={isSelected ? { backgroundColor: strategy.color } : {}}
+                          title={strategy.name}
+                        >
+                          {strategy.emoji} {strategy.shortName}
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+              
+              {/* Toggle kr/% */}
+              <div className="flex items-center bg-muted rounded-lg p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setDisplayMode('percent')}
+                  className={clsx(
+                    'px-3 py-1 text-xs font-semibold rounded-md transition-all',
+                    displayMode === 'percent' 
+                      ? 'bg-card text-foreground shadow-sm' 
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  %
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDisplayMode('kr')}
+                  className={clsx(
+                    'px-3 py-1 text-xs font-semibold rounded-md transition-all',
+                    displayMode === 'kr' 
+                      ? 'bg-card text-foreground shadow-sm' 
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  Kr
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Closed Trades Table */}
+          {filteredClosedTrades.length === 0 ? (
+            <div className="bg-card rounded-2xl border border-border p-12 text-center">
+              <Archive className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-foreground mb-2">Ingen lukkede trades</h3>
+              <p className="text-muted-foreground">Lukkede trades vises her når du lukker en trade</p>
+            </div>
+          ) : (
+            <div className="bg-card rounded-2xl border border-border overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="text-left p-4 text-xs font-bold text-muted-foreground uppercase">Ticker</th>
+                    <th className="text-left p-4 text-xs font-bold text-muted-foreground uppercase">Strategi</th>
+                    <th className="text-right p-4 text-xs font-bold text-muted-foreground uppercase">Kjøp</th>
+                    <th className="text-right p-4 text-xs font-bold text-muted-foreground uppercase">Salg</th>
+                    <th className="text-right p-4 text-xs font-bold text-muted-foreground uppercase">Antall</th>
+                    <th className="text-right p-4 text-xs font-bold text-muted-foreground uppercase">P/L</th>
+                    <th className="text-right p-4 text-xs font-bold text-muted-foreground uppercase">Dato</th>
+                    <th className="text-center p-4 text-xs font-bold text-muted-foreground uppercase">Aksjon</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filteredClosedTrades.map(trade => {
+                    const strategy = STRATEGIES[trade.strategyId];
+                    const pnl = trade.realizedPnL || 0;
+                    const pnlPercent = ((trade.exitPrice || trade.entryPrice) - trade.entryPrice) / trade.entryPrice * 100;
+                    const isProfit = pnl >= 0;
+                    
+                    return (
+                      <tr key={trade.id} className="hover:bg-muted/50 transition-colors">
+                        <td className="p-4">
+                          <div className="font-bold text-foreground">{trade.ticker.replace('.OL', '')}</div>
+                        </td>
+                        <td className="p-4">
+                          <span 
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
+                            style={{ backgroundColor: `${strategy?.color}20`, color: strategy?.color }}
+                          >
+                            {strategy?.emoji} {strategy?.shortName}
+                          </span>
+                        </td>
+                        <td className="p-4 text-right font-medium text-foreground">
+                          {trade.entryPrice.toFixed(2)} kr
+                        </td>
+                        <td className="p-4 text-right font-medium text-foreground">
+                          {trade.exitPrice?.toFixed(2) || '-'} kr
+                        </td>
+                        <td className="p-4 text-right text-foreground">{trade.quantity}</td>
+                        <td className="p-4 text-right">
+                          <div className={clsx(
+                            'font-bold',
+                            isProfit ? 'text-brand-emerald' : 'text-brand-rose'
+                          )}>
+                            {displayMode === 'kr' ? (
+                              <>
+                                {isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr
+                              </>
+                            ) : (
+                              <>
+                                {isProfit ? '+' : ''}{pnlPercent.toFixed(1)}%
+                              </>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-4 text-right text-sm text-muted-foreground">
+                          {trade.exitDate ? new Date(trade.exitDate).toLocaleDateString('nb-NO') : '-'}
+                        </td>
+                        <td className="p-4 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={() => setEditingTrade(trade)}
+                              className="p-1.5 text-muted-foreground hover:text-brand-emerald transition-colors"
+                              title="Rediger"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteTrade(trade.id)}
+                              className="p-1.5 text-muted-foreground hover:text-brand-rose transition-colors"
+                              title="Slett"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Bulk Import Modal */}
       <BulkImportModal

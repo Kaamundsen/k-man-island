@@ -7,7 +7,11 @@ import PriceChart from '@/components/PriceChart';
 import TradePlanCard from '@/components/TradePlanCard';
 import NewsWidget from '@/components/NewsWidget';
 import InsiderAlert from '@/components/InsiderAlert';
-import { ArrowLeft, TrendingUp, TrendingDown, AlertCircle, Zap, Shield, Loader2 } from 'lucide-react';
+import SBLevelsChart from '@/components/SBLevelsChart';
+import SBLevelsTradePlan from '@/components/SBLevelsTradePlan';
+import SBLevelsExplanation from '@/components/SBLevelsExplanation';
+import { analyzeSBLevels, SBLevelsAnalysis, getSBLevelsSummary } from '@/lib/analysis/sb-levels';
+import { ArrowLeft, TrendingUp, TrendingDown, AlertCircle, Zap, Shield, Loader2, Layers } from 'lucide-react';
 import { clsx } from 'clsx';
 
 interface ChartCandle {
@@ -37,10 +41,11 @@ interface StockAnalyseContentProps {
 
 export default function StockAnalyseContent({ stock, allStocks }: StockAnalyseContentProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'chart' | 'plan' | 'insider' | 'news'>('chart');
+  const [activeTab, setActiveTab] = useState<'chart' | 'sblevels' | 'plan' | 'insider' | 'news'>('chart');
   const [chartData, setChartData] = useState<ChartData | null>(null);
   const [chartLoading, setChartLoading] = useState(true);
   const [chartError, setChartError] = useState<string | null>(null);
+  const [sbLevelsAnalysis, setSbLevelsAnalysis] = useState<SBLevelsAnalysis | null>(null);
 
   // Fetch real historical data from API
   useEffect(() => {
@@ -54,6 +59,21 @@ export default function StockAnalyseContent({ stock, allStocks }: StockAnalyseCo
         
         if (data.candles && data.candles.length > 0) {
           setChartData(data);
+          
+          // Calculate SB-Levels analysis
+          const analysis = analyzeSBLevels(
+            stock.ticker,
+            data.candles.map(c => ({
+              date: c.date,
+              open: c.open,
+              high: c.high,
+              low: c.low,
+              close: c.close,
+              volume: c.volume,
+            })),
+            stock.price
+          );
+          setSbLevelsAnalysis(analysis);
         } else if (data.error) {
           setChartError(data.error);
         } else {
@@ -68,7 +88,7 @@ export default function StockAnalyseContent({ stock, allStocks }: StockAnalyseCo
     }
     
     loadChartData();
-  }, [stock.ticker]);
+  }, [stock.ticker, stock.price]);
 
   // Transform candle data for chart component
   const priceData = chartData?.candles.map(candle => ({
@@ -172,7 +192,7 @@ export default function StockAnalyseContent({ stock, allStocks }: StockAnalyseCo
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6 border-b border-gray-200">
+      <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-200">
         <button
           onClick={() => setActiveTab('chart')}
           className={clsx(
@@ -183,6 +203,30 @@ export default function StockAnalyseContent({ stock, allStocks }: StockAnalyseCo
           )}
         >
           📈 Graf & Analyse
+        </button>
+        <button
+          onClick={() => setActiveTab('sblevels')}
+          className={clsx(
+            'px-6 py-3 font-bold text-sm transition-all rounded-t-xl relative',
+            activeTab === 'sblevels'
+              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white'
+              : 'text-gray-600 hover:bg-gray-50'
+          )}
+        >
+          <span className="flex items-center gap-2">
+            <Layers className="w-4 h-4" />
+            SB-Levels
+            {sbLevelsAnalysis?.activeScenario && (
+              <span className={clsx(
+                'px-1.5 py-0.5 text-xs rounded-full font-bold',
+                sbLevelsAnalysis.activeScenario === 'A' && 'bg-green-400 text-green-900',
+                sbLevelsAnalysis.activeScenario === 'B' && 'bg-blue-400 text-blue-900',
+                sbLevelsAnalysis.activeScenario === 'C' && 'bg-red-400 text-red-900',
+              )}>
+                {sbLevelsAnalysis.activeScenario}
+              </span>
+            )}
+          </span>
         </button>
         <button
           onClick={() => setActiveTab('plan')}
@@ -374,6 +418,64 @@ export default function StockAnalyseContent({ stock, allStocks }: StockAnalyseCo
             </div>
           )}
 
+          {activeTab === 'sblevels' && (
+            <div className="space-y-6">
+              {chartLoading && (
+                <div className="bg-surface rounded-2xl p-12 border border-surface-border flex items-center justify-center">
+                  <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+                  <span className="ml-3 text-gray-600">Analyserer SB-Levels...</span>
+                </div>
+              )}
+              
+              {!chartLoading && !sbLevelsAnalysis && (
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6">
+                  <div className="flex items-center gap-2 text-amber-800">
+                    <AlertCircle className="w-5 h-5" />
+                    <span className="font-medium">Ikke nok data for SB-Levels analyse</span>
+                  </div>
+                  <p className="text-sm text-amber-600 mt-2">
+                    Minst 30 dager med historisk data kreves for å beregne støtte/motstandsnivåer.
+                  </p>
+                </div>
+              )}
+              
+              {!chartLoading && sbLevelsAnalysis && chartData && (
+                <>
+                  {/* SB-Levels Summary Banner */}
+                  <div className={clsx(
+                    'rounded-2xl p-4 border-2',
+                    sbLevelsAnalysis.activeScenario === 'A' && 'bg-green-50 border-green-300',
+                    sbLevelsAnalysis.activeScenario === 'B' && 'bg-blue-50 border-blue-300',
+                    sbLevelsAnalysis.activeScenario === 'C' && 'bg-red-50 border-red-300',
+                    !sbLevelsAnalysis.activeScenario && 'bg-gray-50 border-gray-300',
+                  )}>
+                    <p className={clsx(
+                      'text-sm font-medium',
+                      sbLevelsAnalysis.activeScenario === 'A' && 'text-green-800',
+                      sbLevelsAnalysis.activeScenario === 'B' && 'text-blue-800',
+                      sbLevelsAnalysis.activeScenario === 'C' && 'text-red-800',
+                      !sbLevelsAnalysis.activeScenario && 'text-gray-800',
+                    )}>
+                      {getSBLevelsSummary(sbLevelsAnalysis)}
+                    </p>
+                  </div>
+                  
+                  {/* SB-Levels Chart */}
+                  <SBLevelsChart 
+                    candles={chartData.candles} 
+                    analysis={sbLevelsAnalysis}
+                  />
+                  
+                  {/* SB-Levels Trading Plans */}
+                  <SBLevelsTradePlan analysis={sbLevelsAnalysis} />
+                  
+                  {/* SB-Levels Explanations */}
+                  <SBLevelsExplanation analysis={sbLevelsAnalysis} />
+                </>
+              )}
+            </div>
+          )}
+
           {activeTab === 'plan' && <TradePlanCard stock={stock} />}
           {activeTab === 'insider' && <InsiderAlert ticker={tickerShort} />}
           {activeTab === 'news' && <NewsWidget ticker={tickerShort} />}
@@ -381,6 +483,51 @@ export default function StockAnalyseContent({ stock, allStocks }: StockAnalyseCo
 
         {/* Sidebar */}
         <div className="space-y-6">
+          {/* SB-Levels Quick Status */}
+          {sbLevelsAnalysis && (
+            <div 
+              onClick={() => setActiveTab('sblevels')}
+              className={clsx(
+                'rounded-2xl p-4 cursor-pointer transition-all hover:scale-[1.02]',
+                sbLevelsAnalysis.activeScenario === 'A' && 'bg-gradient-to-br from-green-500 to-emerald-600',
+                sbLevelsAnalysis.activeScenario === 'B' && 'bg-gradient-to-br from-blue-500 to-indigo-600',
+                sbLevelsAnalysis.activeScenario === 'C' && 'bg-gradient-to-br from-red-500 to-rose-600',
+                !sbLevelsAnalysis.activeScenario && 'bg-gradient-to-br from-gray-500 to-gray-600',
+              )}
+            >
+              <div className="flex items-center justify-between text-white mb-2">
+                <div className="flex items-center gap-2">
+                  <Layers className="w-5 h-5" />
+                  <span className="font-bold text-sm">SB-Levels</span>
+                </div>
+                <span className="text-2xl">
+                  {sbLevelsAnalysis.activeScenario === 'A' && '🚀'}
+                  {sbLevelsAnalysis.activeScenario === 'B' && '🔄'}
+                  {sbLevelsAnalysis.activeScenario === 'C' && '⛔'}
+                  {!sbLevelsAnalysis.activeScenario && '❓'}
+                </span>
+              </div>
+              <div className="text-white">
+                <div className="text-lg font-bold">
+                  Scenario {sbLevelsAnalysis.activeScenario || '?'}
+                </div>
+                <div className="text-xs opacity-90">
+                  {sbLevelsAnalysis.activeScenario === 'A' && 'Impuls - Breakout'}
+                  {sbLevelsAnalysis.activeScenario === 'B' && 'Pullback - Retest'}
+                  {sbLevelsAnalysis.activeScenario === 'C' && 'Chop - NO TRADE'}
+                  {!sbLevelsAnalysis.activeScenario && 'Analyserer...'}
+                </div>
+              </div>
+              <div className="mt-3 flex justify-between items-center text-xs text-white/80">
+                <span>Motstand: {sbLevelsAnalysis.primaryResistance.toFixed(2)}</span>
+                <span>Støtte: {sbLevelsAnalysis.primarySupport.toFixed(2)}</span>
+              </div>
+              <div className="mt-2 text-xs text-white/60 text-center">
+                Klikk for detaljer →
+              </div>
+            </div>
+          )}
+
           {/* Strategy Tags */}
           <div className="bg-surface rounded-2xl p-6 border border-surface-border">
             <h3 className="text-sm font-bold text-brand-slate uppercase tracking-wide mb-4">

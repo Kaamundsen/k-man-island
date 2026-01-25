@@ -27,12 +27,17 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
     portfolioId: '',
     strategyId: '' as StrategyId | '',
     notes: '',
+    // Closed trade fields
+    exitPrice: '',
+    exitDate: '',
+    exitReason: '' as 'MANUAL' | 'STOP_LOSS' | 'TARGET' | 'TIME_HORIZON' | '',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [portfolios, setPortfolios] = useState<{ id: string; name: string }[]>([]);
   const isEditMode = !!editTrade;
+  const isClosedTrade = editTrade?.status !== 'ACTIVE';
 
   // Load portfolios and set edit data
   useEffect(() => {
@@ -53,6 +58,10 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
           portfolioId: editTrade.portfolioId,
           strategyId: editTrade.strategyId || '',
           notes: editTrade.notes || '',
+          // Closed trade fields
+          exitPrice: editTrade.exitPrice?.toString() || '',
+          exitDate: editTrade.exitDate ? new Date(editTrade.exitDate).toISOString().split('T')[0] : '',
+          exitReason: (editTrade.exitReason || '') as '' | 'MANUAL' | 'STOP_LOSS' | 'TARGET' | 'TIME_HORIZON',
         });
       } else {
         // Reset form for new trade
@@ -68,6 +77,9 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
           portfolioId: loadedPortfolios[0]?.id || '',
           strategyId: '',
           notes: '',
+          exitPrice: '',
+          exitDate: '',
+          exitReason: '',
         });
       }
     }
@@ -95,7 +107,7 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
 
       if (isEditMode && editTrade) {
         // Update existing trade
-        updateTrade({
+        const updatePayload: any = {
           id: editTrade.id,
           ticker: formData.ticker.toUpperCase(),
           name: formData.name || undefined,
@@ -108,7 +120,22 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
           target: formData.target ? parseFloat(formData.target) : undefined,
           timeHorizonEnd,
           notes: formData.notes || undefined,
-        });
+        };
+        
+        // Add closed trade fields if editing a closed trade
+        if (isClosedTrade) {
+          if (formData.exitPrice) {
+            updatePayload.exitPrice = parseFloat(formData.exitPrice);
+          }
+          if (formData.exitDate) {
+            updatePayload.exitDate = new Date(formData.exitDate);
+          }
+          if (formData.exitReason) {
+            updatePayload.exitReason = formData.exitReason;
+          }
+        }
+        
+        updateTrade(updatePayload);
       } else {
         // Create new trade using local store
         const tradeInput: TradeInput = {
@@ -141,6 +168,9 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
         portfolioId: portfolios[0]?.id || '',
         strategyId: '',
         notes: '',
+        exitPrice: '',
+        exitDate: '',
+        exitReason: '',
       });
 
       if (onSuccess) onSuccess();
@@ -167,10 +197,18 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
         <div className="sticky top-0 bg-surface border-b border-gray-200 p-6 flex items-center justify-between rounded-t-3xl">
           <div>
             <h2 className="text-2xl font-extrabold text-brand-slate flex items-center gap-2">
-              {isEditMode ? <><Edit className="w-6 h-6" /> Rediger Trade</> : 'Legg til Trade'}
+              {isEditMode 
+                ? isClosedTrade 
+                  ? <><Edit className="w-6 h-6" /> Rediger Lukket Trade</>
+                  : <><Edit className="w-6 h-6" /> Rediger Trade</>
+                : 'Legg til Trade'}
             </h2>
             <p className="text-sm text-gray-600 mt-1">
-              {isEditMode ? `Oppdater ${editTrade?.ticker}` : 'Registrer en ny handel for sporing'}
+              {isEditMode 
+                ? isClosedTrade 
+                  ? `Oppdater salgspris, dato eller notat for ${editTrade?.ticker}`
+                  : `Oppdater ${editTrade?.ticker}`
+                : 'Registrer en ny handel for sporing'}
             </p>
           </div>
           <button
@@ -369,6 +407,85 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
               className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all resize-none"
             />
           </div>
+
+          {/* Closed Trade Fields - Only shown when editing a closed trade */}
+          {isClosedTrade && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-4">
+              <h3 className="font-bold text-amber-800 flex items-center gap-2">
+                📦 Salgsdata (Lukket Trade)
+              </h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-amber-800 mb-2">
+                    Salgspris (NOK)
+                  </label>
+                  <input
+                    type="number"
+                    name="exitPrice"
+                    value={formData.exitPrice}
+                    onChange={handleChange}
+                    step="0.01"
+                    placeholder="0.00"
+                    className="w-full px-4 py-3 rounded-xl border border-amber-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-200 outline-none transition-all bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-amber-800 mb-2">
+                    Salgsdato
+                  </label>
+                  <input
+                    type="date"
+                    name="exitDate"
+                    value={formData.exitDate}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 rounded-xl border border-amber-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-200 outline-none transition-all bg-white"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-bold text-amber-800 mb-2">
+                  Årsak til salg
+                </label>
+                <select
+                  name="exitReason"
+                  value={formData.exitReason}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-xl border border-amber-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-200 outline-none transition-all bg-white"
+                >
+                  <option value="">Velg årsak</option>
+                  <option value="MANUAL">Manuelt salg</option>
+                  <option value="STOP_LOSS">Stop loss</option>
+                  <option value="TARGET">Nådde mål</option>
+                  <option value="TIME_HORIZON">Tidshorisont utløpt</option>
+                </select>
+              </div>
+              
+              {/* P/L Preview for closed trade */}
+              {formData.exitPrice && formData.entryPrice && (
+                <div className="bg-white rounded-lg p-3 border border-amber-200">
+                  <div className="text-xs text-amber-600 mb-1">Resultat</div>
+                  {(() => {
+                    const exitPrice = parseFloat(formData.exitPrice);
+                    const entryPrice = parseFloat(formData.entryPrice);
+                    const quantity = parseInt(formData.quantity) || 0;
+                    const pnl = (exitPrice - entryPrice) * quantity;
+                    const pnlPercent = ((exitPrice - entryPrice) / entryPrice) * 100;
+                    const isProfit = pnl >= 0;
+                    return (
+                      <div className={`text-lg font-bold ${isProfit ? 'text-green-600' : 'text-red-600'}`}>
+                        {isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr
+                        <span className="text-sm ml-2">
+                          ({isProfit ? '+' : ''}{pnlPercent.toFixed(1)}%)
+                        </span>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">

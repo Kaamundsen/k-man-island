@@ -1,14 +1,19 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { clsx } from 'clsx';
 import StockCard from '@/components/StockCard';
 import StockCardOriginal from '@/components/StockCardOriginal';
 import FilterBar, { MarketFilter, StrategyFilter } from '@/components/FilterBar';
 import MarketStatus from '@/components/MarketStatus';
 import { Stock } from '@/lib/types';
-import { TrendingUp, TrendingDown, Palette, AlertCircle, ChevronRight, LayoutGrid, List, Layers, Minus, RefreshCcw, Loader2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, RefreshCcw, Loader2, Search, X, Plus, Check, AlertCircle, ChevronRight, LayoutGrid, List, Layers, StickyNote, Trash2, Calendar, Bell, Edit2 } from 'lucide-react';
+import { getCustomTickers, addCustomTicker, removeCustomTicker, isInBaseUniverse } from '@/lib/store/universe-store';
+import { getNotes, addNote, updateNote, deleteNote, type StockNote } from '@/lib/store/notes-store';
+import { toast } from 'sonner';
+import SBScanDashboard from '@/components/SBScanDashboard';
 
 interface DashboardContentProps {
   initialStocks: Stock[];
@@ -22,34 +27,23 @@ const calculateCompositeScore = (stock: Stock, prioritizeInsider: boolean = fals
   let score = 0;
   
   if (prioritizeInsider && stock.insiderScore !== undefined) {
-    // Ved INSIDER-filter: Insider score får høyere vekt
-    score += stock.insiderScore * 0.4; // 40%
-    score += stock.kScore * 0.3; // 30%
-    
-    // RSI bonus (15%)
+    score += stock.insiderScore * 0.4;
+    score += stock.kScore * 0.3;
     const rsiOptimal = 50;
     const rsiDistance = Math.abs(stock.rsi - rsiOptimal);
     const rsiScore = Math.max(0, 100 - (rsiDistance * 3));
     score += rsiScore * 0.15;
-    
-    // Risk/Reward Ratio (15%)
     const riskRewardRatio = stock.gainPercent / stock.riskPercent;
     const rrScore = Math.min(100, riskRewardRatio * 20);
     score += rrScore * 0.15;
   } else {
-    // Standard scoring
-    // K-Score (vekt: 50%)
     score += stock.kScore * 0.5;
-    
-    // RSI bonus (vekt: 20%) - mellom 40-60 er best
     const rsiOptimal = 50;
     const rsiDistance = Math.abs(stock.rsi - rsiOptimal);
     const rsiScore = Math.max(0, 100 - (rsiDistance * 3));
     score += rsiScore * 0.2;
-    
-    // Risk/Reward Ratio (vekt: 30%)
     const riskRewardRatio = stock.gainPercent / stock.riskPercent;
-    const rrScore = Math.min(100, riskRewardRatio * 20); // Cap ved 100
+    const rrScore = Math.min(100, riskRewardRatio * 20);
     score += rrScore * 0.3;
   }
   
@@ -59,10 +53,211 @@ const calculateCompositeScore = (stock: Stock, prioritizeInsider: boolean = fals
 type ViewMode = 'cards-and-list' | 'list-only' | 'cards-only';
 
 export default function DashboardContent({ initialStocks, onRefresh, isRefreshing, lastUpdated }: DashboardContentProps) {
+  const router = useRouter();
   const [marketFilter, setMarketFilter] = useState<MarketFilter>('ALLE');
   const [strategyFilter, setStrategyFilter] = useState<StrategyFilter>('ALLE');
   const [useOriginalDesign, setUseOriginalDesign] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('cards-and-list');
+  
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<string[]>([]);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  
+  // Custom tickers state
+  const [customTickers, setCustomTickers] = useState<string[]>([]);
+  
+  // Notes state
+  const [noteModalTicker, setNoteModalTicker] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState('');
+  const [noteTags, setNoteTags] = useState<string[]>([]);
+  const [noteReminder, setNoteReminder] = useState('');
+  const [noteAlert, setNoteAlert] = useState(false);
+  const [editingNote, setEditingNote] = useState<StockNote | null>(null);
+  const [stockNotes, setStockNotes] = useState<Record<string, StockNote[]>>({});
+  const [hoveredNoteTicker, setHoveredNoteTicker] = useState<string | null>(null);
+  
+  // Tag options (same as StockNotesSection)
+  const TAG_OPTIONS = [
+    { value: 'sesong', label: 'Sesong', color: 'bg-blue-100 text-blue-700' },
+    { value: 'rapport', label: 'Rapport', color: 'bg-purple-100 text-purple-700' },
+    { value: 'mønster', label: 'Mønster', color: 'bg-orange-100 text-orange-700' },
+    { value: 'personlig', label: 'Personlig', color: 'bg-gray-100 text-gray-700' },
+  ];
+  
+  // Load custom tickers on mount
+  useEffect(() => {
+    const tickers = getCustomTickers();
+    setCustomTickers(tickers);
+    
+    // Load notes for all stocks
+    const notes: Record<string, StockNote[]> = {};
+    initialStocks.forEach(stock => {
+      const tickerNotes = getNotes(stock.ticker);
+      if (tickerNotes.length > 0) {
+        notes[stock.ticker] = tickerNotes;
+      }
+    });
+    setStockNotes(notes);
+  }, [initialStocks]);
+
+  // Search handler
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+    
+    if (query.length < 2) {
+      setSearchResults([]);
+      setShowSearchDropdown(false);
+      return;
+    }
+    
+    const upperQuery = query.toUpperCase();
+    
+    // Search in existing stocks first
+    const existingMatches = initialStocks
+      .filter(s => s.ticker.toUpperCase().includes(upperQuery) || s.name.toUpperCase().includes(upperQuery))
+      .map(s => s.ticker)
+      .slice(0, 5);
+    
+    // Also suggest the raw query as potential ticker
+    const potentialTicker = upperQuery.endsWith('.OL') ? upperQuery : `${upperQuery}.OL`;
+    const allResults = [...new Set([...existingMatches, potentialTicker])].slice(0, 6);
+    
+    setSearchResults(allResults);
+    setShowSearchDropdown(true);
+  }, [initialStocks]);
+
+  // Add ticker to Mine list
+  const handleSelectTicker = useCallback((ticker: string, navigateToAnalysis: boolean = false) => {
+    const normalizedTicker = ticker.toUpperCase().endsWith('.OL') 
+      ? ticker.toUpperCase() 
+      : `${ticker.toUpperCase()}.OL`;
+    
+    // Check if already in custom tickers
+    const alreadyInCustom = customTickers.some(
+      t => t.toUpperCase() === normalizedTicker.toUpperCase()
+    );
+    
+    if (!alreadyInCustom) {
+      const wasAdded = addCustomTicker(normalizedTicker);
+      if (wasAdded) {
+        setCustomTickers(prev => [...prev, normalizedTicker]);
+        toast.success(`${normalizedTicker.replace('.OL', '')} lagt til i Mine`);
+      }
+    } else {
+      toast.info(`${normalizedTicker.replace('.OL', '')} er allerede i Mine`);
+    }
+    
+    setSearchQuery('');
+    setShowSearchDropdown(false);
+    
+    if (navigateToAnalysis) {
+      router.push(`/analyse/${normalizedTicker}`);
+    }
+  }, [customTickers, router]);
+
+  // Direct search (enter key)
+  const handleDirectSearch = useCallback((navigateToAnalysis: boolean = true) => {
+    if (searchQuery.length < 2) return;
+    
+    const normalizedTicker = searchQuery.toUpperCase().endsWith('.OL') 
+      ? searchQuery.toUpperCase() 
+      : `${searchQuery.toUpperCase()}.OL`;
+    
+    // Validate ticker exists
+    const isKnown = isInBaseUniverse(normalizedTicker);
+    
+    if (!isKnown) {
+      toast.error(`${normalizedTicker.replace('.OL', '')} finnes ikke på Oslo Børs`);
+      return;
+    }
+    
+    handleSelectTicker(normalizedTicker, navigateToAnalysis);
+  }, [searchQuery, handleSelectTicker]);
+
+  // Remove from Mine list
+  const handleRemoveFromMine = useCallback((ticker: string) => {
+    const normalizedTicker = ticker.toUpperCase().endsWith('.OL') 
+      ? ticker.toUpperCase() 
+      : `${ticker.toUpperCase()}.OL`;
+    
+    const wasRemoved = removeCustomTicker(normalizedTicker);
+    if (wasRemoved) {
+      setCustomTickers(prev => prev.filter(t => t.toUpperCase() !== normalizedTicker.toUpperCase()));
+      toast.success(`${normalizedTicker.replace('.OL', '')} fjernet fra Mine`);
+    }
+  }, []);
+
+  // Reset note form
+  const resetNoteForm = useCallback(() => {
+    setNoteModalTicker(null);
+    setNoteText('');
+    setNoteTags([]);
+    setNoteReminder('');
+    setNoteAlert(false);
+    setEditingNote(null);
+  }, []);
+
+  // Open note modal for editing
+  const openNoteForEdit = useCallback((note: StockNote) => {
+    setNoteModalTicker(note.ticker);
+    setNoteText(note.note);
+    setNoteTags(note.tags || []);
+    setNoteReminder(note.reminder || '');
+    setNoteAlert(note.alertEnabled || false);
+    setEditingNote(note);
+  }, []);
+
+  // Add or update note
+  const handleSaveNote = useCallback(() => {
+    if (!noteModalTicker || !noteText.trim()) return;
+    
+    if (editingNote) {
+      // Update existing note
+      updateNote(editingNote.id, {
+        note: noteText.trim(),
+        tags: noteTags,
+        reminder: noteReminder || undefined,
+        alertEnabled: noteAlert,
+      });
+      toast.success('Notat oppdatert');
+    } else {
+      // Add new note
+      addNote({
+        ticker: noteModalTicker,
+        note: noteText.trim(),
+        tags: noteTags,
+        reminder: noteReminder || undefined,
+        alertEnabled: noteAlert,
+      });
+      toast.success('Notat lagt til');
+    }
+    
+    // Refresh notes
+    setStockNotes(prev => ({
+      ...prev,
+      [noteModalTicker]: getNotes(noteModalTicker),
+    }));
+    
+    resetNoteForm();
+  }, [noteModalTicker, noteText, noteTags, noteReminder, noteAlert, editingNote, resetNoteForm]);
+
+  // Delete note
+  const handleDeleteNote = useCallback((noteId: string, ticker: string) => {
+    deleteNote(noteId);
+    setStockNotes(prev => ({
+      ...prev,
+      [ticker]: getNotes(ticker),
+    }));
+    toast.success('Notat slettet');
+  }, []);
+
+  // Toggle tag
+  const toggleNoteTag = useCallback((tag: string) => {
+    setNoteTags(prev => 
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
+  }, []);
 
   const filteredStocks = useMemo(() => {
     let filtered = [...initialStocks];
@@ -72,59 +267,118 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
       filtered = filtered.filter(stock => stock.market === marketFilter);
     }
 
-    // Filter by strategy
-    if (strategyFilter !== 'ALLE') {
+    // Handle MINE filter specially
+    if (strategyFilter === 'MINE') {
+      // Return only custom tickers
       filtered = filtered.filter(stock => 
-        stock.strategies.includes(strategyFilter as 'MOMENTUM' | 'BUFFETT' | 'TVEITEREID' | 'REBOUND' | 'INSIDER')
+        customTickers.some(t => t.toUpperCase() === stock.ticker.toUpperCase())
       );
+      
+      // Sort by composite score
+      filtered.sort((a, b) => calculateCompositeScore(b) - calculateCompositeScore(a));
+      
+      if (viewMode === 'cards-and-list') {
+        return filtered.slice(0, 3);
+      } else if (viewMode === 'cards-only') {
+        return filtered;
+      }
+      return [];
+    }
+
+    // Filter by strategy
+    if (strategyFilter !== 'ALLE' && strategyFilter !== 'SB_SCAN') {
+      // Map FilterBar strategy names to Stock strategy types
+      // Some filters may match multiple strategy types
+      const strategyMap: Record<string, string[]> = {
+        'MOMENTUM': ['MOMENTUM', 'MOMENTUM_TREND', 'MOMENTUM_ASYM'],
+        'BUFFETT': ['BUFFETT'],
+        'TVEITEREID': ['TVEITEREID'],
+        'REBOUND': ['REBOUND'],
+        'INSIDER': ['INSIDER'],
+        // These don't have corresponding stock strategies yet, but we keep them for future use
+        'SWINGTRADE': [],
+        'DAYTRADE': [],
+        'UTBYTTE': [],
+      };
+      const mappedStrategies = strategyMap[strategyFilter] || [];
+      if (mappedStrategies.length > 0) {
+        filtered = filtered.filter(stock => 
+          mappedStrategies.some(s => stock.strategies.includes(s as any))
+        );
+      }
     }
 
     // Filter only BUY signals
     const buyStocks = filtered.filter(stock => stock.signal === 'BUY');
     
-    // Avansert sortering: Kombiner K-Score, RSI og Risk/Reward
     const prioritizeInsider = strategyFilter === 'INSIDER';
     buyStocks.sort((a, b) => {
-      // Beregn composite score
       const scoreA = calculateCompositeScore(a, prioritizeInsider);
       const scoreB = calculateCompositeScore(b, prioritizeInsider);
       return scoreB - scoreA;
     });
     
-    // Return based on view mode
     if (viewMode === 'cards-and-list') {
-      return buyStocks.slice(0, 3); // Top 3 only
+      return buyStocks.slice(0, 3);
     } else if (viewMode === 'cards-only') {
-      return buyStocks; // Show all as cards
+      return buyStocks;
     } else {
-      return []; // list-only shows no cards
+      return [];
     }
-  }, [initialStocks, marketFilter, strategyFilter, viewMode]);
+  }, [initialStocks, marketFilter, strategyFilter, viewMode, customTickers]);
 
   const buySignals = initialStocks.filter(s => s.signal === 'BUY').length;
   const holdSignals = initialStocks.filter(s => s.signal === 'HOLD').length;
   const sellSignals = initialStocks.filter(s => s.signal === 'SELL').length;
   
-  // Watchlist - alle aksjer unntatt topp 3 BUY (eller alle hvis list-only)
+  // Watchlist stocks
   const watchlistStocks = useMemo(() => {
     const prioritizeInsider = strategyFilter === 'INSIDER';
     
-    // Start med samme filtrering som kort
     let filtered = [...initialStocks];
     
-    // Filter by market
     if (marketFilter !== 'ALLE') {
       filtered = filtered.filter(stock => stock.market === marketFilter);
     }
     
-    // Filter by strategy
-    if (strategyFilter !== 'ALLE') {
+    // Handle MINE filter specially
+    if (strategyFilter === 'MINE') {
       filtered = filtered.filter(stock => 
-        stock.strategies.includes(strategyFilter as 'MOMENTUM' | 'BUFFETT' | 'TVEITEREID' | 'REBOUND' | 'INSIDER')
+        customTickers.some(t => t.toUpperCase() === stock.ticker.toUpperCase())
       );
+      
+      if (viewMode === 'list-only') {
+        return filtered.sort((a, b) => calculateCompositeScore(b) - calculateCompositeScore(a));
+      }
+      
+      if (viewMode === 'cards-only') {
+        return [];
+      }
+      
+      // cards-and-list: exclude top 3
+      const sorted = filtered.sort((a, b) => calculateCompositeScore(b) - calculateCompositeScore(a));
+      return sorted.slice(3);
     }
     
-    // Hent alle BUY-aksjer fra filtrert liste og sorter de på samme måte
+    if (strategyFilter !== 'ALLE' && strategyFilter !== 'SB_SCAN') {
+      const strategyMap: Record<string, string[]> = {
+        'MOMENTUM': ['MOMENTUM', 'MOMENTUM_TREND', 'MOMENTUM_ASYM'],
+        'BUFFETT': ['BUFFETT'],
+        'TVEITEREID': ['TVEITEREID'],
+        'REBOUND': ['REBOUND'],
+        'INSIDER': ['INSIDER'],
+        'SWINGTRADE': [],
+        'DAYTRADE': [],
+        'UTBYTTE': [],
+      };
+      const mappedStrategies = strategyMap[strategyFilter] || [];
+      if (mappedStrategies.length > 0) {
+        filtered = filtered.filter(stock => 
+          mappedStrategies.some(s => stock.strategies.includes(s as any))
+        );
+      }
+    }
+    
     const allBuyStocks = filtered
       .filter(stock => stock.signal === 'BUY')
       .sort((a, b) => {
@@ -134,7 +388,6 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
       });
     
     if (viewMode === 'list-only') {
-      // Show all filtered stocks in list
       return filtered.sort((a, b) => {
         const signalOrder = { BUY: 0, HOLD: 1, SELL: 2 };
         if (signalOrder[a.signal] !== signalOrder[b.signal]) {
@@ -147,18 +400,14 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
     }
     
     if (viewMode === 'cards-only') {
-      // Show no list (all are cards)
       return [];
     }
     
-    // cards-and-list mode: Ekskluder topp 3 fra filtrert liste
     const top3BuyTickers = allBuyStocks.slice(0, 3).map(s => s.ticker);
     
     return filtered
       .filter(stock => !top3BuyTickers.includes(stock.ticker))
       .sort((a, b) => {
-        // Sort: BUY først, deretter HOLD, deretter SELL
-        // Innenfor hver gruppe: composite score
         const signalOrder = { BUY: 0, HOLD: 1, SELL: 2 };
         if (signalOrder[a.signal] !== signalOrder[b.signal]) {
           return signalOrder[a.signal] - signalOrder[b.signal];
@@ -167,13 +416,12 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
         const scoreB = calculateCompositeScore(b, prioritizeInsider);
         return scoreB - scoreA;
       });
-  }, [initialStocks, viewMode, strategyFilter, marketFilter]);
+  }, [initialStocks, viewMode, strategyFilter, marketFilter, customTickers]);
 
   return (
     <main className="min-h-screen p-8">
       {/* Header */}
       <div className="mb-8">
-        {/* Top row: Dashboard + Market Status */}
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-4xl font-extrabold text-foreground tracking-tight">
             Dashboard
@@ -181,7 +429,6 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
           <MarketStatus />
         </div>
         
-        {/* Bottom row: Last updated + Refresh + Signals */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <p className="text-muted-foreground text-sm">
@@ -220,7 +467,6 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
             )}
           </div>
           
-          {/* Kompakte signaler */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1.5">
               <TrendingUp className="w-4 h-4 text-brand-emerald" strokeWidth={2.5} />
@@ -243,15 +489,93 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Search Bar */}
+      <div className="mb-6 relative">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Søk ticker (f.eks. EQNR, VOW)..."
+            value={searchQuery}
+            onChange={(e) => handleSearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleDirectSearch(false); // Don't navigate, just add to Mine
+              }
+              if (e.key === 'Escape') {
+                setShowSearchDropdown(false);
+                setSearchQuery('');
+              }
+            }}
+            className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-brand-emerald/20 focus:border-brand-emerald outline-none"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setShowSearchDropdown(false);
+              }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+        
+        {/* Search Dropdown */}
+        {showSearchDropdown && searchResults.length > 0 && (
+          <div className="absolute top-full left-0 mt-2 w-full max-w-md bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden">
+            {searchResults.map((ticker) => {
+              const stock = initialStocks.find(s => s.ticker === ticker);
+              const inCustom = customTickers.some(t => t.toUpperCase() === ticker.toUpperCase());
+              
+              return (
+                <div
+                  key={ticker}
+                  className="flex items-center justify-between px-4 py-3 hover:bg-muted cursor-pointer border-b border-border last:border-0"
+                  onClick={() => handleSelectTicker(ticker, false)}
+                >
+                  <div>
+                    <div className="font-bold text-foreground">{ticker.replace('.OL', '')}</div>
+                    {stock && <div className="text-sm text-muted-foreground">{stock.name}</div>}
+                    {!stock && <div className="text-xs text-amber-500">Ukjent ticker - klikk for å sjekke</div>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {inCustom ? (
+                      <span className="text-xs text-brand-emerald flex items-center gap-1">
+                        <Check className="w-3 h-3" /> I Mine
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Plus className="w-3 h-3" /> Legg til
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* SB-Scan Dashboard - shown when SB_SCAN filter is active */}
+      {strategyFilter === 'SB_SCAN' && (
+        <div className="mb-8">
+          <SBScanDashboard />
+        </div>
+      )}
+
+      {/* Filters - hidden when SB_SCAN is active */}
+      {strategyFilter !== 'SB_SCAN' && (
       <div className="mb-8">
         <div className="flex items-baseline gap-3 mb-4">
           <h2 className="text-2xl font-bold text-foreground">
-            {viewMode === 'cards-only' ? 'Alle Kjøpsanbefalinger' : 
+            {strategyFilter === 'MINE' ? 'Mine Aksjer' :
+             viewMode === 'cards-only' ? 'Alle Kjøpsanbefalinger' : 
              viewMode === 'list-only' ? '' : 
              'Topp 3 Kjøpsanbefalinger'}
           </h2>
-          {viewMode !== 'list-only' && (
+          {viewMode !== 'list-only' && strategyFilter !== 'MINE' && (
             <span className="text-sm text-muted-foreground">
               Rangert etter K-Score, RSI og Risk/Reward
             </span>
@@ -262,10 +586,10 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
           <FilterBar 
             onMarketChange={setMarketFilter}
             onStrategyChange={setStrategyFilter}
+            mineCount={customTickers.length}
           />
           
           <div className="flex items-center gap-3">
-            {/* View Mode Filter */}
             <div className="flex items-center gap-2 bg-muted rounded-xl p-1">
               <button
                 onClick={() => setViewMode('cards-and-list')}
@@ -305,11 +629,10 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
               </button>
             </div>
             
-            {/* Design Toggle */}
             <button
               onClick={() => setUseOriginalDesign(!useOriginalDesign)}
               className="flex-shrink-0"
-              title={useOriginalDesign ? 'Bytt til Moderne Design (farget topp)' : 'Bytt til Original Design (hvit)'}
+              title={useOriginalDesign ? 'Bytt til Moderne Design' : 'Bytt til Original Design'}
             >
               <div className={`relative w-12 h-6 rounded-full transition-colors ${!useOriginalDesign ? 'bg-brand-emerald' : 'bg-muted'}`}>
                 <div className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-card transition-transform shadow-sm ${!useOriginalDesign ? 'translate-x-6' : 'translate-x-0'}`}></div>
@@ -318,12 +641,12 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
           </div>
         </div>
       </div>
+      )}
 
-      {/* Stock Grid */}
-      {filteredStocks.length > 0 && (
+      {/* Stock Grid - hidden when SB_SCAN is active */}
+      {strategyFilter !== 'SB_SCAN' && filteredStocks.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredStocks.map((stock, index) => {
-            // ALLTID bruk lokal rank (posisjon i filtrert liste)
             const rank = index + 1;
             
             return useOriginalDesign ? (
@@ -335,62 +658,65 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
         </div>
       )}
       
-      {filteredStocks.length === 0 && viewMode !== 'list-only' && (
+      {strategyFilter !== 'SB_SCAN' && filteredStocks.length === 0 && viewMode !== 'list-only' && (
         <div className="text-center py-16">
-          <div className="text-muted-foreground text-lg mb-2">Ingen aksjer matcher filtrene</div>
-          <p className="text-muted-foreground text-sm">Prøv å justere filtreringsalternativene</p>
+          <div className="text-muted-foreground text-lg mb-2">
+            {strategyFilter === 'MINE' && customTickers.length === 0 
+              ? 'Ingen aksjer i Mine-listen' 
+              : 'Ingen aksjer matcher filtrene'}
+          </div>
+          <p className="text-muted-foreground text-sm">
+            {strategyFilter === 'MINE' 
+              ? 'Søk etter en ticker ovenfor for å legge til' 
+              : 'Prøv å justere filtreringsalternativene'}
+          </p>
         </div>
       )}
 
-      {/* Watchlist - Overvåkes */}
-      {watchlistStocks.length > 0 && (
+      {/* Watchlist - hidden when SB_SCAN is active */}
+      {strategyFilter !== 'SB_SCAN' && watchlistStocks.length > 0 && (
         <div className={clsx(viewMode === 'list-only' ? 'mt-0' : 'mt-16')}>
           <div className="flex items-center gap-3 mb-6">
             <AlertCircle className="w-6 h-6 text-muted-foreground" />
             <h2 className="text-2xl font-bold text-muted-foreground">
-              {viewMode === 'list-only' ? 'Alle Aksjer' : 'Overvåkes'}
+              {strategyFilter === 'MINE' ? 'Mine Aksjer' :
+               viewMode === 'list-only' ? 'Alle Aksjer' : 'Overvåkes'}
             </h2>
             <span className="text-sm text-muted-foreground">
-              {viewMode === 'list-only' 
-                ? `${watchlistStocks.length} aksjer totalt` 
-                : `${watchlistStocks.filter(s => s.signal === 'BUY').length} flere kjøpsmuligheter`
-              }
+              {watchlistStocks.length} aksjer
             </span>
           </div>
 
           <div className="bg-card rounded-3xl border border-border overflow-hidden">
             {/* Table Header */}
-            <div className="grid grid-cols-[0.5fr,2fr,1fr,1.5fr,1fr,1.5fr,0.5fr] gap-4 px-6 py-4 bg-muted border-b border-border">
+            <div className="grid grid-cols-[0.5fr,2fr,1fr,1.5fr,1fr,1.5fr,1fr,0.5fr] gap-4 px-6 py-4 bg-muted border-b border-border">
               <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">#</div>
               <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">TICKER</div>
               <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">PRIS</div>
               <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">STATUS</div>
               <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">RSI</div>
               <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">K-SCORE</div>
+              <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">NOTAT</div>
               <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">AKSJON</div>
             </div>
 
             {/* Table Body */}
             <div className="divide-y divide-border">
               {watchlistStocks.map((stock, index) => {
-                // Beregn rank basert på view mode og index
-                let rank;
-                if (viewMode === 'list-only') {
-                  // I list-only, rank starter fra 1
-                  rank = stock.signal === 'BUY' ? index + 1 : null;
+                let rank: number | null;
+                if (strategyFilter === 'MINE' || viewMode === 'list-only') {
+                  rank = index + 1;
                 } else {
-                  // I cards-and-list, rank starter fra 4 (etter topp 3 kort)
-                  // Men kun for BUY-aksjer
                   if (stock.signal === 'BUY') {
-                    // Finn posisjonen i den filtrerte BUY-listen
                     const buyStocksBeforeThis = watchlistStocks
                       .slice(0, index)
                       .filter(s => s.signal === 'BUY').length;
-                    rank = buyStocksBeforeThis + 4; // +4 fordi topp 3 er i kort
+                    rank = buyStocksBeforeThis + 4;
                   } else {
-                    rank = null;
+                    rank = index + 4;
                   }
                 }
+                
                 const tickerShort = stock.ticker.replace('.OL', '');
                 const statusConfig: Record<string, { className: string; label: string }> = {
                   BUY: { className: 'badge-buy', label: 'KJØP' },
@@ -400,31 +726,28 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
                 const config = statusConfig[stock.signal] || statusConfig.HOLD;
                 const kScoreColor = stock.kScore >= 75 ? 'bg-brand-emerald' : stock.kScore >= 60 ? 'bg-yellow-400' : 'bg-muted';
                 const priceChangeColor = stock.changePercent > 0 ? 'text-brand-emerald' : 'text-brand-rose';
+                const notes = stockNotes[stock.ticker] || [];
+                const isInMine = customTickers.some(t => t.toUpperCase() === stock.ticker.toUpperCase());
 
                 return (
-                  <Link
+                  <div
                     key={stock.ticker}
-                    href={`/analyse/${stock.ticker}`}
-                    className="grid grid-cols-[0.5fr,2fr,1fr,1.5fr,1fr,1.5fr,0.5fr] gap-4 px-6 py-5 hover:bg-muted transition-colors group"
+                    className="grid grid-cols-[0.5fr,2fr,1fr,1.5fr,1fr,1.5fr,1fr,0.5fr] gap-4 px-6 py-5 hover:bg-muted transition-colors group"
                   >
                     {/* Ranking */}
                     <div className="flex items-center">
-                      {rank ? (
-                        <span className="text-lg font-extrabold text-muted-foreground group-hover:text-brand-emerald transition-colors">
-                          {rank}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground/50">-</span>
-                      )}
+                      <span className="text-lg font-extrabold text-muted-foreground">
+                        {rank}
+                      </span>
                     </div>
 
                     {/* Ticker */}
-                    <div>
+                    <Link href={`/analyse/${stock.ticker}`} className="block">
                       <div className="text-lg font-bold text-foreground group-hover:text-brand-emerald transition-colors">
                         {tickerShort}
                       </div>
                       <div className="text-sm text-muted-foreground mt-0.5">{stock.name}</div>
-                    </div>
+                    </Link>
 
                     {/* Price */}
                     <div>
@@ -463,18 +786,236 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
                       </div>
                     </div>
 
-                    {/* Action */}
-                    <div className="flex items-center justify-end">
-                      <ChevronRight className="w-5 h-5 text-muted-foreground/50 group-hover:text-brand-emerald transition-colors" />
+                    {/* Note */}
+                    <div className="flex items-center relative">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setNoteModalTicker(stock.ticker);
+                        }}
+                        onMouseEnter={() => notes.length > 0 && setHoveredNoteTicker(stock.ticker)}
+                        onMouseLeave={() => setHoveredNoteTicker(null)}
+                        className={clsx(
+                          'p-2 rounded-lg transition-colors relative',
+                          notes.length > 0 
+                            ? 'text-amber-500 hover:bg-amber-50' 
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                        )}
+                      >
+                        <StickyNote className="w-5 h-5" />
+                        {notes.length > 0 && (
+                          <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 text-white text-xs rounded-full flex items-center justify-center">
+                            {notes.length}
+                          </span>
+                        )}
+                      </button>
+                      
+                      {/* Hover tooltip showing notes */}
+                      {hoveredNoteTicker === stock.ticker && notes.length > 0 && (
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 w-64 bg-card border border-border rounded-xl shadow-lg p-3 pointer-events-none">
+                          <div className="text-xs font-bold text-foreground mb-2">📝 Notater ({notes.length})</div>
+                          <div className="space-y-2 max-h-40 overflow-y-auto">
+                            {notes.slice(0, 3).map(note => (
+                              <div key={note.id} className="text-xs">
+                                <p className="text-foreground line-clamp-2">{note.note}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  {note.tags?.map(tag => {
+                                    const tagConfig = TAG_OPTIONS.find(t => t.value === tag);
+                                    return (
+                                      <span key={tag} className={clsx('px-1.5 py-0.5 rounded text-[10px]', tagConfig?.color)}>
+                                        {tagConfig?.label}
+                                      </span>
+                                    );
+                                  })}
+                                  {note.reminder && (
+                                    <span className="text-muted-foreground flex items-center gap-0.5">
+                                      <Calendar className="w-3 h-3" />
+                                      {new Date(note.reminder).toLocaleDateString('nb-NO')}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          {notes.length > 3 && (
+                            <div className="text-xs text-muted-foreground mt-2">+{notes.length - 3} flere...</div>
+                          )}
+                          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-border"></div>
+                        </div>
+                      )}
                     </div>
-                  </Link>
+
+                    {/* Action */}
+                    <div className="flex items-center justify-end gap-2">
+                      {strategyFilter === 'MINE' && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleRemoveFromMine(stock.ticker);
+                          }}
+                          className="p-1.5 text-muted-foreground hover:text-brand-rose transition-colors"
+                          title="Fjern fra Mine"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                      <Link href={`/analyse/${stock.ticker}`}>
+                        <ChevronRight className="w-5 h-5 text-muted-foreground/50 group-hover:text-brand-emerald transition-colors" />
+                      </Link>
+                    </div>
+                  </div>
                 );
               })}
             </div>
           </div>
 
           <div className="mt-4 text-center text-sm text-muted-foreground">
-            Viser {watchlistStocks.length} aksjer som overvåkes
+            Viser {watchlistStocks.length} aksjer
+          </div>
+        </div>
+      )}
+
+      {/* Note Modal - Enhanced with tags, reminder, alerts */}
+      {noteModalTicker && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={resetNoteForm}>
+          <div className="bg-card rounded-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="sticky top-0 bg-card border-b border-border p-4 flex items-center justify-between rounded-t-2xl">
+              <div>
+                <h3 className="text-lg font-bold text-foreground">
+                  {editingNote ? 'Rediger notat' : 'Nytt notat'} - {noteModalTicker.replace('.OL', '')}
+                </h3>
+              </div>
+              <button onClick={resetNoteForm} className="p-2 hover:bg-muted rounded-lg">
+                <X className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+            
+            {/* Content */}
+            <div className="p-4 space-y-4">
+              {/* Note text */}
+              <div>
+                <textarea
+                  value={noteText}
+                  onChange={(e) => setNoteText(e.target.value)}
+                  placeholder="Skriv ditt notat her..."
+                  className="w-full p-3 rounded-lg border border-border bg-background text-foreground focus:ring-2 focus:ring-brand-emerald/20 focus:border-brand-emerald resize-none"
+                  rows={4}
+                  autoFocus
+                />
+              </div>
+              
+              {/* Tags */}
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">Tags</p>
+                <div className="flex flex-wrap gap-2">
+                  {TAG_OPTIONS.map(tag => (
+                    <button
+                      key={tag.value}
+                      type="button"
+                      onClick={() => toggleNoteTag(tag.value)}
+                      className={clsx(
+                        'px-3 py-1 rounded-full text-sm font-medium transition-all',
+                        noteTags.includes(tag.value) ? tag.color : 'bg-muted text-muted-foreground'
+                      )}
+                    >
+                      {tag.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Reminder & Alert */}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                  <input
+                    type="date"
+                    value={noteReminder}
+                    onChange={(e) => setNoteReminder(e.target.value)}
+                    className="text-sm border border-border bg-background text-foreground rounded-lg px-2 py-1"
+                  />
+                </div>
+                
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={noteAlert}
+                    onChange={(e) => setNoteAlert(e.target.checked)}
+                    className="rounded border-border text-brand-emerald focus:ring-brand-emerald"
+                  />
+                  <Bell className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Varsle meg</span>
+                </label>
+              </div>
+              
+              {/* Existing notes for this stock */}
+              {stockNotes[noteModalTicker] && stockNotes[noteModalTicker].length > 0 && !editingNote && (
+                <div className="border-t border-border pt-4">
+                  <p className="text-sm font-medium text-foreground mb-2">Eksisterende notater</p>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {stockNotes[noteModalTicker].map(note => (
+                      <div key={note.id} className="bg-muted rounded-lg p-3 text-sm">
+                        <div className="flex justify-between items-start mb-1">
+                          <div className="flex flex-wrap gap-1">
+                            {note.tags?.map(tag => {
+                              const tagConfig = TAG_OPTIONS.find(t => t.value === tag);
+                              return (
+                                <span key={tag} className={clsx('text-xs px-2 py-0.5 rounded-full', tagConfig?.color)}>
+                                  {tagConfig?.label}
+                                </span>
+                              );
+                            })}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <button 
+                              onClick={() => openNoteForEdit(note)}
+                              className="p-1 text-muted-foreground hover:text-foreground"
+                            >
+                              <Edit2 className="w-3 h-3" />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteNote(note.id, noteModalTicker)}
+                              className="p-1 text-muted-foreground hover:text-brand-rose"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-foreground">{note.note}</p>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                          <span>{new Date(note.createdAt).toLocaleDateString('nb-NO')}</span>
+                          {note.reminder && (
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {new Date(note.reminder).toLocaleDateString('nb-NO')}
+                            </span>
+                          )}
+                          {note.alertEnabled && <Bell className="w-3 h-3 text-amber-500" />}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Actions */}
+            <div className="sticky bottom-0 bg-card border-t border-border p-4 flex justify-end gap-3 rounded-b-2xl">
+              <button
+                onClick={resetNoteForm}
+                className="px-4 py-2 text-sm text-muted-foreground hover:bg-muted rounded-lg"
+              >
+                Avbryt
+              </button>
+              <button
+                onClick={handleSaveNote}
+                disabled={!noteText.trim()}
+                className="px-4 py-2 text-sm font-semibold bg-brand-emerald text-white rounded-lg hover:bg-brand-emerald/90 disabled:opacity-50"
+              >
+                {editingNote ? 'Oppdater' : 'Lagre'}
+              </button>
+            </div>
           </div>
         </div>
       )}

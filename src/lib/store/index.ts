@@ -51,3 +51,17 @@ export {
 
 // Re-export types
 export type { Trade, Portfolio, TradeInput, TradeUpdate, Dividend, DividendInput, DividendSummary } from '../types';
+
+// Universe store exports
+export {
+  getBaseUniverse,
+  getUniverseSize,
+  setUniverseSize,
+  getCustomTickers,
+  addCustomTicker,
+  removeCustomTicker,
+  isCustomTicker,
+  getFullUniverse,
+  isInBaseUniverse,
+  type UniverseSize,
+} from './universe-store';

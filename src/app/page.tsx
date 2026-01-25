@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import DashboardClient from '@/components/DashboardClient';
 import { fetchAllStocksWithKMomentum, fetchLiveStockData } from '@/lib/api/stock-data';
 import { mockStocks } from '@/lib/mock-data';
+import { isFinnhubEnabled, logProviderStatus } from '@/lib/api/market-provider';
 
 // Disable caching for now - always fetch fresh data
 export const dynamic = 'force-dynamic';
@@ -25,38 +26,37 @@ function DashboardLoading() {
 }
 
 export default async function Home() {
-  console.log('🚀 Starting K-Momentum data fetch...');
+  // Log provider status once at startup
+  logProviderStatus();
   
   let stocks;
-  const useKMomentum = process.env.NEXT_PUBLIC_FINNHUB_API_KEY !== undefined;
   
-  if (useKMomentum) {
-    console.log('✨ Using K-Momentum strategy with Finnhub');
+  // Use Finnhub only if explicitly enabled via environment variable
+  if (isFinnhubEnabled()) {
     try {
       stocks = await fetchAllStocksWithKMomentum();
       
       if (stocks.length === 0) {
-        console.warn('⚠️ K-Momentum returned no stocks, falling back to Yahoo Finance');
+        // Fallback to Yahoo (already logged by provider)
         stocks = await fetchLiveStockData();
       }
     } catch (error) {
-      console.error('❌ K-Momentum failed:', error);
-      console.log('⚠️ Falling back to Yahoo Finance');
+      // Fallback to Yahoo on error
       stocks = await fetchLiveStockData();
     }
   } else {
-    console.log('⚠️ No Finnhub API key, using Yahoo Finance fallback');
+    // Default: Yahoo Finance
     stocks = await fetchLiveStockData();
   }
   
   // Final fallback to mock data
   if (stocks.length === 0) {
-    console.warn('⚠️ Using mock data as final fallback');
+    console.log('⚠️ Using mock data as fallback');
     stocks = mockStocks;
   }
 
   const timestamp = new Date().toISOString();
-  console.log(`✅ Loaded ${stocks.length} stocks for dashboard at ${timestamp}`);
+  console.log(`✅ Loaded ${stocks.length} stocks`);
 
   return (
     <Suspense fallback={<DashboardLoading />}>

@@ -328,3 +328,27 @@ export function isMarketOpen(): boolean {
   
   return currentMinutes >= marketOpen && currentMinutes < marketClose;
 }
+
+/**
+ * Fetch data for a single stock by ticker
+ * Returns Stock object or null if not found
+ */
+export async function fetchSingleStockData(ticker: string): Promise<Stock | null> {
+  try {
+    const quotes = await fetchYahooFinanceData([ticker]);
+    
+    if (quotes.length === 0) {
+      return null;
+    }
+    
+    const quote = quotes[0];
+    if (!quote || quote.regularMarketPrice <= 0) {
+      return null;
+    }
+    
+    return convertToStock(quote);
+  } catch (error) {
+    console.error(`Error fetching single stock ${ticker}:`, error);
+    return null;
+  }
+}
