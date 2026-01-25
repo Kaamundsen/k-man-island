@@ -9,6 +9,8 @@
  */
 
 import { FinnhubCandle } from '../api/finnhub';
+import { passesStrategyFilters } from './registry';
+import { Stock } from '../types';
 
 // ============================================
 // STRATEGY TYPES
@@ -468,23 +470,75 @@ export const STRATEGIES: Record<StrategyId, StrategyDefinition> = {
 
 /**
  * Evaluerer en aksje mot alle aktiverte strategier
+ * V2: Bruker registry.passesStrategyFilters() for konsistent passed=true logikk
  */
 export function evaluateAllStrategies(input: StockAnalysisInput): StrategyEvaluation[] {
   const results: StrategyEvaluation[] = [];
+  
+  // Convert input to Stock-like object for registry filter check
+  const stockForFilter: Stock = {
+    ticker: input.ticker,
+    name: input.ticker,
+    price: input.price,
+    change: 0,
+    changePercent: 0,
+    kScore: calculateKScoreFromInput(input),
+    rsi: input.rsi,
+    signal: 'HOLD',
+    target: input.price * 1.1,
+    stopLoss: input.price * 0.95,
+    gainKr: input.price * 0.1,
+    gainPercent: 10,
+    riskKr: input.price * 0.05,
+    riskPercent: 5,
+    timeHorizon: '2-4 uker',
+    market: 'OSLO',
+    strategies: [],
+  };
   
   for (const strategy of Object.values(STRATEGIES)) {
     if (!strategy.enabled || strategy.requiresManualInput) continue;
     
     const evaluation = evaluateStrategy(strategy.id, input);
     if (evaluation) {
-      // Sett ALLE som "passed" - vi bruker score for rangering istedenfor pass/fail
-      evaluation.passed = true;
+      // V2: Use registry filter for consistent passed=true logic
+      const filterResult = passesStrategyFilters(stockForFilter, strategy.id);
+      evaluation.passed = filterResult.passed;
+      
+      // Add filter reasons to reasoning
+      if (!filterResult.passed) {
+        evaluation.reasoning.push('--- Registry Filter ---');
+        filterResult.reasons.forEach(r => evaluation.reasoning.push(`❌ ${r}`));
+      }
+      
       results.push(evaluation);
     }
   }
   
   // Sorter etter score - beste strategi først
   return results.sort((a, b) => b.score - a.score);
+}
+
+/**
+ * Helper: Calculate K-Score from analysis input
+ */
+function calculateKScoreFromInput(input: StockAnalysisInput): number {
+  let score = 50;
+  
+  // Trend bonus
+  if (input.sma50 > input.sma200) score += 15;
+  if (input.price > input.sma50) score += 10;
+  
+  // RSI bonus
+  if (input.rsi >= 40 && input.rsi <= 60) score += 10;
+  
+  // Volume bonus
+  if (input.relativeVolume > 1.2) score += 5;
+  
+  // Insider bonus
+  if (input.insiderScore > 0) score += 10;
+  
+  return Math.max(0, Math.min(100, score));
 }
 
 /**

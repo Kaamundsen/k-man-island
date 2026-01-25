@@ -20,7 +20,9 @@ import { clsx } from 'clsx';
 import { getTrades } from '@/lib/store';
 import { evaluatePortfolio, generateDailyReport, PortfolioSummary, TradeEvaluation } from '@/lib/analysis/portfolio-evaluation';
 import { checkReminders, getActiveAlerts, getTriggeredAlerts, StockNote, StockAlert } from '@/lib/store/notes-store';
-import { qualifiesForCore, getMaxCoreSlots } from '@/lib/strategies/registry';
+import { qualifiesForCore, getMaxCoreSlots, getQualifyingStocksPerStrategy, StrategyId } from '@/lib/strategies/registry';
+import { STRATEGIES } from '@/lib/strategies/index';
+import { Stock } from '@/lib/types';
 
 // V2-compliant Core Brief structure
 interface CoreBriefData {
@@ -67,10 +69,12 @@ export default function RapportPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [coreBrief, setCoreBrief] = useState<CoreBriefData | null>(null);
   const [marketOverview, setMarketOverview] = useState<MarketOverview | null>(null);
+  const [strategiFunn, setStrategiFunn] = useState<Record<string, Stock[]>>({});
   
   // Accordion states
   const [coreBriefOpen, setCoreBriefOpen] = useState(true);
   const [marketOpen, setMarketOpen] = useState(true);
+  const [strategiFunnOpen, setStrategiFunnOpen] = useState(true);
   const [portfolioOpen, setPortfolioOpen] = useState(true);
   const [urgentOpen, setUrgentOpen] = useState(true);
   const [sellOpen, setSellOpen] = useState(true);
@@ -105,6 +109,10 @@ export default function RapportPage() {
             })),
             timestamp: stocksData.timestamp,
           });
+          
+          // V2: Calculate qualifying stocks per strategy
+          const qualifyingPerStrategy = getQualifyingStocksPerStrategy(stocks);
+          setStrategiFunn(qualifyingPerStrategy);
         }
       } catch (err) {
         console.warn('Kunne ikke hente markedsdata:', err);
@@ -490,6 +498,76 @@ export default function RapportPage() {
               <div className="text-center text-xs text-muted-foreground">
                 Sist skannet: {new Date(marketOverview.timestamp).toLocaleString('nb-NO')}
               </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ============================================ */}
+      {/* SECTION: STRATEGIFUNN */}
+      {/* ============================================ */}
+      {Object.keys(strategiFunn).length > 0 && (
+        <div className="bg-card border border-border rounded-2xl mb-8 overflow-hidden shadow-lg">
+          <button 
+            onClick={() => setStrategiFunnOpen(!strategiFunnOpen)}
+            className="w-full p-6 flex items-center justify-between text-left hover:bg-muted transition-colors"
+          >
+            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <Target className="w-6 h-6 text-purple-500" />
+              Strategifunn
+            </h2>
+            <div className="flex items-center gap-3">
+              <span className="px-3 py-1 bg-purple-500/20 text-purple-500 rounded-full text-sm font-medium">
+                {Object.values(strategiFunn).flat().length} kandidater
+              </span>
+              <ChevronDown className={clsx(
+                'w-5 h-5 text-purple-500 transition-transform',
+                strategiFunnOpen && 'rotate-180'
+              )} />
+            </div>
+          </button>
+          
+          {strategiFunnOpen && (
+            <div className="px-6 pb-6 space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Aksjer som kvalifiserer for hver strategi basert på V2-kriterier.
+              </p>
+              
+              {Object.entries(strategiFunn).map(([strategyId, stocks]) => {
+                const strategy = STRATEGIES[strategyId as StrategyId];
+                if (!strategy || stocks.length === 0) return null;
+                
+                return (
+                  <div key={strategyId} className="bg-muted rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xl">{strategy.emoji}</span>
+                      <h4 className="font-semibold text-foreground">{strategy.name}</h4>
+                      <span className="text-xs text-muted-foreground">({stocks.length} kandidater)</span>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {stocks.slice(0, 3).map((stock: Stock) => (
+                        <div key={stock.ticker} className="bg-card rounded-lg p-3 border border-border">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-bold text-brand-emerald">
+                              {stock.ticker.replace('.OL', '')}
+                            </span>
+                            <span className="text-sm font-mono text-foreground">
+                              K: {stock.kScore}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>{stock.price?.toFixed(2)} kr</span>
+                            <span className={stock.changePercent >= 0 ? 'text-brand-emerald' : 'text-brand-rose'}>
+                              {stock.changePercent >= 0 ? '+' : ''}{stock.changePercent?.toFixed(1)}%
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

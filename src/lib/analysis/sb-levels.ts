@@ -586,20 +586,17 @@ export function getSBLevelsSummary(analysis: SBLevelsAnalysis): string {
     return 'Analyserer markedsstruktur...';
   }
   
-  const scenario = analysis.activeScenario === 'A' 
-    ? analysis.scenarioA 
-    : analysis.activeScenario === 'B' 
-      ? analysis.scenarioB 
-      : analysis.scenarioC;
+  if (analysis.activeScenario === 'A') {
+    return `🚀 IMPULS-SCENARIO: Pris (${analysis.currentPrice.toFixed(2)}) nærmer seg motstand på ${analysis.primaryResistance.toFixed(2)}. Ved bekreftet breakout, vurder inngang med stop under ${analysis.primarySupport.toFixed(2)}.`;
+  }
+  
+  if (analysis.activeScenario === 'B') {
+    return `🔄 PULLBACK-SCENARIO: Pris (${analysis.currentPrice.toFixed(2)}) tester støtte på ${analysis.primarySupport.toFixed(2)}. Ved bekreftet reaksjon (higher low), vurder inngang med target mot ${analysis.primaryResistance.toFixed(2)}.`;
+  }
   
   if (analysis.activeScenario === 'C') {
-    return `⛔ SCENARIO C AKTIV: Midt i range (${analysis.rangePosition.toFixed(0)}%). INGEN HANDEL - vent på ytterkant.`;
+    return `⛔ NO TRADE: Pris (${analysis.currentPrice.toFixed(2)}) er midt i range mellom støtte (${analysis.primarySupport.toFixed(2)}) og motstand (${analysis.primaryResistance.toFixed(2)}). Vent på ytterkant.`;
   }
   
-  if (!scenario.tradeable) {
-    return `⚠️ Scenario ${analysis.activeScenario} aktiv, men IKKE TRADEABLE: ${scenario.tradeableReason}`;
-  }
-  
-  const rr = scenario.tradingPlan?.riskReward.toFixed(2) ?? '?';
-  return `✅ SCENARIO ${analysis.activeScenario} AKTIV & TRADEABLE: ${scenario.name} (R/R: ${rr}). ${scenario.tradingPlan?.trigger}`;
+  return 'Analyserer markedsstruktur...';
 }
