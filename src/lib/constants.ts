@@ -167,3 +167,94 @@ export const OSLO_STOCKS_FULL: string[] = [
   ...OSLO_STOCKS_200,
   // Can be extended with more stocks as needed
 ];
+
+// ============================================
+// USA STOCK LISTS (S&P 100 + NASDAQ 100)
+// ============================================
+
+/**
+ * S&P 100 constituents
+ * Large-cap US stocks from the S&P 100 index
+ */
+export const SP100_STOCKS: string[] = [
+  'AAPL', 'ABBV', 'ABT', 'ACN', 'ADBE', 'AIG', 'AMD', 'AMGN', 'AMT', 'AMZN',
+  'AVGO', 'AXP', 'BA', 'BAC', 'BK', 'BKNG', 'BLK', 'BMY', 'BRK-B', 'C',
+  'CAT', 'CHTR', 'CL', 'CMCSA', 'COF', 'COP', 'COST', 'CRM', 'CSCO', 'CVS',
+  'CVX', 'DE', 'DHR', 'DIS', 'DOW', 'DUK', 'EMR', 'EXC', 'F', 'FDX',
+  'GD', 'GE', 'GILD', 'GM', 'GOOG', 'GOOGL', 'GS', 'HD', 'HON', 'IBM',
+  'INTC', 'JNJ', 'JPM', 'KHC', 'KO', 'LIN', 'LLY', 'LMT', 'LOW', 'MA',
+  'MCD', 'MDLZ', 'MDT', 'MET', 'META', 'MMM', 'MO', 'MRK', 'MS', 'MSFT',
+  'NEE', 'NFLX', 'NKE', 'NVDA', 'ORCL', 'PEP', 'PFE', 'PG', 'PM', 'PYPL',
+  'QCOM', 'RTX', 'SBUX', 'SCHW', 'SO', 'SPG', 'T', 'TGT', 'TMO', 'TMUS',
+  'TXN', 'UNH', 'UNP', 'UPS', 'USB', 'V', 'VZ', 'WBA', 'WFC', 'WMT', 'XOM',
+];
+
+/**
+ * NASDAQ 100 constituents
+ * Large-cap tech-heavy stocks from the NASDAQ 100 index
+ */
+export const NASDAQ100_STOCKS: string[] = [
+  'AAPL', 'ABNB', 'ADBE', 'ADI', 'ADP', 'ADSK', 'AEP', 'AMAT', 'AMD', 'AMGN',
+  'AMZN', 'ANSS', 'APP', 'ARM', 'ASML', 'AVGO', 'AZN', 'BIIB', 'BKNG', 'BKR',
+  'CCEP', 'CDNS', 'CDW', 'CEG', 'CHTR', 'CMCSA', 'COST', 'CPRT', 'CRWD', 'CSCO',
+  'CSGP', 'CSX', 'CTAS', 'CTSH', 'DASH', 'DDOG', 'DLTR', 'DXCM', 'EA', 'EXC',
+  'FANG', 'FAST', 'FTNT', 'GEHC', 'GFS', 'GILD', 'GOOG', 'GOOGL', 'HON', 'IDXX',
+  'ILMN', 'INTC', 'INTU', 'ISRG', 'KDP', 'KHC', 'KLAC', 'LIN', 'LRCX', 'LULU',
+  'MAR', 'MCHP', 'MDB', 'MDLZ', 'MELI', 'META', 'MNST', 'MRNA', 'MRVL', 'MSFT',
+  'MU', 'NFLX', 'NVDA', 'NXPI', 'ODFL', 'ON', 'ORLY', 'PANW', 'PAYX', 'PCAR',
+  'PDD', 'PEP', 'PYPL', 'QCOM', 'REGN', 'ROST', 'SBUX', 'SMCI', 'SNPS', 'TEAM',
+  'TMUS', 'TSLA', 'TTD', 'TTWO', 'TXN', 'VRSK', 'VRTX', 'WBD', 'WDAY', 'XEL', 'ZS',
+];
+
+/**
+ * Index membership type for USA stocks
+ */
+export type USAIndexMembership = 'SP100' | 'NDX100' | 'BOTH';
+
+/**
+ * USA Core Universe - Combined S&P 100 + NASDAQ 100 (deduplicated)
+ * This is the single source of truth for USA stocks
+ */
+export const USA_CORE_STOCKS: string[] = Array.from(
+  new Set([...SP100_STOCKS, ...NASDAQ100_STOCKS])
+).sort();
+
+/**
+ * Index membership metadata for each USA stock
+ * Maps ticker to which index(es) it belongs to
+ */
+export const USA_INDEX_MEMBERSHIP: Record<string, USAIndexMembership> = (() => {
+  const sp100Set = new Set(SP100_STOCKS);
+  const ndx100Set = new Set(NASDAQ100_STOCKS);
+  const membership: Record<string, USAIndexMembership> = {};
+  
+  USA_CORE_STOCKS.forEach(ticker => {
+    const inSP100 = sp100Set.has(ticker);
+    const inNDX100 = ndx100Set.has(ticker);
+    
+    if (inSP100 && inNDX100) {
+      membership[ticker] = 'BOTH';
+    } else if (inSP100) {
+      membership[ticker] = 'SP100';
+    } else {
+      membership[ticker] = 'NDX100';
+    }
+  });
+  
+  return membership;
+})();
+
+/**
+ * Get stocks by index membership
+ */
+export function getStocksByIndex(index: USAIndexMembership | 'ALL'): string[] {
+  if (index === 'ALL') return USA_CORE_STOCKS;
+  
+  return USA_CORE_STOCKS.filter(ticker => {
+    const membership = USA_INDEX_MEMBERSHIP[ticker];
+    if (index === 'BOTH') return membership === 'BOTH';
+    if (index === 'SP100') return membership === 'SP100' || membership === 'BOTH';
+    if (index === 'NDX100') return membership === 'NDX100' || membership === 'BOTH';
+    return false;
+  });
+}

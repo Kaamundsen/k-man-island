@@ -11,10 +11,11 @@ interface FilterBarProps {
   onMarketChange: (market: MarketFilter) => void;
   onStrategyChange: (strategy: StrategyFilter) => void;
   mineCount?: number;
+  initialMarket?: MarketFilter;
 }
 
-export default function FilterBar({ onMarketChange, onStrategyChange, mineCount = 0 }: FilterBarProps) {
-  const [selectedMarket, setSelectedMarket] = useState<MarketFilter>('ALLE');
+export default function FilterBar({ onMarketChange, onStrategyChange, mineCount = 0, initialMarket = 'OSLO' }: FilterBarProps) {
+  const [selectedMarket, setSelectedMarket] = useState<MarketFilter>(initialMarket);
   const [selectedStrategy, setSelectedStrategy] = useState<StrategyFilter>('ALLE');
 
   const handleMarketClick = (market: MarketFilter) => {

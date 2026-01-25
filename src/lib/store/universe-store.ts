@@ -1,13 +1,26 @@
 // Universe Store - Manages configurable stock universe and custom tickers
 // Supports 50/100/150/200 stock universes with dynamic additions via search
+// Supports both Oslo and USA markets
 
-import { OSLO_STOCKS_50, OSLO_STOCKS_100, OSLO_STOCKS_150, OSLO_STOCKS_200, OSLO_STOCKS_FULL } from '@/lib/constants';
+import { 
+  OSLO_STOCKS_50, 
+  OSLO_STOCKS_100, 
+  OSLO_STOCKS_150, 
+  OSLO_STOCKS_200, 
+  OSLO_STOCKS_FULL,
+  USA_CORE_STOCKS,
+  USA_INDEX_MEMBERSHIP,
+  type USAIndexMembership,
+} from '@/lib/constants';
 
 export type UniverseSize = 50 | 100 | 150 | 200 | 'full';
+export type MarketType = 'OSLO' | 'USA';
 
 interface UniverseConfig {
   size: UniverseSize;
   customTickers: string[];
+  // USA custom tickers stored separately
+  usaCustomTickers: string[];
 }
 
 const STORAGE_KEY = 'k-man-universe-config';
@@ -15,6 +28,7 @@ const STORAGE_KEY = 'k-man-universe-config';
 const DEFAULT_CONFIG: UniverseConfig = {
   size: 100,
   customTickers: [],
+  usaCustomTickers: [],
 };
 
 // Get the base universe based on size
@@ -106,11 +120,27 @@ export function getCustomTickers(): string[] {
 // Add a custom ticker (returns true if added, false if already exists)
 export function addCustomTicker(ticker: string): boolean {
   const config = loadConfig();
+  const upperTicker = ticker.toUpperCase();
   
-  // Normalize ticker
-  const normalizedTicker = ticker.toUpperCase().endsWith('.OL') 
-    ? ticker.toUpperCase() 
-    : `${ticker.toUpperCase()}.OL`;
+  // Determine if this is a USA or Oslo ticker
+  const isUSA = USA_CORE_STOCKS.includes(upperTicker) || 
+                USA_CORE_STOCKS.includes(upperTicker.replace('.OL', ''));
+  
+  // Normalize ticker based on market
+  let normalizedTicker: string;
+  if (upperTicker.endsWith('.OL')) {
+    // Already has .OL suffix - check if it's actually a USA ticker mistakenly suffixed
+    const withoutSuffix = upperTicker.replace('.OL', '');
+    if (USA_CORE_STOCKS.includes(withoutSuffix)) {
+      normalizedTicker = withoutSuffix; // Remove .OL for USA stocks
+    } else {
+      normalizedTicker = upperTicker;
+    }
+  } else if (isUSA) {
+    normalizedTicker = upperTicker; // USA stocks don't have suffix
+  } else {
+    normalizedTicker = `${upperTicker}.OL`; // Oslo stocks need .OL suffix
+  }
   
   // Check if already in custom tickers (case-insensitive)
   const alreadyInCustom = config.customTickers.some(
@@ -187,4 +217,123 @@ export function isInBaseUniverse(ticker: string): boolean {
     : `${ticker.toUpperCase()}.OL`;
   
   return OSLO_STOCKS_FULL.some(t => t.toUpperCase() === normalizedTicker.toUpperCase());
+}
+
+// ============================================
+// USA UNIVERSE FUNCTIONS
+// ============================================
+
+/**
+ * Get the USA Core universe (S&P 100 + NASDAQ 100 combined)
+ */
+export function getUSAUniverse(): string[] {
+  return USA_CORE_STOCKS;
+}
+
+/**
+ * Get USA custom tickers
+ */
+export function getUSACustomTickers(): string[] {
+  const config = loadConfig();
+  return config.usaCustomTickers || [];
+}
+
+/**
+ * Add a custom USA ticker
+ */
+export function addUSACustomTicker(ticker: string): boolean {
+  const config = loadConfig();
+  const normalizedTicker = ticker.toUpperCase();
+  
+  // Check if already in custom tickers
+  const alreadyInCustom = (config.usaCustomTickers || []).some(
+    t => t.toUpperCase() === normalizedTicker
+  );
+  
+  if (alreadyInCustom) {
+    return false;
+  }
+  
+  // Check if already in USA_CORE_STOCKS
+  if (USA_CORE_STOCKS.includes(normalizedTicker)) {
+    return false;
+  }
+  
+  config.usaCustomTickers = [...(config.usaCustomTickers || []), normalizedTicker];
+  saveConfig(config);
+  
+  console.log(`✅ Added ${normalizedTicker} to USA custom list`);
+  return true;
+}
+
+/**
+ * Remove a custom USA ticker
+ */
+export function removeUSACustomTicker(ticker: string): boolean {
+  const config = loadConfig();
+  const normalizedTicker = ticker.toUpperCase();
+  
+  const originalLength = (config.usaCustomTickers || []).length;
+  config.usaCustomTickers = (config.usaCustomTickers || []).filter(
+    t => t.toUpperCase() !== normalizedTicker
+  );
+  
+  if (config.usaCustomTickers.length < originalLength) {
+    saveConfig(config);
+    console.log(`✅ Removed ${normalizedTicker} from USA custom list`);
+    return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Get full USA universe (base + custom tickers)
+ */
+export function getFullUSAUniverse(): string[] {
+  const custom = getUSACustomTickers();
+  const combined = new Set([...USA_CORE_STOCKS, ...custom]);
+  return Array.from(combined);
+}
+
+/**
+ * Check if a ticker is in the USA universe
+ */
+export function isInUSAUniverse(ticker: string): boolean {
+  const normalizedTicker = ticker.toUpperCase();
+  return USA_CORE_STOCKS.includes(normalizedTicker);
+}
+
+/**
+ * Get index membership for a USA stock
+ * Returns 'SP100', 'NDX100', 'BOTH', or undefined if not in USA universe
+ */
+export function getUSAIndexMembership(ticker: string): USAIndexMembership | undefined {
+  const normalizedTicker = ticker.toUpperCase();
+  return USA_INDEX_MEMBERSHIP[normalizedTicker];
+}
+
+/**
+ * Detect market from ticker
+ * .OL suffix = Oslo, otherwise assume USA
+ */
+export function detectMarket(ticker: string): MarketType {
+  return ticker.toUpperCase().endsWith('.OL') ? 'OSLO' : 'USA';
+}
+
+/**
+ * Get universe by market
+ */
+export function getUniverseByMarket(market: MarketType): string[] {
+  if (market === 'USA') {
+    return getFullUSAUniverse();
+  }
+  return getFullUniverse();
+}
+
+/**
+ * Get combined universe (both markets)
+ */
+export function getCombinedUniverse(): string[] {
+  return [...getFullUniverse(), ...getFullUSAUniverse()];
 }

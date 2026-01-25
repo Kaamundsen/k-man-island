@@ -52,9 +52,22 @@ const calculateCompositeScore = (stock: Stock, prioritizeInsider: boolean = fals
 
 type ViewMode = 'cards-and-list' | 'list-only' | 'cards-only';
 
+// Storage key for persisting market filter
+const MARKET_FILTER_KEY = 'k-man-market-filter';
+
 export default function DashboardContent({ initialStocks, onRefresh, isRefreshing, lastUpdated }: DashboardContentProps) {
   const router = useRouter();
-  const [marketFilter, setMarketFilter] = useState<MarketFilter>('ALLE');
+  
+  // Load saved market filter or default to OSLO
+  const [marketFilter, setMarketFilter] = useState<MarketFilter>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(MARKET_FILTER_KEY);
+      if (saved === 'ALLE' || saved === 'OSLO' || saved === 'USA') {
+        return saved;
+      }
+    }
+    return 'OSLO';
+  });
   const [strategyFilter, setStrategyFilter] = useState<StrategyFilter>('ALLE');
   const [useOriginalDesign, setUseOriginalDesign] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('cards-and-list');
@@ -173,25 +186,25 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
     
     const upperQuery = query.toUpperCase();
     
-    // Search in existing stocks first
+    // Search in existing stocks first (both Oslo and USA)
     const existingMatches = initialStocks
       .filter(s => s.ticker.toUpperCase().includes(upperQuery) || s.name.toUpperCase().includes(upperQuery))
       .map(s => s.ticker)
-      .slice(0, 5);
+      .slice(0, 6);
     
-    // Also suggest the raw query as potential ticker
-    const potentialTicker = upperQuery.endsWith('.OL') ? upperQuery : `${upperQuery}.OL`;
-    const allResults = [...new Set([...existingMatches, potentialTicker])].slice(0, 6);
-    
-    setSearchResults(allResults);
-    setShowSearchDropdown(true);
+    setSearchResults(existingMatches);
+    setShowSearchDropdown(existingMatches.length > 0);
   }, [initialStocks]);
 
   // Add ticker to Mine list
   const handleSelectTicker = useCallback((ticker: string, navigateToAnalysis: boolean = false) => {
-    const normalizedTicker = ticker.toUpperCase().endsWith('.OL') 
-      ? ticker.toUpperCase() 
-      : `${ticker.toUpperCase()}.OL`;
+    // Find matching stock in initialStocks to get the correct ticker format
+    const matchingStock = initialStocks.find(s => 
+      s.ticker.toUpperCase() === ticker.toUpperCase() ||
+      s.ticker.toUpperCase() === `${ticker.toUpperCase()}.OL`
+    );
+    
+    const normalizedTicker = matchingStock?.ticker || ticker.toUpperCase();
     
     // Check if already in custom tickers
     const alreadyInCustom = customTickers.some(
@@ -214,7 +227,7 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
     if (navigateToAnalysis) {
       router.push(`/analyse/${normalizedTicker}`);
     }
-  }, [customTickers, router]);
+  }, [customTickers, router, initialStocks]);
 
   // Direct search (enter key)
   const handleDirectSearch = useCallback((navigateToAnalysis: boolean = true) => {
@@ -675,9 +688,15 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
         
         <div className="flex items-center justify-between gap-6">
           <FilterBar 
-            onMarketChange={setMarketFilter}
+            onMarketChange={(market) => {
+              setMarketFilter(market);
+              if (typeof window !== 'undefined') {
+                localStorage.setItem(MARKET_FILTER_KEY, market);
+              }
+            }}
             onStrategyChange={setStrategyFilter}
             mineCount={customTickers.length}
+            initialMarket={marketFilter}
           />
           
           <div className="flex items-center gap-3">

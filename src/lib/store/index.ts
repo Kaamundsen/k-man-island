@@ -63,5 +63,17 @@ export {
   isCustomTicker,
   getFullUniverse,
   isInBaseUniverse,
+  // USA universe functions
+  getUSAUniverse,
+  getUSACustomTickers,
+  addUSACustomTicker,
+  removeUSACustomTicker,
+  getFullUSAUniverse,
+  isInUSAUniverse,
+  getUSAIndexMembership,
+  detectMarket,
+  getUniverseByMarket,
+  getCombinedUniverse,
   type UniverseSize,
+  type MarketType,
 } from './universe-store';

@@ -13,6 +13,8 @@ import {
   determineBestStrategy,
   StrategyId 
 } from '../strategies/registry';
+import { getFullUniverse } from '../store/universe-store';
+import { USA_CORE_STOCKS } from '../constants';
 
 // Re-export K-Momentum specific functions from legacy (for backward compat)
 export { fetchAllStocksWithKMomentum } from "@/strategy-packs/legacy/api/stock-data-v2";
@@ -92,6 +94,182 @@ const STOCK_NAMES: Record<string, string> = {
   'SOFF.OL': 'Schibsted ASA',
   'WSTEP.OL': 'Wallenius Wilhelmsen',
   'WAWI.OL': 'Wallenius Wilhelmsen ASA',
+};
+
+// USA Stock Names (S&P 100 + NASDAQ 100)
+const USA_STOCK_NAMES: Record<string, string> = {
+  'AAPL': 'Apple Inc.',
+  'ABBV': 'AbbVie Inc.',
+  'ABNB': 'Airbnb Inc.',
+  'ABT': 'Abbott Laboratories',
+  'ACN': 'Accenture plc',
+  'ADBE': 'Adobe Inc.',
+  'ADI': 'Analog Devices Inc.',
+  'ADP': 'Automatic Data Processing',
+  'ADSK': 'Autodesk Inc.',
+  'AEP': 'American Electric Power',
+  'AIG': 'American International Group',
+  'AMAT': 'Applied Materials Inc.',
+  'AMD': 'Advanced Micro Devices',
+  'AMGN': 'Amgen Inc.',
+  'AMT': 'American Tower Corp.',
+  'AMZN': 'Amazon.com Inc.',
+  'ANSS': 'ANSYS Inc.',
+  'APP': 'AppLovin Corp.',
+  'ARM': 'Arm Holdings plc',
+  'ASML': 'ASML Holding N.V.',
+  'AVGO': 'Broadcom Inc.',
+  'AXP': 'American Express Co.',
+  'AZN': 'AstraZeneca PLC',
+  'BA': 'Boeing Co.',
+  'BAC': 'Bank of America Corp.',
+  'BIIB': 'Biogen Inc.',
+  'BK': 'Bank of New York Mellon',
+  'BKNG': 'Booking Holdings Inc.',
+  'BKR': 'Baker Hughes Co.',
+  'BLK': 'BlackRock Inc.',
+  'BMY': 'Bristol-Myers Squibb',
+  'BRK-B': 'Berkshire Hathaway B',
+  'C': 'Citigroup Inc.',
+  'CAT': 'Caterpillar Inc.',
+  'CCEP': 'Coca-Cola Europacific',
+  'CDNS': 'Cadence Design Systems',
+  'CDW': 'CDW Corp.',
+  'CEG': 'Constellation Energy',
+  'CHTR': 'Charter Communications',
+  'CL': 'Colgate-Palmolive Co.',
+  'CMCSA': 'Comcast Corp.',
+  'COF': 'Capital One Financial',
+  'COP': 'ConocoPhillips',
+  'COST': 'Costco Wholesale Corp.',
+  'CPRT': 'Copart Inc.',
+  'CRM': 'Salesforce Inc.',
+  'CRWD': 'CrowdStrike Holdings',
+  'CSCO': 'Cisco Systems Inc.',
+  'CSGP': 'CoStar Group Inc.',
+  'CSX': 'CSX Corp.',
+  'CTAS': 'Cintas Corp.',
+  'CTSH': 'Cognizant Technology',
+  'CVS': 'CVS Health Corp.',
+  'CVX': 'Chevron Corp.',
+  'DASH': 'DoorDash Inc.',
+  'DDOG': 'Datadog Inc.',
+  'DE': 'Deere & Company',
+  'DHR': 'Danaher Corp.',
+  'DIS': 'Walt Disney Co.',
+  'DLTR': 'Dollar Tree Inc.',
+  'DOW': 'Dow Inc.',
+  'DUK': 'Duke Energy Corp.',
+  'DXCM': 'DexCom Inc.',
+  'EA': 'Electronic Arts Inc.',
+  'EMR': 'Emerson Electric Co.',
+  'EXC': 'Exelon Corp.',
+  'F': 'Ford Motor Co.',
+  'FANG': 'Diamondback Energy',
+  'FAST': 'Fastenal Co.',
+  'FDX': 'FedEx Corp.',
+  'FTNT': 'Fortinet Inc.',
+  'GD': 'General Dynamics Corp.',
+  'GE': 'General Electric Co.',
+  'GEHC': 'GE HealthCare Technologies',
+  'GFS': 'GlobalFoundries Inc.',
+  'GILD': 'Gilead Sciences Inc.',
+  'GM': 'General Motors Co.',
+  'GOOG': 'Alphabet Inc. Class C',
+  'GOOGL': 'Alphabet Inc. Class A',
+  'GS': 'Goldman Sachs Group',
+  'HD': 'Home Depot Inc.',
+  'HON': 'Honeywell International',
+  'IBM': 'IBM Corp.',
+  'IDXX': 'IDEXX Laboratories',
+  'ILMN': 'Illumina Inc.',
+  'INTC': 'Intel Corp.',
+  'INTU': 'Intuit Inc.',
+  'ISRG': 'Intuitive Surgical Inc.',
+  'JNJ': 'Johnson & Johnson',
+  'JPM': 'JPMorgan Chase & Co.',
+  'KDP': 'Keurig Dr Pepper Inc.',
+  'KHC': 'Kraft Heinz Co.',
+  'KLAC': 'KLA Corp.',
+  'KO': 'Coca-Cola Co.',
+  'LIN': 'Linde plc',
+  'LLY': 'Eli Lilly and Co.',
+  'LMT': 'Lockheed Martin Corp.',
+  'LOW': 'Lowe\'s Companies Inc.',
+  'LRCX': 'Lam Research Corp.',
+  'LULU': 'Lululemon Athletica',
+  'MA': 'Mastercard Inc.',
+  'MAR': 'Marriott International',
+  'MCD': 'McDonald\'s Corp.',
+  'MCHP': 'Microchip Technology',
+  'MDB': 'MongoDB Inc.',
+  'MDLZ': 'Mondelez International',
+  'MDT': 'Medtronic plc',
+  'MELI': 'MercadoLibre Inc.',
+  'MET': 'MetLife Inc.',
+  'META': 'Meta Platforms Inc.',
+  'MMM': '3M Co.',
+  'MNST': 'Monster Beverage Corp.',
+  'MO': 'Altria Group Inc.',
+  'MRK': 'Merck & Co. Inc.',
+  'MRNA': 'Moderna Inc.',
+  'MRVL': 'Marvell Technology',
+  'MS': 'Morgan Stanley',
+  'MSFT': 'Microsoft Corp.',
+  'MU': 'Micron Technology Inc.',
+  'NEE': 'NextEra Energy Inc.',
+  'NFLX': 'Netflix Inc.',
+  'NKE': 'Nike Inc.',
+  'NVDA': 'NVIDIA Corp.',
+  'NXPI': 'NXP Semiconductors',
+  'ODFL': 'Old Dominion Freight',
+  'ON': 'ON Semiconductor Corp.',
+  'ORCL': 'Oracle Corp.',
+  'ORLY': 'O\'Reilly Automotive',
+  'PANW': 'Palo Alto Networks',
+  'PAYX': 'Paychex Inc.',
+  'PCAR': 'PACCAR Inc.',
+  'PDD': 'PDD Holdings Inc.',
+  'PEP': 'PepsiCo Inc.',
+  'PFE': 'Pfizer Inc.',
+  'PG': 'Procter & Gamble Co.',
+  'PM': 'Philip Morris International',
+  'PYPL': 'PayPal Holdings Inc.',
+  'QCOM': 'Qualcomm Inc.',
+  'REGN': 'Regeneron Pharmaceuticals',
+  'ROST': 'Ross Stores Inc.',
+  'RTX': 'RTX Corp.',
+  'SBUX': 'Starbucks Corp.',
+  'SCHW': 'Charles Schwab Corp.',
+  'SMCI': 'Super Micro Computer',
+  'SNPS': 'Synopsys Inc.',
+  'SO': 'Southern Co.',
+  'SPG': 'Simon Property Group',
+  'T': 'AT&T Inc.',
+  'TEAM': 'Atlassian Corp.',
+  'TGT': 'Target Corp.',
+  'TMO': 'Thermo Fisher Scientific',
+  'TMUS': 'T-Mobile US Inc.',
+  'TSLA': 'Tesla Inc.',
+  'TTD': 'The Trade Desk Inc.',
+  'TTWO': 'Take-Two Interactive',
+  'TXN': 'Texas Instruments Inc.',
+  'UNH': 'UnitedHealth Group Inc.',
+  'UNP': 'Union Pacific Corp.',
+  'UPS': 'United Parcel Service',
+  'USB': 'U.S. Bancorp',
+  'V': 'Visa Inc.',
+  'VRSK': 'Verisk Analytics Inc.',
+  'VRTX': 'Vertex Pharmaceuticals',
+  'VZ': 'Verizon Communications',
+  'WBA': 'Walgreens Boots Alliance',
+  'WBD': 'Warner Bros. Discovery',
+  'WDAY': 'Workday Inc.',
+  'WFC': 'Wells Fargo & Co.',
+  'WMT': 'Walmart Inc.',
+  'XEL': 'Xcel Energy Inc.',
+  'XOM': 'Exxon Mobil Corp.',
+  'ZS': 'Zscaler Inc.',
 };
 
 /**
@@ -231,10 +409,15 @@ function convertToStock(quote: YahooQuote): Stock {
   const indicators = calculateTechnicalIndicators(quote);
   const isOslo = quote.symbol.endsWith('.OL');
   
+  // Get stock name from appropriate source
+  const stockName = isOslo 
+    ? (STOCK_NAMES[quote.symbol] || quote.symbol)
+    : (USA_STOCK_NAMES[quote.symbol] || quote.symbol);
+  
   // Create preliminary stock for strategy evaluation
   const prelimStock: Stock = {
     ticker: quote.symbol,
-    name: STOCK_NAMES[quote.symbol] || quote.symbol,
+    name: stockName,
     price: quote.regularMarketPrice,
     change: quote.regularMarketChange,
     changePercent: quote.regularMarketChangePercent,
@@ -299,28 +482,47 @@ function convertToStock(quote: YahooQuote): Stock {
 }
 
 /**
- * CANONICAL: Fetch live stock data for the full watchlist
+ * CANONICAL: Fetch live stock data for the full watchlist (Oslo + USA)
  * Returns sorted list by K-Score
  * 
  * @param limit - Optional limit on number of stocks to return (default: all)
+ * @param market - Optional filter: 'OSLO', 'USA', or undefined for all
  */
-export async function fetchLiveStockData(limit?: number): Promise<Stock[]> {
+export async function fetchLiveStockData(limit?: number, market?: 'OSLO' | 'USA'): Promise<Stock[]> {
   try {
-    console.log(`🔄 Fetching live stock data from Yahoo Finance (watchlist: ${WATCHLIST.length})...`);
+    // Determine which lists to fetch
+    const osloList = market === 'USA' ? [] : getFullUniverse();
+    const usaList = market === 'OSLO' ? [] : USA_CORE_STOCKS;
+    const combinedList = [...osloList, ...usaList];
     
-    const quotes = await fetchYahooFinanceData(WATCHLIST);
+    console.log(`🔄 Fetching live stock data from Yahoo Finance (Oslo: ${osloList.length}, USA: ${usaList.length})...`);
     
-    if (quotes.length === 0) {
+    // Fetch in batches to avoid rate limiting
+    const batchSize = 50;
+    const allQuotes: YahooQuote[] = [];
+    
+    for (let i = 0; i < combinedList.length; i += batchSize) {
+      const batch = combinedList.slice(i, i + batchSize);
+      const batchQuotes = await fetchYahooFinanceData(batch);
+      allQuotes.push(...batchQuotes);
+      
+      // Small delay between batches to be nice to the API
+      if (i + batchSize < combinedList.length) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
+    
+    if (allQuotes.length === 0) {
       console.warn('⚠️ No data from Yahoo Finance');
       return [];
     }
     
-    const stocks = quotes
+    const stocks = allQuotes
       .filter(q => q.regularMarketPrice > 0)
       .map(convertToStock)
       .sort((a, b) => b.kScore - a.kScore);
     
-    console.log(`✅ Fetched ${stocks.length} stocks from Yahoo Finance`);
+    console.log(`✅ Fetched ${stocks.length} stocks from Yahoo Finance (Oslo: ${stocks.filter(s => s.market === 'OSLO').length}, USA: ${stocks.filter(s => s.market === 'USA').length})`);
     
     if (limit && limit > 0) {
       return stocks.slice(0, limit);
