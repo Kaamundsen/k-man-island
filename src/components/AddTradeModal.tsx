@@ -37,7 +37,7 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
   const [error, setError] = useState('');
   const [portfolios, setPortfolios] = useState<{ id: string; name: string }[]>([]);
   const isEditMode = !!editTrade;
-  const isClosedTrade = editTrade?.status !== 'ACTIVE';
+  const isClosedTrade = isEditMode && editTrade?.status !== 'ACTIVE';
 
   // Load portfolios and set edit data
   useEffect(() => {

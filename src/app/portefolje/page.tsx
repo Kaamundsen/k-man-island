@@ -1112,11 +1112,11 @@ export default function PorteføljePage() {
                   </div>
                   )}
                   
-                  {/* Lukkede Trades for denne strategien - egen tabell (kun når en spesifikk portefølje er valgt) */}
-                  {strategyClosedTrades.length > 0 && selectedPortfolioId !== 'all' && (
-                    <div className="mt-4 bg-white rounded-2xl border border-gray-100 overflow-x-auto">
-                      <div className="px-4 py-2 border-b border-gray-100">
-                        <span className="text-sm font-medium text-gray-500">📦 Lukkede trades ({strategyClosedTrades.length})</span>
+                  {/* Lukkede Trades for denne strategien - egen tabell (kun når en spesifikk portefølje er valgt, ikke på Alle eller Lukkede tab) */}
+                  {strategyClosedTrades.length > 0 && selectedPortfolioId !== 'all' && selectedPortfolioId !== 'closed' && (
+                    <div className="mt-4 bg-card rounded-2xl border border-border overflow-x-auto">
+                      <div className="px-4 py-2 border-b border-border">
+                        <span className="text-sm font-medium text-muted-foreground">📦 Lukkede trades ({strategyClosedTrades.length})</span>
                       </div>
                       <table className="w-full min-w-[800px]">
                         <colgroup>
@@ -1129,19 +1129,19 @@ export default function PorteføljePage() {
                           <col className="w-[8%]" />
                           <col className="w-[10%]" />
                         </colgroup>
-                        <thead className="bg-gray-50/50 border-b border-gray-100">
+                        <thead className="bg-muted/50 border-b border-border">
                           <tr>
-                            <th className="text-left px-4 py-2 text-xs font-bold text-gray-400 uppercase">Ticker</th>
-                            <th className="text-left px-4 py-2 text-xs font-bold text-gray-400 uppercase">Strategi</th>
-                            <th className="text-right px-4 py-2 text-xs font-bold text-gray-400 uppercase">Antall</th>
-                            <th className="text-right px-4 py-2 text-xs font-bold text-gray-400 uppercase">Inngang</th>
-                            <th className="text-center px-4 py-2 text-xs font-bold text-gray-400 uppercase">Utgang</th>
-                            <th className="text-right px-4 py-2 text-xs font-bold text-gray-400 uppercase">Resultat</th>
-                            <th className="text-center px-4 py-2 text-xs font-bold text-gray-400 uppercase">Dager</th>
-                            <th className="text-center px-4 py-2 text-xs font-bold text-gray-400 uppercase">Aksjon</th>
+                            <th className="text-left px-4 py-2 text-xs font-bold text-muted-foreground uppercase">Ticker</th>
+                            <th className="text-left px-4 py-2 text-xs font-bold text-muted-foreground uppercase">Strategi</th>
+                            <th className="text-right px-4 py-2 text-xs font-bold text-muted-foreground uppercase">Antall</th>
+                            <th className="text-right px-4 py-2 text-xs font-bold text-muted-foreground uppercase">Inngang</th>
+                            <th className="text-center px-4 py-2 text-xs font-bold text-muted-foreground uppercase">Utgang</th>
+                            <th className="text-right px-4 py-2 text-xs font-bold text-muted-foreground uppercase">Resultat</th>
+                            <th className="text-center px-4 py-2 text-xs font-bold text-muted-foreground uppercase">Dager</th>
+                            <th className="text-center px-4 py-2 text-xs font-bold text-muted-foreground uppercase">Aksjon</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-50">
+                        <tbody className="divide-y divide-border">
                           {strategyClosedTrades.map(trade => {
                             const tradeStrategy = STRATEGIES[trade.strategyId];
                             const daysHeld = trade.exitDate
@@ -1154,18 +1154,17 @@ export default function PorteføljePage() {
                             const isProfit = pnl >= 0;
                             
                             return (
-                              <tr key={trade.id} className="hover:bg-gray-50/70 transition-colors">
+                              <tr key={trade.id} className="hover:bg-muted/50 transition-colors">
                                 <td className="px-4 py-3">
                                   <div className="flex items-center gap-1.5">
-                                    <span className="font-medium text-gray-600">{trade.ticker}</span>
+                                    <span className="font-medium text-foreground">{trade.ticker}</span>
                                     {trade.notes && (
                                       <div className="relative group/note">
                                         <span className="text-amber-500 cursor-help">
                                           <StickyNote className="w-3.5 h-3.5" />
                                         </span>
-                                        <div className="absolute left-0 top-5 z-50 w-52 px-2 py-1.5 bg-yellow-50 rounded-sm shadow-md opacity-0 invisible group-hover/note:opacity-100 group-hover/note:visible transition-all duration-150 pointer-events-none border border-yellow-200">
-                                          <p className="text-xs text-gray-700">{trade.notes}</p>
-                                          <div className="absolute -top-1 left-2 w-2 h-2 bg-yellow-50 border-l border-t border-yellow-200 rotate-45" />
+                                        <div className="absolute left-0 top-5 z-50 w-52 px-2 py-1.5 bg-card rounded-lg shadow-md opacity-0 invisible group-hover/note:opacity-100 group-hover/note:visible transition-all duration-150 pointer-events-none border border-border">
+                                          <p className="text-xs text-foreground">{trade.notes}</p>
                                         </div>
                                       </div>
                                     )}
@@ -1180,14 +1179,14 @@ export default function PorteføljePage() {
                                     {tradeStrategy?.emoji} {tradeStrategy?.shortName || trade.strategyId}
                                   </span>
                                 </td>
-                                <td className="px-4 py-3 text-right text-gray-600">{trade.quantity}</td>
+                                <td className="px-4 py-3 text-right text-foreground">{trade.quantity}</td>
                                 <td className="px-4 py-3 text-right">
-                                  <div className="text-gray-600">{trade.entryPrice.toFixed(2)} kr</div>
-                                  <div className="text-xs text-gray-400">{new Date(trade.entryDate).toLocaleDateString('nb-NO')}</div>
+                                  <div className="text-foreground">{trade.entryPrice.toFixed(2)} kr</div>
+                                  <div className="text-xs text-muted-foreground">{new Date(trade.entryDate).toLocaleDateString('nb-NO')}</div>
                                 </td>
                                 <td className="px-4 py-3 text-center">
-                                  <div className="text-gray-700 font-medium">→ {exitPrice.toFixed(2)} kr</div>
-                                  <div className="text-xs text-gray-400">
+                                  <div className="text-foreground font-medium">→ {exitPrice.toFixed(2)} kr</div>
+                                  <div className="text-xs text-muted-foreground">
                                     {trade.exitDate ? new Date(trade.exitDate).toLocaleDateString('nb-NO') : '—'}
                                     {trade.exitReason && <span className="ml-1">({trade.exitReason})</span>}
                                   </div>
@@ -1205,11 +1204,11 @@ export default function PorteføljePage() {
                                     </>
                                   )}
                                 </td>
-                                <td className="px-4 py-3 text-center text-gray-500">{daysHeld}d</td>
+                                <td className="px-4 py-3 text-center text-muted-foreground">{daysHeld}d</td>
                                 <td className="px-4 py-3">
                                   <div className="flex items-center justify-center gap-1">
-                                    <button onClick={() => { setEditingTrade(trade); setIsAddModalOpen(true); }} className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="Rediger"><Edit className="w-4 h-4" /></button>
-                                    <button onClick={() => handleDeleteTrade(trade.id)} className="p-1.5 text-gray-400 hover:text-brand-rose hover:bg-brand-rose/10 rounded-lg transition-colors" title="Slett"><Trash2 className="w-4 h-4" /></button>
+                                    <button onClick={() => { setEditingTrade(trade); setIsAddModalOpen(true); }} className="p-1.5 text-muted-foreground hover:text-brand-emerald hover:bg-muted rounded-lg transition-colors" title="Rediger"><Edit className="w-4 h-4" /></button>
+                                    <button onClick={() => handleDeleteTrade(trade.id)} className="p-1.5 text-muted-foreground hover:text-brand-rose hover:bg-brand-rose/10 rounded-lg transition-colors" title="Slett"><Trash2 className="w-4 h-4" /></button>
                                   </div>
                                 </td>
                               </tr>
@@ -1334,13 +1333,13 @@ export default function PorteføljePage() {
             </table>
           </div>
         </div>
-      ) : (
-        <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center mb-8">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Briefcase className="w-8 h-8 text-gray-400" />
+      ) : selectedPortfolioId !== 'closed' ? (
+        <div className="bg-card rounded-2xl border border-border p-12 text-center mb-8">
+          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+            <Briefcase className="w-8 h-8 text-muted-foreground" />
           </div>
-          <h3 className="text-xl font-bold text-gray-600 mb-2">Ingen aktive trades</h3>
-          <p className="text-gray-500 mb-6">Start med å legge til din første trade</p>
+          <h3 className="text-xl font-bold text-foreground mb-2">Ingen aktive trades</h3>
+          <p className="text-muted-foreground mb-6">Start med å legge til din første trade</p>
           <button
             onClick={() => setIsAddModalOpen(true)}
             className="inline-flex items-center gap-2 px-6 py-3 bg-brand-emerald text-white font-bold rounded-xl hover:bg-brand-emerald/90 transition-colors"
@@ -1349,7 +1348,7 @@ export default function PorteføljePage() {
             Legg til Trade
           </button>
         </div>
-      )}
+      ) : null}
       </div>{/* End max-w-7xl container */}
 
       {/* Add/Edit Trade Modal */}
@@ -1672,7 +1671,7 @@ export default function PorteføljePage() {
                         <td className="p-4 text-center">
                           <div className="flex items-center justify-center gap-1">
                             <button
-                              onClick={() => setEditingTrade(trade)}
+                              onClick={() => { setEditingTrade(trade); setIsAddModalOpen(true); }}
                               className="p-1.5 text-muted-foreground hover:text-brand-emerald transition-colors"
                               title="Rediger"
                             >
@@ -1691,6 +1690,45 @@ export default function PorteføljePage() {
                     );
                   })}
                 </tbody>
+                {/* Total row for closed trades */}
+                <tfoot className="bg-muted/50 border-t-2 border-border">
+                  {(() => {
+                    const totalInvested = filteredClosedTrades.reduce((sum, t) => sum + (t.entryPrice * t.quantity), 0);
+                    const totalExit = filteredClosedTrades.reduce((sum, t) => sum + ((t.exitPrice || t.entryPrice) * t.quantity), 0);
+                    const totalPnl = filteredClosedTrades.reduce((sum, t) => sum + (t.realizedPnL || 0), 0);
+                    const totalPnlPercent = totalInvested > 0 ? (totalPnl / totalInvested) * 100 : 0;
+                    const isTotalProfit = totalPnl >= 0;
+                    
+                    return (
+                      <tr>
+                        <td className="p-4 font-bold text-foreground">TOTAL</td>
+                        <td className="p-4 text-sm text-muted-foreground">{filteredClosedTrades.length} trades</td>
+                        <td className="p-4 text-right font-semibold text-foreground">
+                          {totalInvested.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr
+                        </td>
+                        <td className="p-4 text-right font-semibold text-foreground">
+                          {totalExit.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr
+                        </td>
+                        <td className="p-4"></td>
+                        <td className="p-4 text-right">
+                          <div className={clsx('font-bold', isTotalProfit ? 'text-brand-emerald' : 'text-brand-rose')}>
+                            {displayMode === 'kr' ? (
+                              <>
+                                {isTotalProfit ? '+' : ''}{totalPnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr
+                              </>
+                            ) : (
+                              <>
+                                {isTotalProfit ? '+' : ''}{totalPnlPercent.toFixed(1)}%
+                              </>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-4"></td>
+                        <td className="p-4"></td>
+                      </tr>
+                    );
+                  })()}
+                </tfoot>
               </table>
             </div>
           )}

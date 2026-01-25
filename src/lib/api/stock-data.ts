@@ -2,10 +2,17 @@
  * stock-data.ts - CANONICAL SOURCE for live stock list fetching
  * 
  * Single source of truth for fetching stock lists from Yahoo Finance.
+ * Uses Strategy Registry for V2-compliant scoring and filtering.
  * See docs/00_SOURCE_OF_TRUTH.md
  */
 
 import { Stock, StockStrategy } from '../types';
+import { 
+  calculateStrategyScore, 
+  passesStrategyFilters, 
+  determineBestStrategy,
+  StrategyId 
+} from '../strategies/registry';
 
 // Re-export K-Momentum specific functions from legacy (for backward compat)
 export { fetchAllStocksWithKMomentum } from "@/strategy-packs/legacy/api/stock-data-v2";
@@ -218,32 +225,14 @@ function calculateTechnicalIndicators(quote: YahooQuote): {
 
 /**
  * Convert Yahoo quote to Stock type
+ * Uses Strategy Registry for V2-compliant strategy detection
  */
 function convertToStock(quote: YahooQuote): Stock {
   const indicators = calculateTechnicalIndicators(quote);
   const isOslo = quote.symbol.endsWith('.OL');
   
-  const strategies: StockStrategy[] = [];
-  
-  if (indicators.signal === 'BUY' && quote.regularMarketChangePercent > 1) {
-    strategies.push('MOMENTUM');
-  }
-  if (indicators.kScore >= 70) {
-    strategies.push('BUFFETT');
-  }
-  if (quote.regularMarketVolume > 1000000) {
-    strategies.push('TVEITEREID');
-  }
-  
-  const pricePosition = ((quote.regularMarketPrice - quote.fiftyTwoWeekLow) / 
-    (quote.fiftyTwoWeekHigh - quote.fiftyTwoWeekLow)) * 100;
-  if (indicators.rsi < 45 && pricePosition < 40 && quote.regularMarketChangePercent > -2) {
-    strategies.push('REBOUND');
-  }
-  
-  // Note: Quick analysis from Yahoo 1d data has limited history
-  // Full analysis should use /api/analysis/[ticker] endpoint
-  return {
+  // Create preliminary stock for strategy evaluation
+  const prelimStock: Stock = {
     ticker: quote.symbol,
     name: STOCK_NAMES[quote.symbol] || quote.symbol,
     price: quote.regularMarketPrice,
@@ -258,13 +247,53 @@ function convertToStock(quote: YahooQuote): Stock {
     gainPercent: indicators.gainPercent,
     riskKr: indicators.riskKr,
     riskPercent: indicators.riskPercent,
-    timeHorizon: indicators.signal === 'BUY' ? '2-6 uker' : '4-8 uker',
+    timeHorizon: '2-6 uker',
     market: isOslo ? 'OSLO' : 'USA',
+    strategies: [],
+  };
+  
+  // V2: Use registry to determine qualifying strategies
+  const strategies: StockStrategy[] = [];
+  const strategyChecks: Array<{ id: StrategyId; mapped: StockStrategy }> = [
+    { id: 'MOMENTUM_TREND', mapped: 'MOMENTUM' },
+    { id: 'BUFFETT', mapped: 'BUFFETT' },
+    { id: 'TVEITEREID', mapped: 'TVEITEREID' },
+    { id: 'REBOUND', mapped: 'REBOUND' },
+  ];
+  
+  for (const check of strategyChecks) {
+    const { passed } = passesStrategyFilters(prelimStock, check.id);
+    if (passed) {
+      strategies.push(check.mapped);
+    }
+  }
+  
+  // V2: Use registry to determine best strategy and final signal
+  const bestStrategy = determineBestStrategy(prelimStock);
+  
+  // Determine signal based on strategy qualification
+  // If stock passes any BUY strategy with good score → BUY
+  // If stock doesn't pass any strategy → HOLD
+  // RSI overbought or very negative → SELL
+  let finalSignal: 'BUY' | 'HOLD' | 'SELL' = indicators.signal;
+  
+  if (strategies.length > 0 && bestStrategy.score >= 60) {
+    finalSignal = 'BUY';
+  } else if (strategies.length === 0 && indicators.kScore < 50) {
+    finalSignal = 'HOLD';
+  }
+  
+  // Note: Quick analysis from Yahoo 1d data has limited history
+  // Full analysis should use /api/analysis/[ticker] endpoint
+  return {
+    ...prelimStock,
+    signal: finalSignal,
     strategies: strategies.length > 0 ? strategies : ['MOMENTUM'],
+    timeHorizon: finalSignal === 'BUY' ? '2-6 uker' : '4-8 uker',
     // Data quality flags - quick scan has limited data
     dataSource: 'yahoo',
-    historyDays: 1, // Only 1 day of data in quick scan
-    insufficientHistory: true, // Quick scan always has insufficient history for full analysis
+    historyDays: 1,
+    insufficientHistory: true,
   };
 }
 

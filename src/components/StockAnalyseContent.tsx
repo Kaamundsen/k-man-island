@@ -441,21 +441,9 @@ export default function StockAnalyseContent({ stock, allStocks }: StockAnalyseCo
               
               {!chartLoading && sbLevelsAnalysis && chartData && (
                 <>
-                  {/* SB-Levels Summary Banner */}
-                  <div className={clsx(
-                    'rounded-2xl p-4 border-2',
-                    sbLevelsAnalysis.activeScenario === 'A' && 'bg-green-50 border-green-300',
-                    sbLevelsAnalysis.activeScenario === 'B' && 'bg-blue-50 border-blue-300',
-                    sbLevelsAnalysis.activeScenario === 'C' && 'bg-red-50 border-red-300',
-                    !sbLevelsAnalysis.activeScenario && 'bg-gray-50 border-gray-300',
-                  )}>
-                    <p className={clsx(
-                      'text-sm font-medium',
-                      sbLevelsAnalysis.activeScenario === 'A' && 'text-green-800',
-                      sbLevelsAnalysis.activeScenario === 'B' && 'text-blue-800',
-                      sbLevelsAnalysis.activeScenario === 'C' && 'text-red-800',
-                      !sbLevelsAnalysis.activeScenario && 'text-gray-800',
-                    )}>
+                  {/* SB-Levels Summary Banner - Yellow/Amber style */}
+                  <div className="rounded-2xl p-4 bg-amber-50 border-2 border-amber-300">
+                    <p className="text-sm font-medium text-amber-800">
                       {getSBLevelsSummary(sbLevelsAnalysis)}
                     </p>
                   </div>

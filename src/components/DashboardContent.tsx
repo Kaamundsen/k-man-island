@@ -10,7 +10,7 @@ import FilterBar, { MarketFilter, StrategyFilter } from '@/components/FilterBar'
 import MarketStatus from '@/components/MarketStatus';
 import { Stock } from '@/lib/types';
 import { TrendingUp, TrendingDown, Minus, RefreshCcw, Loader2, Search, X, Plus, Check, AlertCircle, ChevronRight, LayoutGrid, List, Layers, StickyNote, Trash2, Calendar, Bell, Edit2 } from 'lucide-react';
-import { getCustomTickers, addCustomTicker, removeCustomTicker, isInBaseUniverse } from '@/lib/store/universe-store';
+import { getCustomTickers, addCustomTicker, removeCustomTicker, isInBaseUniverse, getUniverseSize, setUniverseSize, type UniverseSize } from '@/lib/store/universe-store';
 import { getNotes, addNote, updateNote, deleteNote, type StockNote } from '@/lib/store/notes-store';
 import { toast } from 'sonner';
 import SBScanDashboard from '@/components/SBScanDashboard';
@@ -67,6 +67,12 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
   // Custom tickers state
   const [customTickers, setCustomTickers] = useState<string[]>([]);
   
+  // Universe size state
+  const [universeSize, setUniverseSizeState] = useState<UniverseSize>(100);
+  
+  // Additional stocks fetched for custom tickers not in initialStocks
+  const [customTickerStocks, setCustomTickerStocks] = useState<Stock[]>([]);
+  
   // Notes state
   const [noteModalTicker, setNoteModalTicker] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
@@ -85,10 +91,13 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
     { value: 'personlig', label: 'Personlig', color: 'bg-gray-100 text-gray-700' },
   ];
   
-  // Load custom tickers on mount
+  // Load custom tickers and universe size on mount
   useEffect(() => {
     const tickers = getCustomTickers();
     setCustomTickers(tickers);
+    
+    const storedSize = getUniverseSize();
+    setUniverseSizeState(storedSize);
     
     // Load notes for all stocks
     const notes: Record<string, StockNote[]> = {};
@@ -100,6 +109,57 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
     });
     setStockNotes(notes);
   }, [initialStocks]);
+  
+  // Handle universe size change
+  const handleUniverseSizeChange = (size: UniverseSize) => {
+    setUniverseSizeState(size);
+    setUniverseSize(size);
+    toast.success(`Univers endret til ${size === 'full' ? 'alle' : size} aksjer`);
+    // Trigger a refresh to load new stocks
+    if (onRefresh) {
+      onRefresh();
+    }
+  };
+  
+  // Fetch data for custom tickers not in initialStocks
+  useEffect(() => {
+    const fetchMissingCustomTickers = async () => {
+      const missingTickers = customTickers.filter(
+        ticker => !initialStocks.some(s => s.ticker.toUpperCase() === ticker.toUpperCase())
+      );
+      
+      if (missingTickers.length === 0) {
+        setCustomTickerStocks([]);
+        return;
+      }
+      
+      try {
+        // Fetch data for each missing ticker
+        const fetchPromises = missingTickers.map(async (ticker) => {
+          const response = await fetch(`/api/stock/${encodeURIComponent(ticker)}`);
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success && result.data) {
+              return result.data as Stock;
+            }
+          }
+          return null;
+        });
+        
+        const results = await Promise.all(fetchPromises);
+        const validStocks = results.filter((s): s is Stock => s !== null);
+        setCustomTickerStocks(validStocks);
+      } catch (error) {
+        console.error('Error fetching custom ticker data:', error);
+      }
+    };
+    
+    if (customTickers.length > 0) {
+      fetchMissingCustomTickers();
+    } else {
+      setCustomTickerStocks([]);
+    }
+  }, [customTickers, initialStocks]);
 
   // Search handler
   const handleSearch = useCallback((query: string) => {
@@ -259,8 +319,20 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
     );
   }, []);
 
+  // Combine initialStocks with customTickerStocks
+  const allStocks = useMemo(() => {
+    const combined = [...initialStocks];
+    // Add custom ticker stocks that aren't already in initialStocks
+    customTickerStocks.forEach(stock => {
+      if (!combined.some(s => s.ticker.toUpperCase() === stock.ticker.toUpperCase())) {
+        combined.push(stock);
+      }
+    });
+    return combined;
+  }, [initialStocks, customTickerStocks]);
+
   const filteredStocks = useMemo(() => {
-    let filtered = [...initialStocks];
+    let filtered = [...allStocks];
 
     // Filter by market
     if (marketFilter !== 'ALLE') {
@@ -325,17 +397,17 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
     } else {
       return [];
     }
-  }, [initialStocks, marketFilter, strategyFilter, viewMode, customTickers]);
+  }, [allStocks, marketFilter, strategyFilter, viewMode, customTickers]);
 
-  const buySignals = initialStocks.filter(s => s.signal === 'BUY').length;
-  const holdSignals = initialStocks.filter(s => s.signal === 'HOLD').length;
-  const sellSignals = initialStocks.filter(s => s.signal === 'SELL').length;
+  const buySignals = allStocks.filter(s => s.signal === 'BUY').length;
+  const holdSignals = allStocks.filter(s => s.signal === 'HOLD').length;
+  const sellSignals = allStocks.filter(s => s.signal === 'SELL').length;
   
   // Watchlist stocks
   const watchlistStocks = useMemo(() => {
     const prioritizeInsider = strategyFilter === 'INSIDER';
     
-    let filtered = [...initialStocks];
+    let filtered = [...allStocks];
     
     if (marketFilter !== 'ALLE') {
       filtered = filtered.filter(stock => stock.market === marketFilter);
@@ -416,7 +488,7 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
         const scoreB = calculateCompositeScore(b, prioritizeInsider);
         return scoreB - scoreA;
       });
-  }, [initialStocks, viewMode, strategyFilter, marketFilter, customTickers]);
+  }, [allStocks, viewMode, strategyFilter, marketFilter, customTickers]);
 
   return (
     <main className="min-h-screen p-8">
@@ -465,6 +537,91 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
                 {isRefreshing ? 'Oppdaterer...' : 'Oppdater nå'}
               </button>
             )}
+            
+            {/* Search Bar - inline with Oppdater nå */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Søk ticker..."
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleDirectSearch(false);
+                  }
+                  if (e.key === 'Escape') {
+                    setShowSearchDropdown(false);
+                    setSearchQuery('');
+                  }
+                }}
+                className="w-40 pl-9 pr-8 py-1.5 text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-brand-emerald/20 focus:border-brand-emerald outline-none"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setShowSearchDropdown(false);
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+              
+              {/* Search Dropdown */}
+              {showSearchDropdown && searchResults.length > 0 && (
+                <div className="absolute top-full left-0 mt-2 w-64 bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden">
+                  {searchResults.map((ticker) => {
+                    const stock = initialStocks.find(s => s.ticker === ticker);
+                    const inCustom = customTickers.some(t => t.toUpperCase() === ticker.toUpperCase());
+                    
+                    return (
+                      <div
+                        key={ticker}
+                        className="flex items-center justify-between px-4 py-3 hover:bg-muted cursor-pointer border-b border-border last:border-0"
+                        onClick={() => handleSelectTicker(ticker, false)}
+                      >
+                        <div>
+                          <div className="font-bold text-foreground">{ticker.replace('.OL', '')}</div>
+                          {stock && <div className="text-sm text-muted-foreground">{stock.name}</div>}
+                          {!stock && <div className="text-xs text-amber-500">Ukjent ticker</div>}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {inCustom ? (
+                            <span className="text-xs text-brand-emerald flex items-center gap-1 font-semibold">
+                              <Check className="w-3 h-3" /> I Mine
+                            </span>
+                          ) : (
+                            <span className="px-2 py-1 text-xs bg-brand-emerald text-white rounded-lg flex items-center gap-1 font-semibold">
+                              <Plus className="w-3 h-3" /> Legg til
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            
+            {/* Universe Size Selector */}
+            <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+              {([50, 100, 150, 200] as const).map((size) => (
+                <button
+                  key={size}
+                  onClick={() => handleUniverseSizeChange(size)}
+                  className={clsx(
+                    'px-2 py-1 text-xs font-medium rounded-md transition-all',
+                    universeSize === size
+                      ? 'bg-card text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
           </div>
           
           <div className="flex items-center gap-4">
@@ -489,84 +646,7 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="mb-6 relative">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Søk ticker (f.eks. EQNR, VOW)..."
-            value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleDirectSearch(false); // Don't navigate, just add to Mine
-              }
-              if (e.key === 'Escape') {
-                setShowSearchDropdown(false);
-                setSearchQuery('');
-              }
-            }}
-            className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-brand-emerald/20 focus:border-brand-emerald outline-none"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => {
-                setSearchQuery('');
-                setShowSearchDropdown(false);
-              }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-        
-        {/* Search Dropdown */}
-        {showSearchDropdown && searchResults.length > 0 && (
-          <div className="absolute top-full left-0 mt-2 w-full max-w-md bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden">
-            {searchResults.map((ticker) => {
-              const stock = initialStocks.find(s => s.ticker === ticker);
-              const inCustom = customTickers.some(t => t.toUpperCase() === ticker.toUpperCase());
-              
-              return (
-                <div
-                  key={ticker}
-                  className="flex items-center justify-between px-4 py-3 hover:bg-muted cursor-pointer border-b border-border last:border-0"
-                  onClick={() => handleSelectTicker(ticker, false)}
-                >
-                  <div>
-                    <div className="font-bold text-foreground">{ticker.replace('.OL', '')}</div>
-                    {stock && <div className="text-sm text-muted-foreground">{stock.name}</div>}
-                    {!stock && <div className="text-xs text-amber-500">Ukjent ticker - klikk for å sjekke</div>}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {inCustom ? (
-                      <span className="text-xs text-brand-emerald flex items-center gap-1">
-                        <Check className="w-3 h-3" /> I Mine
-                      </span>
-                    ) : (
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Plus className="w-3 h-3" /> Legg til
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* SB-Scan Dashboard - shown when SB_SCAN filter is active */}
-      {strategyFilter === 'SB_SCAN' && (
-        <div className="mb-8">
-          <SBScanDashboard />
-        </div>
-      )}
-
-      {/* Filters - hidden when SB_SCAN is active */}
-      {strategyFilter !== 'SB_SCAN' && (
+      {/* Filters - always visible */}
       <div className="mb-8">
         <div className="flex items-baseline gap-3 mb-4">
           <h2 className="text-2xl font-bold text-foreground">
@@ -641,6 +721,12 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
           </div>
         </div>
       </div>
+
+      {/* SB-Scan Dashboard - shown when SB_SCAN filter is active */}
+      {strategyFilter === 'SB_SCAN' && (
+        <div className="mb-8">
+          <SBScanDashboard />
+        </div>
       )}
 
       {/* Stock Grid - hidden when SB_SCAN is active */}
