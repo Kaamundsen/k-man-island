@@ -991,14 +991,50 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
                           )}
                         </button>
                         
-                        {/* Note tooltip */}
+                        {/* Note tooltip - SB-Scan style */}
                         {hoveredNoteTicker === stock.ticker && notes.length > 0 && (
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 w-48 bg-yellow-50 border border-yellow-200 rounded-sm shadow-md p-2 pointer-events-none">
-                            <div className="space-y-1 max-h-20 overflow-y-auto">
-                              {notes.slice(0, 2).map(note => (
-                                <p key={note.id} className="text-[10px] text-gray-700 line-clamp-2">{note.note}</p>
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 w-72 bg-card border border-border rounded-xl shadow-xl p-4 pointer-events-none">
+                            <div className="flex items-center justify-between mb-3 pb-2 border-b border-border">
+                              <span className="text-sm font-medium text-foreground">
+                                {tickerShort} - Notater
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {notes.length} notat{notes.length > 1 ? 'er' : ''}
+                              </span>
+                            </div>
+                            
+                            <div className="space-y-3 max-h-48 overflow-y-auto">
+                              {notes.slice(0, 3).map(note => (
+                                <div key={note.id} className="text-xs">
+                                  <p className="text-foreground leading-relaxed">{note.note}</p>
+                                  {note.tags && note.tags.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mt-1.5">
+                                      {note.tags.map(tag => {
+                                        const tagConfig = TAG_OPTIONS.find(t => t.value === tag);
+                                        return (
+                                          <span key={tag} className={clsx('px-1.5 py-0.5 rounded text-[10px] font-medium', tagConfig?.color)}>
+                                            {tagConfig?.label}
+                                          </span>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                  <div className="text-[10px] text-muted-foreground mt-1">
+                                    {new Date(note.createdAt).toLocaleDateString('nb-NO', { 
+                                      day: 'numeric', 
+                                      month: 'short',
+                                      year: 'numeric'
+                                    })}
+                                  </div>
+                                </div>
                               ))}
                             </div>
+                            
+                            {notes.length > 3 && (
+                              <div className="text-xs text-muted-foreground mt-3 pt-2 border-t border-border text-center">
+                                +{notes.length - 3} flere notater
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
