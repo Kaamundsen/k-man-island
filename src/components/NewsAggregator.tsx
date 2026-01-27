@@ -126,7 +126,7 @@ export function NewsAggregator({
     });
   };
   
-  const fetchNews = useCallback(async () => {
+  const fetchNews = useCallback(async (forceRefresh: boolean = false) => {
     setLoading(true);
     setError(null);
     
@@ -134,6 +134,7 @@ export function NewsAggregator({
       // Hent RSS-nyheter
       const params = new URLSearchParams();
       if (ticker) params.set('ticker', ticker.replace('.OL', ''));
+      if (forceRefresh) params.set('refresh', 'true');
       
       const response = await fetch(`/api/news-aggregator?${params.toString()}`);
       const data = await response.json();
@@ -225,18 +226,18 @@ export function NewsAggregator({
   }, [ticker]);
   
   useEffect(() => {
-    fetchNews();
+    fetchNews(false);
     
     // Lytt etter endringer i localStorage (når nye artikler legges til)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'k-man-article-tips') {
-        fetchNews();
+        fetchNews(false);
       }
     };
     
     // Lytt også etter custom event fra samme vindu
     const handleArticleUpdate = () => {
-      fetchNews();
+      fetchNews(false);
     };
     
     window.addEventListener('storage', handleStorageChange);
@@ -349,7 +350,7 @@ export function NewsAggregator({
             Siste Nyheter
           </h3>
           <button
-            onClick={fetchNews}
+            onClick={() => fetchNews(true)}
             disabled={loading}
             className="p-1.5 rounded hover:bg-muted"
           >
@@ -418,7 +419,7 @@ export function NewsAggregator({
               </span>
             )}
             <button
-              onClick={fetchNews}
+              onClick={() => fetchNews(true)}
               disabled={loading}
               className="p-2 rounded-lg hover:bg-muted transition-colors"
             >

@@ -190,10 +190,20 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
     const existingMatches = initialStocks
       .filter(s => s.ticker.toUpperCase().includes(upperQuery) || s.name.toUpperCase().includes(upperQuery))
       .map(s => s.ticker)
-      .slice(0, 6);
+      .slice(0, 5);
     
-    setSearchResults(existingMatches);
-    setShowSearchDropdown(existingMatches.length > 0);
+    // Also suggest the raw query as potential Oslo ticker if not already matched
+    const potentialOsloTicker = upperQuery.endsWith('.OL') ? upperQuery : `${upperQuery}.OL`;
+    const potentialUSATicker = upperQuery.replace('.OL', '');
+    
+    const allResults = [...new Set([
+      ...existingMatches,
+      // Add potential ticker if not already in results
+      ...(existingMatches.some(t => t.toUpperCase() === potentialOsloTicker) ? [] : [potentialOsloTicker]),
+    ])].slice(0, 6);
+    
+    setSearchResults(allResults);
+    setShowSearchDropdown(true);
   }, [initialStocks]);
 
   // Add ticker to Mine list

@@ -150,11 +150,12 @@ const STOCK_NAMES: Record<string, string> = {
   'AEGA.OL': 'Aega ASA',
   // Additional commonly traded
   'SATS.OL': 'Sats ASA',
-  'TRMED.OL': 'TietoEVRY Oyj',
+  'TRMED.OL': 'Thor Medical ASA',
   'ENTRA.OL': 'Entra ASA',
   'ATEA.OL': 'Atea ASA',
   'AKVA.OL': 'AKVA Group ASA',
   'BOUV.OL': 'Bouvet ASA',
+  'ZENA.OL': 'Zenith Energy Ltd',
 };
 
 // USA Stock Names (S&P 100 + NASDAQ 100)

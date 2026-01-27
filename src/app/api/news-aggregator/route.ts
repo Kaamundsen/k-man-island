@@ -25,13 +25,14 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const ticker = searchParams.get('ticker');
   const source = searchParams.get('source') || 'all';
+  const forceRefresh = searchParams.get('refresh') === 'true';
   
   try {
-    // Sjekk cache
+    // Sjekk cache (skip hvis force refresh)
     const cacheKey = `${source}-${ticker || 'all'}`;
     const cached = feedCache.get(cacheKey);
     
-    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    if (!forceRefresh && cached && Date.now() - cached.timestamp < CACHE_DURATION) {
       return NextResponse.json({ 
         news: cached.data,
         cached: true,
