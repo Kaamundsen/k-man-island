@@ -570,38 +570,38 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess }: BulkImpo
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-card rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col border border-border">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+        <div className="flex items-center justify-between p-6 border-b border-border">
           <div>
-            <h2 className="text-2xl font-extrabold text-brand-slate flex items-center gap-2">
+            <h2 className="text-2xl font-extrabold text-foreground flex items-center gap-2">
               <Upload className="w-6 h-6 text-brand-emerald" />
               Bulk Import fra Nordnet
             </h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {importMode === 'trades' 
-                ? <>Lim inn transaksjoner fra Nordnet - støtter både <span className="text-green-600 font-medium">KJØP</span> og <span className="text-red-600 font-medium">SALG</span></>
-                : <>Lim inn <span className="text-blue-600 font-medium">UTBYTTE</span> fra Nordnet</>
+                ? <>Lim inn transaksjoner fra Nordnet - støtter både <span className="text-green-500 font-medium">KJØP</span> og <span className="text-red-500 font-medium">SALG</span></>
+                : <>Lim inn <span className="text-blue-500 font-medium">UTBYTTE</span> fra Nordnet</>
               }
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-muted rounded-lg transition-colors"
           >
-            <X className="w-6 h-6 text-gray-500" />
+            <X className="w-6 h-6 text-muted-foreground" />
           </button>
         </div>
 
         {/* Mode Tabs */}
-        <div className="flex border-b border-gray-200 px-6">
+        <div className="flex border-b border-border px-6">
           <button
             onClick={() => { setImportMode('trades'); setPasteText(''); setParsedTrades([]); setParsedDividends([]); setImportResult(null); setDividendResult(null); }}
             className={clsx(
               'flex items-center gap-2 px-4 py-3 font-semibold border-b-2 transition-colors',
               importMode === 'trades'
                 ? 'border-brand-emerald text-brand-emerald'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
             )}
           >
             <TrendingUp className="w-4 h-4" />
@@ -612,8 +612,8 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess }: BulkImpo
             className={clsx(
               'flex items-center gap-2 px-4 py-3 font-semibold border-b-2 transition-colors',
               importMode === 'dividends'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-blue-500 text-blue-500'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
             )}
           >
             <DollarSign className="w-4 h-4" />
@@ -625,7 +625,7 @@ export default function BulkImportModal({ isOpen, onClose, onSuccess }: BulkImpo
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Paste Area */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-foreground mb-2">
               {importMode === 'trades' ? 'Lim inn Nordnet-transaksjoner' : 'Lim inn Nordnet-utbytte'}
             </label>
             <textarea
@@ -655,25 +655,25 @@ Kid
 -
 200,00 NOK`}
               rows={6}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all resize-none font-mono text-sm"
+              className="w-full px-4 py-3 rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all resize-none font-mono text-sm"
             />
           </div>
 
           {/* Portfolio & Strategy Selection - Hovedvalg */}
           {parsedTrades.length > 0 && (
-            <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-              <p className="text-sm text-blue-700 mb-3 font-medium">
+            <div className="bg-blue-500/10 dark:bg-blue-950/40 rounded-xl p-4 border border-blue-500/30">
+              <p className="text-sm text-blue-600 dark:text-blue-400 mb-3 font-medium">
                 ⬇️ Sett for alle (du kan endre individuelt i tabellen under)
               </p>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-foreground mb-2">
                     Portefølje for alle
                   </label>
                   <select
                     value={selectedPortfolioId}
                     onChange={(e) => handleMainPortfolioChange(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-border bg-card text-foreground focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
                   >
                     {portfolios.map(p => (
                       <option key={p.id} value={p.id}>{p.name}</option>
@@ -681,13 +681,13 @@ Kid
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-foreground mb-2">
                     Strategi for alle
                   </label>
                   <select
                     value={selectedStrategyId}
                     onChange={(e) => handleMainStrategyChange(e.target.value as StrategyId)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-border bg-card text-foreground focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
                   >
                     <option value="">📈 Momentum Trend (default)</option>
                     <optgroup label="── Ekspert-strategier ──">
@@ -718,7 +718,7 @@ Kid
           {parsedTrades.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-gray-700">
+                <h3 className="font-semibold text-foreground">
                   Funnet {parsedTrades.length} transaksjoner
                 </h3>
                 <button
@@ -729,53 +729,53 @@ Kid
                 </button>
               </div>
               
-              <div className="border border-gray-200 rounded-xl overflow-hidden overflow-x-auto">
+              <div className="border border-border rounded-xl overflow-hidden overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-muted">
                     <tr>
                       <th className="w-8 px-2 py-2"></th>
-                      <th className="px-2 py-2 text-left font-semibold text-gray-600">Type</th>
-                      <th className="px-2 py-2 text-left font-semibold text-gray-600">Dato</th>
-                      <th className="px-2 py-2 text-left font-semibold text-gray-600">Aksje</th>
-                      <th className="px-2 py-2 text-right font-semibold text-gray-600">Antall</th>
-                      <th className="px-2 py-2 text-right font-semibold text-gray-600">Pris</th>
-                      <th className="px-2 py-2 text-left font-semibold text-gray-600">Portefølje</th>
-                      <th className="px-2 py-2 text-left font-semibold text-gray-600">Strategi</th>
+                      <th className="px-2 py-2 text-left font-semibold text-muted-foreground">Type</th>
+                      <th className="px-2 py-2 text-left font-semibold text-muted-foreground">Dato</th>
+                      <th className="px-2 py-2 text-left font-semibold text-muted-foreground">Aksje</th>
+                      <th className="px-2 py-2 text-right font-semibold text-muted-foreground">Antall</th>
+                      <th className="px-2 py-2 text-right font-semibold text-muted-foreground">Pris</th>
+                      <th className="px-2 py-2 text-left font-semibold text-muted-foreground">Portefølje</th>
+                      <th className="px-2 py-2 text-left font-semibold text-muted-foreground">Strategi</th>
                       <th className="w-8 px-2 py-2"></th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-border">
                     {parsedTrades.map(trade => (
                       <tr 
                         key={trade.id}
-                        className={trade.selected ? 'bg-brand-emerald/5' : 'opacity-50 bg-gray-50'}
+                        className={trade.selected ? 'bg-brand-emerald/5' : 'opacity-50 bg-muted'}
                       >
                         <td className="px-2 py-2">
                           <input
                             type="checkbox"
                             checked={trade.selected}
                             onChange={() => toggleTradeSelection(trade.id)}
-                            className="w-4 h-4 rounded border-gray-300 text-brand-emerald focus:ring-brand-emerald"
+                            className="w-4 h-4 rounded border-border text-brand-emerald focus:ring-brand-emerald"
                           />
                         </td>
                         <td className="px-2 py-2">
                           <span className={`px-2 py-0.5 text-xs font-bold rounded ${
                             trade.type === 'BUY' 
-                              ? 'bg-green-100 text-green-700' 
-                              : 'bg-red-100 text-red-700'
+                              ? 'bg-green-500/20 text-green-500' 
+                              : 'bg-red-500/20 text-red-500'
                           }`}>
                             {trade.type === 'BUY' ? 'KJØP' : 'SALG'}
                           </span>
                         </td>
-                        <td className="px-2 py-2 text-gray-600 text-xs">
+                        <td className="px-2 py-2 text-muted-foreground text-xs">
                           {trade.date.split('-').reverse().join('.')}
                         </td>
                         <td className="px-2 py-2">
-                          <div className="font-medium text-gray-900">{trade.name}</div>
-                          <div className="text-xs text-gray-500 font-mono">{trade.ticker}</div>
+                          <div className="font-medium text-foreground">{trade.name}</div>
+                          <div className="text-xs text-muted-foreground font-mono">{trade.ticker}</div>
                         </td>
-                        <td className="px-2 py-2 text-right text-gray-900">{trade.quantity}</td>
-                        <td className="px-2 py-2 text-right text-gray-900">
+                        <td className="px-2 py-2 text-right text-foreground">{trade.quantity}</td>
+                        <td className="px-2 py-2 text-right text-foreground">
                           {trade.price.toLocaleString('nb-NO', { minimumFractionDigits: 2 })}
                         </td>
                         <td className="px-2 py-2">
@@ -783,7 +783,7 @@ Kid
                             value={trade.portfolioId}
                             onChange={(e) => handleTradePortfolioChange(trade.id, e.target.value)}
                             disabled={!trade.selected}
-                            className="w-full px-2 py-1 text-xs rounded border border-gray-200 focus:border-brand-emerald outline-none disabled:bg-gray-100 disabled:text-gray-400"
+                            className="w-full px-2 py-1 text-xs rounded border border-border bg-card text-foreground focus:border-brand-emerald outline-none disabled:bg-muted disabled:text-muted-foreground"
                           >
                             {portfolios.map(p => (
                               <option key={p.id} value={p.id}>{p.name}</option>
@@ -795,7 +795,7 @@ Kid
                             value={trade.strategyId}
                             onChange={(e) => handleTradeStrategyChange(trade.id, e.target.value as StrategyId)}
                             disabled={!trade.selected}
-                            className="w-full px-2 py-1 text-xs rounded border border-gray-200 focus:border-brand-emerald outline-none disabled:bg-gray-100 disabled:text-gray-400"
+                            className="w-full px-2 py-1 text-xs rounded border border-border bg-card text-foreground focus:border-brand-emerald outline-none disabled:bg-muted disabled:text-muted-foreground"
                           >
                             <option value="">📈 M-Trend</option>
                             {Object.values(STRATEGIES)
@@ -811,7 +811,7 @@ Kid
                         <td className="px-2 py-2">
                           <button
                             onClick={() => removeTrade(trade.id)}
-                            className="p-1 text-gray-400 hover:text-brand-rose transition-colors"
+                            className="p-1 text-muted-foreground hover:text-brand-rose transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -883,44 +883,44 @@ Kid
           {importMode === 'dividends' && parsedDividends.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-gray-700">
+                <h3 className="font-semibold text-foreground">
                   💰 Forhåndsvisning ({parsedDividends.length} utbytte)
                 </h3>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => toggleAllDividends(true)}
-                    className="text-xs text-blue-600 hover:underline"
+                    className="text-xs text-blue-500 hover:underline"
                   >
                     Velg alle
                   </button>
-                  <span className="text-gray-300">|</span>
+                  <span className="text-muted-foreground">|</span>
                   <button
                     onClick={() => toggleAllDividends(false)}
-                    className="text-xs text-gray-500 hover:underline"
+                    className="text-xs text-muted-foreground hover:underline"
                   >
                     Fjern alle
                   </button>
                 </div>
               </div>
               
-              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div className="bg-card rounded-xl border border-border overflow-hidden">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50 border-b border-gray-200">
+                  <thead className="bg-muted border-b border-border">
                     <tr>
-                      <th className="px-3 py-2 text-left">✓</th>
-                      <th className="px-3 py-2 text-left">Dato</th>
-                      <th className="px-3 py-2 text-left">Aksje</th>
-                      <th className="px-3 py-2 text-right">Antall</th>
-                      <th className="px-3 py-2 text-right">Per aksje</th>
-                      <th className="px-3 py-2 text-right">Totalt</th>
+                      <th className="px-3 py-2 text-left text-muted-foreground">✓</th>
+                      <th className="px-3 py-2 text-left text-muted-foreground">Dato</th>
+                      <th className="px-3 py-2 text-left text-muted-foreground">Aksje</th>
+                      <th className="px-3 py-2 text-right text-muted-foreground">Antall</th>
+                      <th className="px-3 py-2 text-right text-muted-foreground">Per aksje</th>
+                      <th className="px-3 py-2 text-right text-muted-foreground">Totalt</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-border">
                     {parsedDividends.map(dividend => (
                       <tr 
                         key={dividend.id} 
                         className={clsx(
-                          'hover:bg-gray-50 transition-colors',
+                          'hover:bg-muted transition-colors',
                           !dividend.selected && 'opacity-50'
                         )}
                       >
@@ -929,34 +929,34 @@ Kid
                             type="checkbox"
                             checked={dividend.selected}
                             onChange={() => toggleDividendSelection(dividend.id)}
-                            className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                            className="w-4 h-4 text-blue-500 rounded focus:ring-blue-500"
                           />
                         </td>
-                        <td className="px-3 py-2 text-gray-600">
+                        <td className="px-3 py-2 text-muted-foreground">
                           {dividend.date.split('-').reverse().join('.')}
                         </td>
                         <td className="px-3 py-2">
-                          <div className="font-medium text-gray-900">{dividend.ticker}</div>
-                          <div className="text-xs text-gray-500">{dividend.name}</div>
+                          <div className="font-medium text-foreground">{dividend.ticker}</div>
+                          <div className="text-xs text-muted-foreground">{dividend.name}</div>
                         </td>
-                        <td className="px-3 py-2 text-right text-gray-600">
+                        <td className="px-3 py-2 text-right text-muted-foreground">
                           {dividend.quantity.toLocaleString('nb-NO')}
                         </td>
-                        <td className="px-3 py-2 text-right text-gray-600">
+                        <td className="px-3 py-2 text-right text-muted-foreground">
                           {dividend.dividendPerShare.toFixed(2)} kr
                         </td>
-                        <td className="px-3 py-2 text-right font-semibold text-blue-600">
+                        <td className="px-3 py-2 text-right font-semibold text-blue-500">
                           {dividend.totalAmount.toLocaleString('nb-NO', { maximumFractionDigits: 2 })} kr
                         </td>
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot className="bg-blue-50 border-t border-blue-200">
+                  <tfoot className="bg-blue-500/10 border-t border-blue-500/30">
                     <tr>
-                      <td colSpan={5} className="px-3 py-2 text-right font-semibold text-gray-700">
+                      <td colSpan={5} className="px-3 py-2 text-right font-semibold text-foreground">
                         Total utbytte:
                       </td>
-                      <td className="px-3 py-2 text-right font-bold text-blue-700">
+                      <td className="px-3 py-2 text-right font-bold text-blue-500">
                         {parsedDividends
                           .filter(d => d.selected)
                           .reduce((sum, d) => sum + d.totalAmount, 0)
@@ -995,16 +995,16 @@ Kid
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-6 border-t border-gray-100 bg-gray-50">
-          <div className="text-sm text-gray-500">
+        <div className="flex items-center justify-between p-6 border-t border-border bg-muted">
+          <div className="text-sm text-muted-foreground">
             {importMode === 'trades' ? (
               selectedCount > 0 ? (
                 <span className="flex items-center gap-2">
                   <span className="font-medium text-brand-emerald">{selectedCount} valgt:</span>
-                  <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold">
+                  <span className="bg-green-500/20 text-green-500 px-2 py-0.5 rounded text-xs font-bold">
                     {parsedTrades.filter(t => t.selected && t.type === 'BUY').length} kjøp
                   </span>
-                  <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs font-bold">
+                  <span className="bg-red-500/20 text-red-500 px-2 py-0.5 rounded text-xs font-bold">
                     {parsedTrades.filter(t => t.selected && t.type === 'SELL').length} salg
                   </span>
                 </span>
@@ -1014,8 +1014,8 @@ Kid
             ) : (
               selectedDividendCount > 0 ? (
                 <span className="flex items-center gap-2">
-                  <span className="font-medium text-blue-600">{selectedDividendCount} utbytte valgt</span>
-                  <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-bold">
+                  <span className="font-medium text-blue-500">{selectedDividendCount} utbytte valgt</span>
+                  <span className="bg-blue-500/20 text-blue-500 px-2 py-0.5 rounded text-xs font-bold">
                     {parsedDividends.filter(d => d.selected).reduce((sum, d) => sum + d.totalAmount, 0).toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr
                   </span>
                 </span>
@@ -1027,7 +1027,7 @@ Kid
           <div className="flex items-center gap-3">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-200 rounded-lg transition-colors"
+              className="px-4 py-2 text-muted-foreground font-medium hover:bg-muted/80 rounded-lg transition-colors"
             >
               Lukk
             </button>
@@ -1038,7 +1038,7 @@ Kid
                 className={`flex items-center gap-2 px-6 py-2 font-bold rounded-lg transition-colors ${
                   selectedCount > 0 && selectedPortfolioId && !isImporting
                     ? 'bg-brand-emerald text-white hover:bg-brand-emerald/90'
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : 'bg-muted text-muted-foreground cursor-not-allowed'
                 }`}
               >
                 {isImporting ? (
@@ -1060,7 +1060,7 @@ Kid
                 className={`flex items-center gap-2 px-6 py-2 font-bold rounded-lg transition-colors ${
                   selectedDividendCount > 0 && !isImporting
                     ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : 'bg-muted text-muted-foreground cursor-not-allowed'
                 }`}
               >
                 {isImporting ? (

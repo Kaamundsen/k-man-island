@@ -1904,50 +1904,50 @@ export default function PorteføljePage() {
       {/* Close Trade Modal */}
       {closingTrade && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-            <div className="flex items-center justify-between p-5 border-b border-gray-100">
-              <h2 className="text-lg font-bold text-brand-slate">
+          <div className="bg-card rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden border border-border">
+            <div className="flex items-center justify-between p-5 border-b border-border">
+              <h2 className="text-lg font-bold text-foreground">
                 Lukk Trade: {closingTrade.ticker}
               </h2>
               <button
                 onClick={() => setClosingTrade(null)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-muted rounded-lg transition-colors"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
             
             <div className="p-5 space-y-4">
               {/* Info om traden */}
-              <div className="bg-gray-50 rounded-xl p-4">
+              <div className="bg-muted rounded-xl p-4">
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <span className="text-gray-500">Kjøpt:</span>
-                    <span className="ml-2 font-semibold">{closingTrade.entryPrice.toFixed(2)} kr</span>
+                    <span className="text-muted-foreground">Kjøpt:</span>
+                    <span className="ml-2 font-semibold text-foreground">{closingTrade.entryPrice.toFixed(2)} kr</span>
                   </div>
                   <div>
-                    <span className="text-gray-500">Dato:</span>
-                    <span className="ml-2 font-semibold">{new Date(closingTrade.entryDate).toLocaleDateString('nb-NO')}</span>
+                    <span className="text-muted-foreground">Dato:</span>
+                    <span className="ml-2 font-semibold text-foreground">{new Date(closingTrade.entryDate).toLocaleDateString('nb-NO')}</span>
                   </div>
                   <div>
-                    <span className="text-gray-500">Antall:</span>
-                    <span className="ml-2 font-semibold">{closingTrade.quantity}</span>
+                    <span className="text-muted-foreground">Antall:</span>
+                    <span className="ml-2 font-semibold text-foreground">{closingTrade.quantity}</span>
                   </div>
                   <div>
-                    <span className="text-gray-500">Investert:</span>
-                    <span className="ml-2 font-semibold">{(closingTrade.entryPrice * closingTrade.quantity).toLocaleString('nb-NO')} kr</span>
+                    <span className="text-muted-foreground">Investert:</span>
+                    <span className="ml-2 font-semibold text-foreground">{(closingTrade.entryPrice * closingTrade.quantity).toLocaleString('nb-NO')} kr</span>
                   </div>
                 </div>
               </div>
 
               {/* Nordnet hurtigfelt */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
                   📋 Lim inn fra Nordnet (valgfritt)
                 </label>
                 <textarea
                   placeholder="Lim inn salgsdata fra Nordnet her..."
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all text-sm"
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all text-sm"
                   rows={2}
                   onChange={(e) => {
                     const text = e.target.value;
@@ -1981,7 +1981,7 @@ export default function PorteføljePage() {
               {/* Manuell input */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">
                     Salgspris
                   </label>
                   <input
@@ -1989,27 +1989,27 @@ export default function PorteføljePage() {
                     step="0.01"
                     value={closeTradeData.exitPrice}
                     onChange={(e) => setCloseTradeData(prev => ({ ...prev, exitPrice: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-border bg-card text-foreground focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
                     placeholder="0.00"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">
                     Salgsdato
                   </label>
                   <input
                     type="date"
                     value={closeTradeData.exitDate}
                     onChange={(e) => setCloseTradeData(prev => ({ ...prev, exitDate: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-border bg-card text-foreground focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
                   />
                 </div>
               </div>
 
               {/* P/L Preview */}
               {closeTradeData.exitPrice && (
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <div className="text-sm text-gray-500 mb-1">Resultat ved salg</div>
+                <div className="bg-muted rounded-xl p-4">
+                  <div className="text-sm text-muted-foreground mb-1">Resultat ved salg</div>
                   {(() => {
                     const exitPrice = parseFloat(closeTradeData.exitPrice);
                     const pnl = (exitPrice - closingTrade.entryPrice) * closingTrade.quantity;
@@ -2031,10 +2031,10 @@ export default function PorteføljePage() {
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-3 p-5 border-t border-gray-100 bg-gray-50">
+            <div className="flex items-center justify-end gap-3 p-5 border-t border-border bg-muted">
               <button
                 onClick={() => setClosingTrade(null)}
-                className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-200 rounded-lg transition-colors"
+                className="px-4 py-2 text-muted-foreground font-medium hover:bg-muted/80 rounded-lg transition-colors"
               >
                 Avbryt
               </button>
@@ -2055,7 +2055,7 @@ export default function PorteføljePage() {
                   'px-6 py-2 font-bold rounded-lg transition-colors',
                   closeTradeData.exitPrice && parseFloat(closeTradeData.exitPrice) > 0
                     ? 'bg-brand-emerald text-white hover:bg-brand-emerald/90'
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : 'bg-muted text-muted-foreground cursor-not-allowed'
                 )}
               >
                 Lukk Trade
@@ -2068,10 +2068,10 @@ export default function PorteføljePage() {
       {/* Create/Edit Portfolio Modal */}
       {(isCreatePortfolioModalOpen || editingPortfolio) && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+          <div className="bg-card rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden border border-border">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-xl font-bold text-brand-slate">
+            <div className="flex items-center justify-between p-6 border-b border-border">
+              <h2 className="text-xl font-bold text-foreground">
                 {editingPortfolio ? 'Rediger Portefølje' : 'Ny Portefølje'}
               </h2>
               <button
@@ -2080,9 +2080,9 @@ export default function PorteføljePage() {
                   setEditingPortfolio(null);
                   setNewPortfolioData({ name: '', description: '', strategyId: '', isCustom: true });
                 }}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-muted rounded-lg transition-colors"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
             
@@ -2090,7 +2090,7 @@ export default function PorteføljePage() {
             <div className="p-6 space-y-4">
               {/* Velg strategi eller custom */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
                   Type portefølje
                 </label>
                 <div className="flex gap-2">
@@ -2100,7 +2100,7 @@ export default function PorteføljePage() {
                       'flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all',
                       newPortfolioData.isCustom 
                         ? 'bg-brand-emerald text-white' 
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
                     )}
                   >
                     Egendefinert
@@ -2111,7 +2111,7 @@ export default function PorteføljePage() {
                       'flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all',
                       !newPortfolioData.isCustom 
                         ? 'bg-brand-emerald text-white' 
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
                     )}
                   >
                     Strategi-basert
@@ -2122,7 +2122,7 @@ export default function PorteføljePage() {
               {/* Strategi velger (hvis ikke custom) */}
               {!newPortfolioData.isCustom && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">
                     Velg strategi
                   </label>
                   <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-1">
@@ -2139,16 +2139,16 @@ export default function PorteføljePage() {
                           'flex items-center gap-2 p-3 rounded-lg border-2 text-left transition-all',
                           newPortfolioData.strategyId === strategy.id
                             ? 'border-brand-emerald bg-brand-emerald/5'
-                            : 'border-gray-200 hover:border-gray-300'
+                            : 'border-border hover:border-muted-foreground'
                         )}
                       >
                         <span className="text-xl">{strategy.emoji}</span>
                         <div className="min-w-0 flex-1">
-                          <div className="font-medium text-sm text-gray-900 truncate">{strategy.name}</div>
-                          <div className="text-xs text-gray-500">{strategy.shortName}</div>
+                          <div className="font-medium text-sm text-foreground truncate">{strategy.name}</div>
+                          <div className="text-xs text-muted-foreground">{strategy.shortName}</div>
                         </div>
                         {!strategy.enabled && (
-                          <span className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">Manuell</span>
+                          <span className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded">Manuell</span>
                         )}
                       </button>
                     ))}
@@ -2158,7 +2158,7 @@ export default function PorteføljePage() {
 
               {/* Navn */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
                   Porteføljenavn
                 </label>
                 <input
@@ -2166,13 +2166,13 @@ export default function PorteføljePage() {
                   value={newPortfolioData.name}
                   onChange={(e) => setNewPortfolioData(prev => ({ ...prev, name: e.target.value }))}
                   placeholder={newPortfolioData.isCustom ? 'F.eks. "Min favoritter" eller "Utbytte 2024"' : 'Velg strategi først'}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-emerald/20 focus:border-brand-emerald"
+                  className="w-full px-4 py-2 border border-border bg-card text-foreground placeholder:text-muted-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-emerald/20 focus:border-brand-emerald"
                 />
               </div>
 
               {/* Beskrivelse */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
                   Beskrivelse (valgfritt)
                 </label>
                 <textarea
@@ -2180,20 +2180,20 @@ export default function PorteføljePage() {
                   onChange={(e) => setNewPortfolioData(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Kort beskrivelse av porteføljen..."
                   rows={2}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-emerald/20 focus:border-brand-emerald resize-none"
+                  className="w-full px-4 py-2 border border-border bg-card text-foreground placeholder:text-muted-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-emerald/20 focus:border-brand-emerald resize-none"
                 />
               </div>
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100 bg-gray-50">
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-border bg-muted">
               <button
                 onClick={() => {
                   setIsCreatePortfolioModalOpen(false);
                   setEditingPortfolio(null);
                   setNewPortfolioData({ name: '', description: '', strategyId: '', isCustom: true });
                 }}
-                className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-200 rounded-lg transition-colors"
+                className="px-4 py-2 text-muted-foreground font-medium hover:bg-muted/80 rounded-lg transition-colors"
               >
                 Avbryt
               </button>
@@ -2204,7 +2204,7 @@ export default function PorteføljePage() {
                   'px-6 py-2 font-bold rounded-lg transition-colors',
                   newPortfolioData.name.trim()
                     ? 'bg-brand-emerald text-white hover:bg-brand-emerald/90'
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : 'bg-muted text-muted-foreground cursor-not-allowed'
                 )}
               >
                 {editingPortfolio ? 'Lagre' : 'Opprett'}

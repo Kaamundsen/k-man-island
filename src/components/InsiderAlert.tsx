@@ -36,14 +36,14 @@ export default function InsiderAlert({ ticker }: InsiderAlertProps) {
   const insiderType = recentBuys > recentSells ? 'buy' : recentSells > 0 ? 'sell' : 'neutral';
   
   return (
-    <div className="bg-surface rounded-2xl p-6 border border-surface-border">
+    <div className="bg-card rounded-2xl p-6 border border-border">
       <div className="flex items-center gap-2 mb-6">
-        <Users className="w-5 h-5 text-brand-slate" />
-        <h3 className="text-xl font-bold text-brand-slate">Innsidehandel-Sjekk</h3>
+        <Users className="w-5 h-5 text-foreground" />
+        <h3 className="text-xl font-bold text-foreground">Innsidehandel-Sjekk</h3>
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-gray-500">Laster innsidehandel...</div>
+        <div className="text-center py-8 text-muted-foreground">Laster innsidehandel...</div>
       ) : (
         <>
           {/* Alert Box */}
@@ -68,7 +68,7 @@ export default function InsiderAlert({ ticker }: InsiderAlertProps) {
                     }`}>
                       ALARM
                     </span>
-                    <span className="text-xs text-gray-500">Siste 90 dager</span>
+                    <span className="text-xs text-muted-foreground">Siste 90 dager</span>
                   </div>
                   <h4 className={`font-bold mb-2 ${
                     insiderType === 'buy' ? 'text-brand-emerald' : 'text-brand-rose'
@@ -78,7 +78,7 @@ export default function InsiderAlert({ ticker }: InsiderAlertProps) {
                       : `${recentSells} salg registrert`
                     }
                   </h4>
-                  <p className="text-sm text-gray-600 leading-relaxed">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     {insiderType === 'buy'
                       ? 'Innsidere har kjøpt aksjer. Dette kan indikere tro på fremtidig vekst.'
                       : 'Innsidere har solgt aksjer. Vurder om dette påvirker din investeringsavgjørelse.'
@@ -91,12 +91,12 @@ export default function InsiderAlert({ ticker }: InsiderAlertProps) {
 
           {/* Insider Trading Table */}
           {transactions.length > 0 ? (
-            <div className="bg-gray-50 rounded-xl p-4 mb-6">
-              <h4 className="text-sm font-bold text-brand-slate mb-3">Siste meldepliktige handler</h4>
+            <div className="bg-muted rounded-xl p-4 mb-6">
+              <h4 className="text-sm font-bold text-foreground mb-3">Siste meldepliktige handler</h4>
               <div className="space-y-2 text-sm">
                 {transactions.slice(0, 5).map((transaction, index) => (
-                  <div key={index} className="flex justify-between p-2 bg-white rounded">
-                    <span className="text-gray-600">
+                  <div key={index} className="flex justify-between p-2 bg-card rounded border border-border">
+                    <span className="text-muted-foreground">
                       {new Date(transaction.transactionDate).toLocaleDateString('nb-NO', { 
                         day: '2-digit', 
                         month: 'short', 
@@ -106,7 +106,7 @@ export default function InsiderAlert({ ticker }: InsiderAlertProps) {
                     <span className={`font-semibold ${transaction.transactionCode === 'P' ? 'text-brand-emerald' : 'text-brand-rose'}`}>
                       {transaction.transactionCode === 'P' ? 'KJØP' : 'SALG'}
                     </span>
-                    <span className="text-gray-900 font-semibold">
+                    <span className="text-foreground font-semibold">
                       {Math.abs(transaction.change).toLocaleString()} aksjer
                     </span>
                   </div>
@@ -114,7 +114,7 @@ export default function InsiderAlert({ ticker }: InsiderAlertProps) {
               </div>
             </div>
           ) : (
-            <div className="bg-gray-50 rounded-xl p-6 mb-6 text-center text-gray-500">
+            <div className="bg-muted rounded-xl p-6 mb-6 text-center text-muted-foreground">
               Ingen innsidehandler registrert siste 90 dager
             </div>
           )}
@@ -122,14 +122,14 @@ export default function InsiderAlert({ ticker }: InsiderAlertProps) {
       )}
 
       {/* Newsweb Link */}
-      <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4">
+      <div className="bg-amber-500/10 dark:bg-amber-950/30 border-2 border-amber-500/30 rounded-xl p-4">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-full bg-yellow-200 flex items-center justify-center flex-shrink-0">
-            <AlertTriangle className="w-5 h-5 text-yellow-700" />
+          <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+            <AlertTriangle className="w-5 h-5 text-amber-500" />
           </div>
           <div className="flex-1">
-            <h4 className="font-bold text-yellow-900 mb-2">⚠️ Sjekk Newsweb</h4>
-            <p className="text-sm text-yellow-800 mb-3 leading-relaxed">
+            <h4 className="font-bold text-amber-600 dark:text-amber-400 mb-2">⚠️ Sjekk Newsweb</h4>
+            <p className="text-sm text-amber-700 dark:text-amber-300 mb-3 leading-relaxed">
               For fullstendig oversikt over meldepliktige handler og flaggemeldinger, 
               sjekk alltid Newsweb før du handler.
             </p>

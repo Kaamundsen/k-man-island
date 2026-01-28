@@ -1,4 +1,4 @@
-import { StrategyId } from './strategies';
+import { StrategyId, StrategyEvaluation } from './strategies';
 
 export type StockStrategy = 'MOMENTUM' | 'MOMENTUM_TREND' | 'MOMENTUM_ASYM' | 'BUFFETT' | 'TVEITEREID' | 'REBOUND' | 'INSIDER';
 
@@ -30,6 +30,10 @@ export interface Stock {
   dataSource?: 'yahoo' | 'finnhub' | 'fallback';
   historyDays?: number;
   insufficientHistory?: boolean;
+  // Strategy evaluations (V2)
+  strategyEvaluations?: StrategyEvaluation[];
+  // Recent purchase flag for prioritization boost
+  recentPurchase?: boolean | Date;
 }
 
 export interface Trade {

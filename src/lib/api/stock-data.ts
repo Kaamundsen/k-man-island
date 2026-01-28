@@ -13,6 +13,7 @@ import {
   determineBestStrategy,
   StrategyId 
 } from '../strategies/registry';
+import { StrategyEvaluation } from '../strategies';
 import { getFullUniverse } from '../store/universe-store';
 import { USA_CORE_STOCKS } from '../constants';
 
@@ -497,22 +498,42 @@ function convertToStock(quote: YahooQuote): Stock {
     strategies: [],
   };
   
-  // V2: Use registry to determine qualifying strategies
+  // V2: Use registry to determine qualifying strategies and build evaluations
   const strategies: StockStrategy[] = [];
+  const strategyEvaluations: StrategyEvaluation[] = [];
+  
   const strategyChecks: Array<{ id: StrategyId; mapped: StockStrategy }> = [
     { id: 'MOMENTUM_TREND', mapped: 'MOMENTUM_TREND' },
     { id: 'MOMENTUM_ASYM', mapped: 'MOMENTUM_ASYM' },
     { id: 'BUFFETT', mapped: 'BUFFETT' },
     { id: 'TVEITEREID', mapped: 'TVEITEREID' },
     { id: 'REBOUND', mapped: 'REBOUND' },
+    { id: 'INSIDER', mapped: 'INSIDER' },
+    { id: 'DAYTRADER', mapped: 'MOMENTUM' },
+    { id: 'SWING_SHORT', mapped: 'MOMENTUM' },
+    { id: 'DIVIDEND_HUNTER', mapped: 'BUFFETT' }, // Utbytte-aksjer
   ];
   
   for (const check of strategyChecks) {
-    const { passed } = passesStrategyFilters(prelimStock, check.id);
+    const { passed, reasons } = passesStrategyFilters(prelimStock, check.id);
+    const score = calculateStrategyScore(prelimStock, check.id);
+    
+    // Create strategy evaluation for all strategies (not just passed ones)
+    strategyEvaluations.push({
+      strategyId: check.id,
+      passed,
+      score,
+      confidence: passed ? Math.min(90, score) : Math.min(50, score / 2),
+      reasoning: reasons,
+    });
+    
     if (passed) {
       strategies.push(check.mapped);
     }
   }
+  
+  // Sort evaluations by score (highest first)
+  strategyEvaluations.sort((a, b) => b.score - a.score);
   
   // V2: Use registry to determine best strategy and final signal
   const bestStrategy = determineBestStrategy(prelimStock);
@@ -536,6 +557,8 @@ function convertToStock(quote: YahooQuote): Stock {
     signal: finalSignal,
     strategies: strategies.length > 0 ? strategies : ['MOMENTUM_TREND'],
     timeHorizon: finalSignal === 'BUY' ? '2-6 uker' : '4-8 uker',
+    // Strategy evaluations for sorting by strategy
+    strategyEvaluations,
     // Data quality flags - quick scan has limited data
     dataSource: 'yahoo',
     historyDays: 1,

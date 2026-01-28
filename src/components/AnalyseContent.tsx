@@ -32,10 +32,10 @@ export default function AnalyseContent({ stocks }: AnalyseContentProps) {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-4xl font-extrabold text-brand-slate tracking-tight mb-2">
+            <h1 className="text-4xl font-extrabold text-foreground tracking-tight mb-2">
               Dyp Analyse
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Søk etter en aksje for detaljert analyse med pris, target, risiko og innsidehandel
             </p>
           </div>
@@ -46,18 +46,18 @@ export default function AnalyseContent({ stocks }: AnalyseContentProps) {
       {/* Search */}
       <div className="max-w-2xl mx-auto mb-12">
         <div className="relative">
-          <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-400" />
+          <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-muted-foreground" />
           <input
             type="text"
             placeholder="Søk etter ticker eller navn... (OKEA, VAR, AAPL)"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-16 pr-6 py-5 rounded-2xl border-2 border-gray-200 focus:border-brand-emerald focus:ring-4 focus:ring-brand-emerald/20 outline-none transition-all text-lg font-medium"
+            className="w-full pl-16 pr-6 py-5 rounded-2xl border-2 border-border bg-card text-foreground focus:border-brand-emerald focus:ring-4 focus:ring-brand-emerald/20 outline-none transition-all text-lg font-medium placeholder:text-muted-foreground"
           />
         </div>
         
         {searchTerm && (
-          <div className="mt-4 text-sm text-gray-600">
+          <div className="mt-4 text-sm text-muted-foreground">
             Fant {filteredStocks.length} resultat{filteredStocks.length !== 1 ? 'er' : ''}
           </div>
         )}
@@ -113,11 +113,11 @@ export default function AnalyseContent({ stocks }: AnalyseContentProps) {
       <div>
         {!searchTerm && (
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-brand-slate flex items-center gap-3 mb-2">
+            <h2 className="text-2xl font-bold text-foreground flex items-center gap-3 mb-2">
               <TrendingUp className="w-7 h-7 text-brand-emerald" />
               Topp 6 Etter K-Score
             </h2>
-            <p className="text-gray-600">Klikk på et kort for å se full analyse</p>
+            <p className="text-muted-foreground">Klikk på et kort for å se full analyse</p>
           </div>
         )}
 
@@ -129,8 +129,8 @@ export default function AnalyseContent({ stocks }: AnalyseContentProps) {
           </div>
         ) : (
           <div className="text-center py-16">
-            <div className="text-gray-400 text-lg mb-2">Ingen aksjer funnet</div>
-            <p className="text-gray-500 text-sm">Prøv et annet søk eller gå til Markedsskanner for full oversikt</p>
+            <div className="text-muted-foreground text-lg mb-2">Ingen aksjer funnet</div>
+            <p className="text-muted-foreground/70 text-sm">Prøv et annet søk eller gå til Markedsskanner for full oversikt</p>
           </div>
         )}
       </div>
@@ -140,24 +140,24 @@ export default function AnalyseContent({ stocks }: AnalyseContentProps) {
         <div className="mt-12 grid grid-cols-3 gap-4">
           <a 
             href="/markedsskanner"
-            className="bg-surface rounded-2xl p-6 border border-surface-border hover:shadow-card-hover transition-all text-center group"
+            className="bg-card rounded-2xl p-6 border border-border hover:bg-muted transition-all text-center group"
           >
             <div className="w-12 h-12 rounded-xl bg-brand-emerald/10 flex items-center justify-center mx-auto mb-3 group-hover:bg-brand-emerald/20 transition-colors">
               <Search className="w-6 h-6 text-brand-emerald" />
             </div>
-            <h3 className="font-bold text-brand-slate mb-1">Markedsskanner</h3>
-            <p className="text-sm text-gray-600">Se alle aksjer i tabell</p>
+            <h3 className="font-bold text-foreground mb-1">Markedsskanner</h3>
+            <p className="text-sm text-muted-foreground">Se alle aksjer i tabell</p>
           </a>
 
           <a 
             href="/"
-            className="bg-surface rounded-2xl p-6 border border-surface-border hover:shadow-card-hover transition-all text-center group"
+            className="bg-card rounded-2xl p-6 border border-border hover:bg-muted transition-all text-center group"
           >
             <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center mx-auto mb-3 group-hover:bg-blue-500/20 transition-colors">
-              <TrendingUp className="w-6 h-6 text-blue-600" />
+              <TrendingUp className="w-6 h-6 text-blue-500" />
             </div>
-            <h3 className="font-bold text-brand-slate mb-1">Dashboard</h3>
-            <p className="text-sm text-gray-600">Beste muligheter nå</p>
+            <h3 className="font-bold text-foreground mb-1">Dashboard</h3>
+            <p className="text-sm text-muted-foreground">Beste muligheter nå</p>
           </a>
 
           <div className="bg-gradient-to-br from-brand-emerald to-emerald-600 rounded-2xl p-6 text-white">

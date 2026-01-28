@@ -14,6 +14,7 @@ interface StockCardProps {
 
 export default function StockCard({ stock, rank, reminder, hasNote }: StockCardProps) {
   const isPositive = stock.changePercent >= 0;
+  const currency = stock.market === 'USA' ? 'USD' : 'NOK';
   
   const signalConfig = {
     BUY: { bg: 'bg-brand-emerald', text: 'KJØP', badgeBg: 'bg-white/20', badgeText: 'text-white' },
@@ -50,23 +51,19 @@ export default function StockCard({ stock, rank, reminder, hasNote }: StockCardP
           <div className="flex flex-col items-end gap-2">
             {/* Strategy Icons */}
             <div className="flex gap-1.5">
-              {/* Momentum: TREND=hvit, ASYM=oransje, BEGGE=helfylt gul */}
+              {/* Momentum: Alltid hvit på kortet */}
               {(stock.strategies.includes('MOMENTUM_TREND') || stock.strategies.includes('MOMENTUM_ASYM') || stock.strategies.includes('MOMENTUM')) && (
-                <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center" title={
-                  stock.strategies.includes('MOMENTUM_TREND') && stock.strategies.includes('MOMENTUM_ASYM') 
-                    ? "Momentum (Trend + Asym)" 
-                    : stock.strategies.includes('MOMENTUM_ASYM') 
-                      ? "Momentum Asym" 
-                      : "Momentum Trend"
-                }>
-                  <Zap 
-                    className={clsx('w-4 h-4', {
-                      'text-amber-300 fill-amber-300': stock.strategies.includes('MOMENTUM_TREND') && stock.strategies.includes('MOMENTUM_ASYM'),
-                      'text-orange-500': stock.strategies.includes('MOMENTUM_ASYM') && !stock.strategies.includes('MOMENTUM_TREND'),
-                      'text-white': (!stock.strategies.includes('MOMENTUM_ASYM') && stock.strategies.includes('MOMENTUM_TREND')) || stock.strategies.includes('MOMENTUM'),
-                    })}
-                    strokeWidth={2.5} 
-                  />
+                <div 
+                  className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center" 
+                  title={
+                    stock.strategies.includes('MOMENTUM_TREND') && stock.strategies.includes('MOMENTUM_ASYM') 
+                      ? "Momentum (Trend + Asym)" 
+                      : stock.strategies.includes('MOMENTUM_ASYM') 
+                        ? "Momentum Asym" 
+                        : "Momentum Trend"
+                  }
+                >
+                  <Zap className="w-4 h-4 text-white" strokeWidth={2.5} />
                 </div>
               )}
               {stock.strategies.includes('BUFFETT') && (
@@ -117,7 +114,7 @@ export default function StockCard({ stock, rank, reminder, hasNote }: StockCardP
           <div>
             <div className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1">PRIS</div>
             <div className="text-3xl font-extrabold text-foreground">
-              {stock.price.toFixed(2)} <span className="text-lg text-muted-foreground">NOK</span>
+              {stock.price.toFixed(2)} <span className="text-lg text-muted-foreground">{currency}</span>
             </div>
           </div>
           <div className="text-right">

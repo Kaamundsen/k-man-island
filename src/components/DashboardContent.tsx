@@ -9,6 +9,7 @@ import StockCardOriginal from '@/components/StockCardOriginal';
 import FilterBar, { MarketFilter, StrategyFilter } from '@/components/FilterBar';
 import MarketStatus from '@/components/MarketStatus';
 import { Stock } from '@/lib/types';
+import { StrategyId } from '@/lib/strategies';
 import { TrendingUp, TrendingDown, Minus, RefreshCcw, Loader2, Search, X, Plus, Check, AlertCircle, ChevronRight, LayoutGrid, List, Layers, StickyNote, Trash2, Calendar, Bell, Edit2, Zap, Shield, ArrowUpCircle, Users } from 'lucide-react';
 import { getCustomTickers, addCustomTicker, removeCustomTicker, isInBaseUniverse, getUniverseSize, setUniverseSize, type UniverseSize } from '@/lib/store/universe-store';
 import { getNotes, addNote, updateNote, deleteNote, type StockNote } from '@/lib/store/notes-store';
@@ -21,6 +22,24 @@ interface DashboardContentProps {
   isRefreshing?: boolean;
   lastUpdated?: string;
 }
+
+// Mapping fra StrategyFilter til StrategyId(s)
+const STRATEGY_FILTER_TO_IDS: Record<StrategyFilter, StrategyId[]> = {
+  'ALLE': [],
+  'MOMENTUM': ['MOMENTUM_TREND', 'MOMENTUM_ASYM'],
+  'BUFFETT': ['BUFFETT'],
+  'TVEITEREID': ['TVEITEREID'],
+  'REBOUND': ['REBOUND'],
+  'INSIDER': ['INSIDER'],
+  'SWINGTRADE': ['SWING_SHORT'],
+  'DAYTRADE': ['DAYTRADER'],
+  'UTBYTTE': ['DIVIDEND_HUNTER'], // Bruker dividend-strategi hvis implementert
+  'MINE': [],
+  'SB_SCAN': [],
+};
+
+// Boost for nylig kjøpte aksjer (forberedt for fremtidig bruk)
+const RECENT_PURCHASE_BOOST = 15; // Legges til score for nylig kjøpte aksjer
 
 // Beregn en sammensatt score for å rangere aksjer
 const calculateCompositeScore = (stock: Stock, prioritizeInsider: boolean = false): number => {
@@ -48,6 +67,67 @@ const calculateCompositeScore = (stock: Stock, prioritizeInsider: boolean = fals
   }
   
   return score;
+};
+
+/**
+ * Hent strategi-spesifikk score for sortering
+ * Brukes når strategyFilter !== 'ALLE'
+ * Faller tilbake til calculateCompositeScore hvis strategi-evaluering mangler
+ */
+const getStrategyScore = (
+  stock: Stock, 
+  strategyFilter: StrategyFilter,
+  applyRecentPurchaseBoost: boolean = true
+): number => {
+  // Spesialtilfeller - bruk standard sortering
+  if (strategyFilter === 'ALLE' || strategyFilter === 'MINE' || strategyFilter === 'SB_SCAN') {
+    return calculateCompositeScore(stock, false);
+  }
+  
+  // Finn relevante StrategyId(s) for dette filteret
+  const relevantStrategyIds = STRATEGY_FILTER_TO_IDS[strategyFilter];
+  
+  if (!relevantStrategyIds || relevantStrategyIds.length === 0) {
+    // Fallback til composite score
+    return calculateCompositeScore(stock, false);
+  }
+  
+  // Sjekk om aksjen har strategyEvaluations
+  if (!stock.strategyEvaluations || stock.strategyEvaluations.length === 0) {
+    // Fallback til composite score
+    const prioritizeInsider = strategyFilter === 'INSIDER';
+    return calculateCompositeScore(stock, prioritizeInsider);
+  }
+  
+  // Finn beste score blant relevante strategier
+  let bestScore = -1;
+  for (const strategyId of relevantStrategyIds) {
+    const evaluation = stock.strategyEvaluations.find(e => e.strategyId === strategyId);
+    if (evaluation && evaluation.score > bestScore) {
+      bestScore = evaluation.score;
+    }
+  }
+  
+  // Hvis ingen evaluering funnet, bruk composite score
+  if (bestScore < 0) {
+    const prioritizeInsider = strategyFilter === 'INSIDER';
+    return calculateCompositeScore(stock, prioritizeInsider);
+  }
+  
+  // Legg til boost for nylig kjøpte aksjer (når implementert)
+  if (applyRecentPurchaseBoost && stock.recentPurchase) {
+    // Hvis det er en dato, sjekk om den er innenfor siste 7 dager
+    if (stock.recentPurchase instanceof Date) {
+      const daysSincePurchase = (Date.now() - stock.recentPurchase.getTime()) / (1000 * 60 * 60 * 24);
+      if (daysSincePurchase <= 7) {
+        bestScore += RECENT_PURCHASE_BOOST;
+      }
+    } else if (stock.recentPurchase === true) {
+      bestScore += RECENT_PURCHASE_BOOST;
+    }
+  }
+  
+  return bestScore;
 };
 
 type ViewMode = 'cards-and-list' | 'list-only' | 'cards-only';
@@ -406,11 +486,19 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
     // Filter only BUY signals
     const buyStocks = filtered.filter(stock => stock.signal === 'BUY');
     
-    const prioritizeInsider = strategyFilter === 'INSIDER';
+    // Sorter etter strategi-spesifikk score når filter er valgt, ellers composite
     buyStocks.sort((a, b) => {
-      const scoreA = calculateCompositeScore(a, prioritizeInsider);
-      const scoreB = calculateCompositeScore(b, prioritizeInsider);
-      return scoreB - scoreA;
+      if (strategyFilter !== 'ALLE' && strategyFilter !== 'MINE' && strategyFilter !== 'SB_SCAN') {
+        // Bruk strategi-spesifikk score for valgt strategi
+        const scoreA = getStrategyScore(a, strategyFilter);
+        const scoreB = getStrategyScore(b, strategyFilter);
+        return scoreB - scoreA;
+      } else {
+        // Bruk standard composite score (50/20/30)
+        const scoreA = calculateCompositeScore(a, false);
+        const scoreB = calculateCompositeScore(b, false);
+        return scoreB - scoreA;
+      }
     });
     
     if (viewMode === 'cards-and-list') {
@@ -474,13 +562,17 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
       }
     }
     
+    // Hjelpefunksjon for sortering basert på strategi eller composite
+    const getSortScore = (stock: Stock): number => {
+      if (strategyFilter !== 'ALLE' && strategyFilter !== 'MINE' && strategyFilter !== 'SB_SCAN') {
+        return getStrategyScore(stock, strategyFilter);
+      }
+      return calculateCompositeScore(stock, prioritizeInsider);
+    };
+    
     const allBuyStocks = filtered
       .filter(stock => stock.signal === 'BUY')
-      .sort((a, b) => {
-        const scoreA = calculateCompositeScore(a, prioritizeInsider);
-        const scoreB = calculateCompositeScore(b, prioritizeInsider);
-        return scoreB - scoreA;
-      });
+      .sort((a, b) => getSortScore(b) - getSortScore(a));
     
     if (viewMode === 'list-only') {
       return filtered.sort((a, b) => {
@@ -488,9 +580,7 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
         if (signalOrder[a.signal] !== signalOrder[b.signal]) {
           return signalOrder[a.signal] - signalOrder[b.signal];
         }
-        const scoreA = calculateCompositeScore(a, prioritizeInsider);
-        const scoreB = calculateCompositeScore(b, prioritizeInsider);
-        return scoreB - scoreA;
+        return getSortScore(b) - getSortScore(a);
       });
     }
     
@@ -507,9 +597,7 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
         if (signalOrder[a.signal] !== signalOrder[b.signal]) {
           return signalOrder[a.signal] - signalOrder[b.signal];
         }
-        const scoreA = calculateCompositeScore(a, prioritizeInsider);
-        const scoreB = calculateCompositeScore(b, prioritizeInsider);
-        return scoreB - scoreA;
+        return getSortScore(b) - getSortScore(a);
       });
   }, [allStocks, viewMode, strategyFilter, marketFilter, customTickers]);
 
@@ -850,6 +938,7 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
                 }
                 
                 const tickerShort = stock.ticker.replace('.OL', '');
+                const currency = stock.market === 'USA' ? '$' : 'kr';
                 const statusConfig: Record<string, { className: string; label: string }> = {
                   BUY: { className: 'badge-buy', label: 'KJØP' },
                   HOLD: { className: 'badge-watch', label: 'WATCH' },
@@ -865,13 +954,9 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
                 const ratioValue = stock.riskPercent > 0 ? stock.gainPercent / stock.riskPercent : 0;
                 const ratioDisplay = ratioValue > 0 ? `1:${ratioValue.toFixed(1)}` : '-';
                 
-                // Strategy icons mapping
+                // Strategy icons mapping (non-momentum)
                 const getStrategyIcon = (strategy: string) => {
                   switch(strategy) {
-                    case 'MOMENTUM':
-                    case 'MOMENTUM_TREND':
-                    case 'MOMENTUM_ASYM':
-                      return <Zap className="w-4 h-4 text-yellow-500" />;
                     case 'BUFFETT':
                       return <Shield className="w-4 h-4 text-blue-500" />;
                     case 'TVEITEREID':
@@ -884,6 +969,36 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
                       return null;
                   }
                 };
+                
+                // Momentum icon - spesialbehandling for TREND/ASYM
+                const hasTrend = stock.strategies.includes('MOMENTUM_TREND');
+                const hasAsym = stock.strategies.includes('MOMENTUM_ASYM');
+                const hasMomentum = stock.strategies.includes('MOMENTUM') || hasTrend || hasAsym;
+                
+                const getMomentumIcon = () => {
+                  if (hasTrend && hasAsym) {
+                    // Begge: Fylt gul med oransje border/stroke
+                    return (
+                      <Zap 
+                        className="w-4 h-4 text-orange-500 fill-amber-400" 
+                        strokeWidth={2.5}
+                        title="Momentum (Trend + Asym)" 
+                      />
+                    );
+                  } else if (hasAsym) {
+                    // Kun ASYM: Skarp oransje stroke, ikke fylt
+                    return <Zap className="w-4 h-4 text-orange-500" strokeWidth={2.5} title="Momentum Asym" />;
+                  } else if (hasTrend || hasMomentum) {
+                    // Kun TREND eller generisk: Gul stroke, ikke fylt
+                    return <Zap className="w-4 h-4 text-amber-400" strokeWidth={2.5} title="Momentum Trend" />;
+                  }
+                  return null;
+                };
+                
+                // Filtrerte strategier (uten momentum-varianter for separat visning)
+                const nonMomentumStrategies = stock.strategies.filter(
+                  s => !['MOMENTUM', 'MOMENTUM_TREND', 'MOMENTUM_ASYM'].includes(s)
+                );
 
                 return (
                   <div
@@ -908,7 +1023,7 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
                     {/* Price */}
                     <div className="flex flex-col justify-center">
                       <div className="text-sm font-bold text-foreground">
-                        {stock.price.toFixed(2)}
+                        {stock.market === 'USA' ? '$' : ''}{stock.price.toFixed(2)}{stock.market !== 'USA' ? ' kr' : ''}
                       </div>
                       <div className={clsx('text-[10px] font-semibold', priceChangeColor)}>
                         {stock.changePercent > 0 ? '+' : ''}{stock.changePercent.toFixed(1)}%
@@ -942,11 +1057,11 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
                       </div>
                     </div>
 
-                    {/* R/R with kr above, graph in middle, % below */}
+                    {/* R/R with currency above, graph in middle, % below */}
                     <div className="flex flex-col pl-10">
-                      {/* Gevinst kr | Ratio | Risiko kr - above */}
+                      {/* Gevinst | Ratio | Risiko - above */}
                       <div className="flex items-center justify-between text-[10px]">
-                        <span className="text-brand-emerald font-semibold">+{stock.gainKr.toFixed(0)}kr</span>
+                        <span className="text-brand-emerald font-semibold">+{currency === '$' ? '$' : ''}{stock.gainKr.toFixed(0)}{currency !== '$' ? currency : ''}</span>
                         <span className={clsx(
                           'font-bold',
                           ratioValue >= 2 ? 'text-brand-emerald' : 
@@ -954,7 +1069,7 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
                         )}>
                           {ratioDisplay}
                         </span>
-                        <span className="text-brand-rose font-semibold">-{stock.riskKr.toFixed(0)}kr</span>
+                        <span className="text-brand-rose font-semibold">-{currency === '$' ? '$' : ''}{stock.riskKr.toFixed(0)}{currency !== '$' ? currency : ''}</span>
                       </div>
                       {/* R/R bar */}
                       <div className="w-full h-2 bg-muted rounded-full overflow-hidden flex mt-0.5">
@@ -983,13 +1098,18 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
 
                     {/* Strategi */}
                     <div className="flex items-center gap-1">
-                      {stock.strategies.slice(0, 3).map((strategy, i) => (
+                      {/* Momentum-ikon først (hvis aktuelt) */}
+                      {hasMomentum && (
+                        <span>{getMomentumIcon()}</span>
+                      )}
+                      {/* Andre strategier */}
+                      {nonMomentumStrategies.slice(0, 2).map((strategy, i) => (
                         <span key={i} title={strategy}>
                           {getStrategyIcon(strategy)}
                         </span>
                       ))}
-                      {stock.strategies.length > 3 && (
-                        <span className="text-[10px] text-muted-foreground">+{stock.strategies.length - 3}</span>
+                      {nonMomentumStrategies.length > 2 && (
+                        <span className="text-[10px] text-muted-foreground">+{nonMomentumStrategies.length - 2}</span>
                       )}
                     </div>
                     

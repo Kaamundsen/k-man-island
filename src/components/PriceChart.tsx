@@ -14,44 +14,47 @@ interface PriceChartProps {
 
 export default function PriceChart({ data, target, stopLoss, currentPrice }: PriceChartProps) {
   return (
-    <div className="bg-surface rounded-2xl p-6 border border-surface-border">
+    <div className="bg-card rounded-2xl p-6 border border-border">
       <div className="mb-6">
-        <h3 className="text-xl font-bold text-brand-slate mb-2">Prisutvikling & Volum</h3>
+        <h3 className="text-xl font-bold text-foreground mb-2">Prisutvikling & Volum</h3>
         <div className="flex gap-4 text-sm">
           <div className="flex items-center gap-2">
             <div className="w-3 h-0.5 bg-brand-emerald"></div>
-            <span className="text-gray-600">Pris</span>
+            <span className="text-muted-foreground">Pris</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-0.5 bg-green-400 border-2 border-green-400"></div>
-            <span className="text-gray-600">Target</span>
+            <span className="text-muted-foreground">Target</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-0.5 bg-red-400 border-2 border-red-400"></div>
-            <span className="text-gray-600">Stop Loss</span>
+            <span className="text-muted-foreground">Stop Loss</span>
           </div>
         </div>
       </div>
       
       <ResponsiveContainer width="100%" height={400}>
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
           <XAxis 
             dataKey="date" 
-            tick={{ fontSize: 12, fill: '#6b7280' }}
+            tick={{ fontSize: 12 }}
             tickLine={false}
+            className="text-muted-foreground [&_text]:fill-muted-foreground"
           />
           <YAxis 
-            tick={{ fontSize: 12, fill: '#6b7280' }}
+            tick={{ fontSize: 12 }}
             tickLine={false}
             domain={['dataMin - 5', 'dataMax + 5']}
+            className="text-muted-foreground [&_text]:fill-muted-foreground"
           />
           <Tooltip 
             contentStyle={{
-              backgroundColor: 'white',
-              border: '1px solid #e5e7eb',
+              backgroundColor: 'hsl(var(--card))',
+              border: '1px solid hsl(var(--border))',
               borderRadius: '8px',
-              fontSize: '12px'
+              fontSize: '12px',
+              color: 'hsl(var(--foreground))'
             }}
           />
           <ReferenceLine 

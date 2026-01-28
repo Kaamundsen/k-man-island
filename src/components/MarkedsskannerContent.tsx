@@ -71,10 +71,10 @@ export default function MarkedsskannerContent({ stocks }: MarkedsskannerContentP
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-4xl font-extrabold text-brand-slate tracking-tight mb-2">
+            <h1 className="text-4xl font-extrabold text-foreground tracking-tight mb-2">
               Markedsskanner
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Komplett oversikt over alle aksjer med sortering og filtrering
             </p>
           </div>
@@ -83,22 +83,22 @@ export default function MarkedsskannerContent({ stocks }: MarkedsskannerContentP
 
         {/* Search */}
         <div className="relative max-w-md">
-          <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <input
             type="text"
             placeholder="Søk etter ticker eller navn..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
+            className="w-full pl-12 pr-4 py-3 rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
           />
         </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-4 gap-4 mb-8">
-        <div className="bg-surface rounded-2xl p-4 border border-surface-border">
-          <div className="text-sm text-gray-600 mb-1">Totalt Aksjer</div>
-          <div className="text-3xl font-extrabold text-brand-slate">{stocks.length}</div>
+        <div className="bg-card rounded-2xl p-4 border border-border">
+          <div className="text-sm text-muted-foreground mb-1">Totalt Aksjer</div>
+          <div className="text-3xl font-extrabold text-foreground">{stocks.length}</div>
         </div>
         <div className="bg-gradient-to-br from-brand-emerald to-emerald-600 rounded-2xl p-4 text-white">
           <div className="text-sm opacity-75 mb-1">Kjøpssignaler</div>
@@ -115,39 +115,39 @@ export default function MarkedsskannerContent({ stocks }: MarkedsskannerContentP
       </div>
 
       {/* Table */}
-      <div className="bg-surface rounded-3xl border border-surface-border overflow-hidden">
+      <div className="bg-card rounded-3xl border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-muted border-b border-border">
               <tr>
                 <th className="px-6 py-4 text-left">
                   <button
                     onClick={() => handleSort('ticker')}
-                    className="flex items-center gap-2 font-bold text-sm text-gray-700 hover:text-brand-slate transition-colors"
+                    className="flex items-center gap-2 font-bold text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     Ticker
                     <SortIcon field="ticker" />
                   </button>
                 </th>
                 <th className="px-6 py-4 text-left">
-                  <div className="font-bold text-sm text-gray-700">Navn</div>
+                  <div className="font-bold text-sm text-muted-foreground">Navn</div>
                 </th>
                 <th className="px-6 py-4 text-left">
                   <button
                     onClick={() => handleSort('kScore')}
-                    className="flex items-center gap-2 font-bold text-sm text-gray-700 hover:text-brand-slate transition-colors"
+                    className="flex items-center gap-2 font-bold text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     K-Score
                     <SortIcon field="kScore" />
                   </button>
                 </th>
                 <th className="px-6 py-4 text-left">
-                  <div className="font-bold text-sm text-gray-700">Signal</div>
+                  <div className="font-bold text-sm text-muted-foreground">Signal</div>
                 </th>
                 <th className="px-6 py-4 text-right">
                   <button
                     onClick={() => handleSort('price')}
-                    className="flex items-center gap-2 ml-auto font-bold text-sm text-gray-700 hover:text-brand-slate transition-colors"
+                    className="flex items-center gap-2 ml-auto font-bold text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     Pris
                     <SortIcon field="price" />
@@ -156,7 +156,7 @@ export default function MarkedsskannerContent({ stocks }: MarkedsskannerContentP
                 <th className="px-6 py-4 text-right">
                   <button
                     onClick={() => handleSort('changePercent')}
-                    className="flex items-center gap-2 ml-auto font-bold text-sm text-gray-700 hover:text-brand-slate transition-colors"
+                    className="flex items-center gap-2 ml-auto font-bold text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     Endring
                     <SortIcon field="changePercent" />
@@ -165,26 +165,26 @@ export default function MarkedsskannerContent({ stocks }: MarkedsskannerContentP
                 <th className="px-6 py-4 text-right">
                   <button
                     onClick={() => handleSort('gainPercent')}
-                    className="flex items-center gap-2 ml-auto font-bold text-sm text-gray-700 hover:text-brand-slate transition-colors"
+                    className="flex items-center gap-2 ml-auto font-bold text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     Potensial
                     <SortIcon field="gainPercent" />
                   </button>
                 </th>
                 <th className="px-6 py-4 text-center">
-                  <div className="font-bold text-sm text-gray-700">Marked</div>
+                  <div className="font-bold text-sm text-muted-foreground">Marked</div>
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-border">
               {filteredAndSortedStocks.map((stock, index) => {
                 const isPositive = stock.changePercent >= 0;
                 const tickerShort = stock.ticker.replace('.OL', '');
                 
                 const signalConfig = {
                   BUY: { bg: 'bg-brand-emerald', text: 'KJØP' },
-                  SELL: { bg: 'bg-brand-rose', text: 'SELL' },
-                  HOLD: { bg: 'bg-gray-500', text: 'WATCH' },
+                  SELL: { bg: 'bg-brand-rose', text: 'SELG' },
+                  HOLD: { bg: 'bg-gray-500', text: 'HOLD' },
                 };
                 
                 const config = signalConfig[stock.signal];
@@ -192,25 +192,25 @@ export default function MarkedsskannerContent({ stocks }: MarkedsskannerContentP
                 return (
                   <tr 
                     key={stock.ticker}
-                    className="hover:bg-gray-50 transition-colors"
+                    className="hover:bg-muted transition-colors"
                   >
                     <td className="px-6 py-4">
                       <Link 
                         href={`/analyse/${stock.ticker}`}
-                        className="font-bold text-brand-slate hover:text-brand-emerald transition-colors"
+                        className="font-bold text-foreground hover:text-brand-emerald transition-colors"
                       >
                         {tickerShort}
                       </Link>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-gray-600">{stock.name}</div>
+                      <div className="text-sm text-muted-foreground">{stock.name}</div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="text-2xl font-extrabold text-brand-slate">
+                        <div className="text-2xl font-extrabold text-foreground">
                           {stock.kScore}
                         </div>
-                        <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden w-20">
+                        <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden w-20">
                           <div 
                             className={clsx(
                               'h-full rounded-full',
@@ -232,7 +232,7 @@ export default function MarkedsskannerContent({ stocks }: MarkedsskannerContentP
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="font-bold text-brand-slate">
+                      <div className="font-bold text-foreground">
                         {stock.price.toFixed(2)} NOK
                       </div>
                     </td>
@@ -264,14 +264,14 @@ export default function MarkedsskannerContent({ stocks }: MarkedsskannerContentP
 
         {filteredAndSortedStocks.length === 0 && (
           <div className="text-center py-16">
-            <div className="text-gray-400 text-lg mb-2">Ingen aksjer funnet</div>
-            <p className="text-gray-500 text-sm">Prøv et annet søk</p>
+            <div className="text-muted-foreground text-lg mb-2">Ingen aksjer funnet</div>
+            <p className="text-muted-foreground/70 text-sm">Prøv et annet søk</p>
           </div>
         )}
       </div>
 
       {/* Footer Info */}
-      <div className="mt-6 text-center text-sm text-gray-500">
+      <div className="mt-6 text-center text-sm text-muted-foreground">
         Viser {filteredAndSortedStocks.length} av {stocks.length} aksjer
       </div>
     </main>

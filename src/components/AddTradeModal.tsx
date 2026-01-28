@@ -192,18 +192,18 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-surface rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-card rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-border">
         {/* Header */}
-        <div className="sticky top-0 bg-surface border-b border-gray-200 p-6 flex items-center justify-between rounded-t-3xl">
+        <div className="sticky top-0 bg-card border-b border-border p-6 flex items-center justify-between rounded-t-3xl">
           <div>
-            <h2 className="text-2xl font-extrabold text-brand-slate flex items-center gap-2">
+            <h2 className="text-2xl font-extrabold text-foreground flex items-center gap-2">
               {isEditMode 
                 ? isClosedTrade 
                   ? <><Edit className="w-6 h-6" /> Rediger Lukket Trade</>
                   : <><Edit className="w-6 h-6" /> Rediger Trade</>
                 : 'Legg til Trade'}
             </h2>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {isEditMode 
                 ? isClosedTrade 
                   ? `Oppdater salgspris, dato eller notat for ${editTrade?.ticker}`
@@ -213,9 +213,9 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
           </div>
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+            className="w-10 h-10 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center transition-colors"
           >
-            <X className="w-5 h-5 text-gray-600" />
+            <X className="w-5 h-5 text-muted-foreground" />
           </button>
         </div>
 
@@ -230,7 +230,7 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
           {/* Portfolio and Strategy Selection */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-bold text-brand-slate mb-2">
+              <label className="block text-sm font-bold text-foreground mb-2">
                 Portfolio *
               </label>
               <select
@@ -238,7 +238,7 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
                 value={formData.portfolioId}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
+                className="w-full px-4 py-3 rounded-xl border border-border bg-card text-foreground focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
               >
                 <option value="">Velg portfolio</option>
                 {portfolios.map(p => (
@@ -247,7 +247,7 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
               </select>
             </div>
             <div>
-              <label className="block text-sm font-bold text-brand-slate mb-2">
+              <label className="block text-sm font-bold text-foreground mb-2">
                 Strategi *
               </label>
               <select
@@ -255,7 +255,7 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
                 value={formData.strategyId}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
+                className="w-full px-4 py-3 rounded-xl border border-border bg-card text-foreground focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
               >
                 <option value="">Velg strategi</option>
                 {Object.entries(STRATEGIES).map(([id, strategy]) => (
@@ -268,7 +268,7 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
           {/* Basic Trade Info */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-bold text-brand-slate mb-2">
+              <label className="block text-sm font-bold text-foreground mb-2">
                 Ticker *
               </label>
               <input
@@ -278,12 +278,12 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
                 onChange={handleChange}
                 placeholder="OKEA.OL"
                 required
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all uppercase"
+                className="w-full px-4 py-3 rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all uppercase"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-brand-slate mb-2">
+              <label className="block text-sm font-bold text-foreground mb-2">
                 Antall Aksjer *
               </label>
               <input
@@ -294,7 +294,7 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
                 placeholder="100"
                 required
                 min="1"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
+                className="w-full px-4 py-3 rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
               />
             </div>
           </div>
@@ -302,7 +302,7 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
           {/* Price Info */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-bold text-brand-slate mb-2">
+              <label className="block text-sm font-bold text-foreground mb-2">
                 Inngangspris (NOK) *
               </label>
               <input
@@ -314,12 +314,12 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
                 required
                 step="0.01"
                 min="0"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
+                className="w-full px-4 py-3 rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-brand-slate mb-2">
+              <label className="block text-sm font-bold text-foreground mb-2">
                 Inngangsdato *
               </label>
               <input
@@ -328,21 +328,21 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
                 value={formData.entryDate}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
+                className="w-full px-4 py-3 rounded-xl border border-border bg-card text-foreground focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
               />
             </div>
           </div>
 
           {/* Execution Tracking */}
-          <div className="bg-blue-50 rounded-2xl p-4 border-2 border-blue-200">
-            <h3 className="text-sm font-bold text-brand-slate mb-4 flex items-center gap-2">
+          <div className="bg-blue-500/10 dark:bg-blue-950/40 rounded-2xl p-4 border-2 border-blue-500/30">
+            <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
               <div className="w-2 h-6 bg-blue-500 rounded-full"></div>
               Execution Tracking
             </h3>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-bold text-brand-slate mb-2">
+                <label className="block text-sm font-bold text-foreground mb-2">
                   Stop Loss (NOK)
                 </label>
                 <input
@@ -353,13 +353,13 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
                   placeholder="29.50"
                   step="0.01"
                   min="0"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-rose focus:ring-2 focus:ring-brand-rose/20 outline-none transition-all"
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground focus:border-brand-rose focus:ring-2 focus:ring-brand-rose/20 outline-none transition-all"
                 />
-                <p className="text-xs text-gray-500 mt-1">Automatisk exit hvis pris faller under</p>
+                <p className="text-xs text-muted-foreground mt-1">Automatisk exit hvis pris faller under</p>
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-brand-slate mb-2">
+                <label className="block text-sm font-bold text-foreground mb-2">
                   Target (NOK)
                 </label>
                 <input
@@ -370,14 +370,14 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
                   placeholder="39.00"
                   step="0.01"
                   min="0"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
                 />
-                <p className="text-xs text-gray-500 mt-1">Forventet profitt-nivå</p>
+                <p className="text-xs text-muted-foreground mt-1">Forventet profitt-nivå</p>
               </div>
             </div>
 
             <div className="mt-4">
-              <label className="block text-sm font-bold text-brand-slate mb-2">
+              <label className="block text-sm font-bold text-foreground mb-2">
                 Tidshorisont (Sluttdato)
               </label>
               <input
@@ -385,9 +385,9 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
                 name="timeHorizonEnd"
                 value={formData.timeHorizonEnd}
                 onChange={handleChange}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
+                className="w-full px-4 py-3 rounded-xl border border-border bg-card text-foreground focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 For Dead Money tracking: System vil varsle hvis pris ikke beveger seg mot target innen denne datoen
               </p>
             </div>
@@ -395,7 +395,7 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
 
           {/* Notes */}
           <div>
-            <label className="block text-sm font-bold text-brand-slate mb-2">
+            <label className="block text-sm font-bold text-foreground mb-2">
               Notater (valgfritt)
             </label>
             <textarea
@@ -404,20 +404,20 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
               onChange={handleChange}
               placeholder="Skriv ned hvorfor du tok denne traden, tekniske observasjoner, etc."
               rows={3}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all resize-none"
+              className="w-full px-4 py-3 rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all resize-none"
             />
           </div>
 
           {/* Closed Trade Fields - Only shown when editing a closed trade */}
           {isClosedTrade && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-4">
-              <h3 className="font-bold text-amber-800 flex items-center gap-2">
+            <div className="bg-amber-500/10 dark:bg-amber-950/30 border border-amber-500/30 rounded-xl p-4 space-y-4">
+              <h3 className="font-bold text-amber-600 dark:text-amber-400 flex items-center gap-2">
                 📦 Salgsdata (Lukket Trade)
               </h3>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-bold text-amber-800 mb-2">
+                  <label className="block text-sm font-bold text-amber-600 dark:text-amber-400 mb-2">
                     Salgspris (NOK)
                   </label>
                   <input
@@ -427,11 +427,11 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
                     onChange={handleChange}
                     step="0.01"
                     placeholder="0.00"
-                    className="w-full px-4 py-3 rounded-xl border border-amber-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-200 outline-none transition-all bg-white"
+                    className="w-full px-4 py-3 rounded-xl border border-amber-500/30 bg-card text-foreground placeholder:text-muted-foreground focus:border-amber-400 focus:ring-2 focus:ring-amber-200/20 outline-none transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-amber-800 mb-2">
+                  <label className="block text-sm font-bold text-amber-600 dark:text-amber-400 mb-2">
                     Salgsdato
                   </label>
                   <input
@@ -439,20 +439,20 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
                     name="exitDate"
                     value={formData.exitDate}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border border-amber-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-200 outline-none transition-all bg-white"
+                    className="w-full px-4 py-3 rounded-xl border border-amber-500/30 bg-card text-foreground focus:border-amber-400 focus:ring-2 focus:ring-amber-200/20 outline-none transition-all"
                   />
                 </div>
               </div>
               
               <div>
-                <label className="block text-sm font-bold text-amber-800 mb-2">
+                <label className="block text-sm font-bold text-amber-600 dark:text-amber-400 mb-2">
                   Årsak til salg
                 </label>
                 <select
                   name="exitReason"
                   value={formData.exitReason}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-xl border border-amber-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-200 outline-none transition-all bg-white"
+                  className="w-full px-4 py-3 rounded-xl border border-amber-500/30 bg-card text-foreground focus:border-amber-400 focus:ring-2 focus:ring-amber-200/20 outline-none transition-all"
                 >
                   <option value="">Velg årsak</option>
                   <option value="MANUAL">Manuelt salg</option>
@@ -464,8 +464,8 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
               
               {/* P/L Preview for closed trade */}
               {formData.exitPrice && formData.entryPrice && (
-                <div className="bg-white rounded-lg p-3 border border-amber-200">
-                  <div className="text-xs text-amber-600 mb-1">Resultat</div>
+                <div className="bg-card rounded-lg p-3 border border-amber-500/30">
+                  <div className="text-xs text-amber-600 dark:text-amber-400 mb-1">Resultat</div>
                   {(() => {
                     const exitPrice = parseFloat(formData.exitPrice);
                     const entryPrice = parseFloat(formData.entryPrice);
@@ -474,7 +474,7 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
                     const pnlPercent = ((exitPrice - entryPrice) / entryPrice) * 100;
                     const isProfit = pnl >= 0;
                     return (
-                      <div className={`text-lg font-bold ${isProfit ? 'text-green-600' : 'text-red-600'}`}>
+                      <div className={`text-lg font-bold ${isProfit ? 'text-green-500' : 'text-red-500'}`}>
                         {isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr
                         <span className="text-sm ml-2">
                           ({isProfit ? '+' : ''}{pnlPercent.toFixed(1)}%)
@@ -492,7 +492,7 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-3 rounded-xl border-2 border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition-colors"
+              className="flex-1 px-6 py-3 rounded-xl border-2 border-border text-muted-foreground font-bold hover:bg-muted transition-colors"
             >
               Avbryt
             </button>
