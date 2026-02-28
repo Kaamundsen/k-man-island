@@ -90,15 +90,15 @@ export default function NewsWidget({ ticker }: NewsWidgetProps) {
             href={`https://newsweb.oslobors.no/search?issuer=${ticker}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 bg-brand-slate text-white rounded-lg text-sm font-semibold hover:bg-brand-slate/90 transition-colors"
+            className="px-4 py-2 bg-[#003366] text-white rounded-lg text-sm font-semibold hover:bg-[#002244] transition-colors"
           >
-            📊 Newsweb
+            📊 Oslo Børs Newsweb
           </a>
           <a
             href={`https://www.e24.no/sok?q=${ticker}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 bg-gray-600 text-white rounded-lg text-sm font-semibold hover:bg-gray-700 transition-colors"
+            className="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm font-semibold hover:bg-gray-900 transition-colors"
           >
             📰 E24
           </a>
@@ -106,9 +106,25 @@ export default function NewsWidget({ ticker }: NewsWidgetProps) {
             href={`https://www.dn.no/sok/?query=${ticker}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 bg-gray-600 text-white rounded-lg text-sm font-semibold hover:bg-gray-700 transition-colors"
+            className="px-4 py-2 bg-[#1e1e5c] text-white rounded-lg text-sm font-semibold hover:bg-[#151547] transition-colors"
           >
             📈 DN
+          </a>
+          <a
+            href={`https://finansavisen.no/sok?q=${ticker}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 bg-[#2b5797] text-white rounded-lg text-sm font-semibold hover:bg-[#1e4178] transition-colors"
+          >
+            💼 Finansavisen
+          </a>
+          <a
+            href={`https://www.investornytt.no/?s=${ticker}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 bg-[#3d3d5c] text-white rounded-lg text-sm font-semibold hover:bg-[#2a2a45] transition-colors"
+          >
+            📊 Investornytt
           </a>
         </div>
       </div>

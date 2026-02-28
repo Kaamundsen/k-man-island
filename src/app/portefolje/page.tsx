@@ -24,6 +24,16 @@ import {
   type DividendSummary
 } from '@/lib/store';
 import { STRATEGIES, StrategyId, getAllStrategies } from '@/lib/strategies';
+import { OSLO_STOCKS_FULL } from '@/lib/constants';
+
+// Oslo-aksjer = kr (inkl. når ticker mangler .OL, f.eks. FRO for Frontline). USA = USD.
+const OSLO_TICKERS_SET = new Set(OSLO_STOCKS_FULL);
+function getTradeCurrency(ticker: string): string {
+  const upper = ticker.toUpperCase().trim();
+  if (upper.endsWith('.OL')) return 'kr';
+  if (OSLO_TICKERS_SET.has(`${upper}.OL`)) return 'kr'; // Oslo-aksje lagret uten .OL
+  return 'USD';
+}
 
 interface LiveQuote {
   price: number;
@@ -923,7 +933,7 @@ export default function PorteføljePage() {
                             </td>
                             <td className="px-4 py-3 text-right font-semibold text-foreground">{trade.quantity}</td>
                             <td className="px-4 py-3 text-right">
-                              <div className="font-semibold text-foreground">{trade.entryPrice.toFixed(2)} kr</div>
+                              <div className="font-semibold text-foreground">{trade.entryPrice.toFixed(2)} {getTradeCurrency(trade.ticker)}</div>
                               <div className="text-xs text-muted-foreground">{new Date(trade.entryDate).toLocaleDateString('nb-NO')}</div>
                             </td>
                             <td className="px-4 py-3">
@@ -936,6 +946,7 @@ export default function PorteføljePage() {
                                       <span className="w-1.5 h-1.5 bg-gray-300 rounded-full" />
                                     )}
                                     <span className="text-sm font-bold text-foreground">{currentPrice.toFixed(2)}</span>
+                                    <span className="text-xs text-muted-foreground">{getTradeCurrency(trade.ticker)}</span>
                                   </div>
                                   <div className="text-right text-xs">
                                     {isAboveTarget ? (
@@ -944,7 +955,7 @@ export default function PorteføljePage() {
                                       <span className="text-brand-emerald font-medium">
                                         {displayMode === 'percent' 
                                           ? `${((trade.target - currentPrice) / currentPrice * 100).toFixed(1)}%`
-                                          : `${(trade.target - currentPrice).toFixed(0)} kr`
+                                          : `${(trade.target - currentPrice).toFixed(0)} ${getTradeCurrency(trade.ticker)}`
                                         } til mål
                                       </span>
                                     )}
@@ -980,7 +991,7 @@ export default function PorteføljePage() {
                                       'text-xs',
                                       liveQuote.changePercent >= 0 ? 'text-brand-emerald/70' : 'text-brand-rose/70'
                                     )}>
-                                      {liveQuote.change >= 0 ? '+' : ''}{liveQuote.change.toFixed(2)} kr
+                                      {liveQuote.change >= 0 ? '+' : ''}{liveQuote.change.toFixed(2)} {getTradeCurrency(trade.ticker)}
                                     </div>
                                   </div>
                                 ) : (
@@ -989,7 +1000,7 @@ export default function PorteføljePage() {
                                       'font-bold text-sm',
                                       liveQuote.change >= 0 ? 'text-brand-emerald' : 'text-brand-rose'
                                     )}>
-                                      {liveQuote.change >= 0 ? '+' : ''}{liveQuote.change.toFixed(2)} kr
+                                      {liveQuote.change >= 0 ? '+' : ''}{liveQuote.change.toFixed(2)} {getTradeCurrency(trade.ticker)}
                                     </div>
                                     <div className={clsx(
                                       'text-xs',
@@ -1008,11 +1019,11 @@ export default function PorteføljePage() {
                               {displayMode === 'percent' ? (
                                 <>
                                   <div className={clsx('font-bold', isProfit ? 'text-brand-emerald' : 'text-brand-rose')}>{isProfit ? '+' : ''}{pnlPercent.toFixed(1)}%</div>
-                                  <div className={clsx('text-xs', isProfit ? 'text-brand-emerald/70' : 'text-brand-rose/70')}>{isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</div>
+                                  <div className={clsx('text-xs', isProfit ? 'text-brand-emerald/70' : 'text-brand-rose/70')}>{isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} {getTradeCurrency(trade.ticker)}</div>
                                 </>
                               ) : (
                                 <>
-                                  <div className={clsx('font-bold', isProfit ? 'text-brand-emerald' : 'text-brand-rose')}>{isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</div>
+                                  <div className={clsx('font-bold', isProfit ? 'text-brand-emerald' : 'text-brand-rose')}>{isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} {getTradeCurrency(trade.ticker)}</div>
                                   <div className={clsx('text-xs', isProfit ? 'text-brand-emerald/70' : 'text-brand-rose/70')}>{isProfit ? '+' : ''}{pnlPercent.toFixed(1)}%</div>
                                 </>
                               )}
@@ -1342,11 +1353,11 @@ export default function PorteføljePage() {
                                   </td>
                                   <td className="px-4 py-3 text-right font-semibold text-foreground">{trade.quantity}</td>
                                   <td className="px-4 py-3 text-right">
-                                    <div className="font-semibold text-foreground">{trade.entryPrice.toFixed(2)} kr</div>
+                                    <div className="font-semibold text-foreground">{trade.entryPrice.toFixed(2)} {getTradeCurrency(trade.ticker)}</div>
                                     <div className="text-xs text-muted-foreground">{new Date(trade.entryDate).toLocaleDateString('nb-NO')}</div>
                                   </td>
                                   <td className="px-4 py-3 text-center">
-                                    <div className="font-semibold text-foreground">→ {exitPrice.toFixed(2)} kr</div>
+                                    <div className="font-semibold text-foreground">→ {exitPrice.toFixed(2)} {getTradeCurrency(trade.ticker)}</div>
                                     <div className="text-xs text-muted-foreground">
                                       {trade.exitDate ? new Date(trade.exitDate).toLocaleDateString('nb-NO') : '—'}
                                       {trade.exitReason && <span className="ml-1">({trade.exitReason})</span>}
@@ -1356,11 +1367,11 @@ export default function PorteføljePage() {
                                     {displayMode === 'percent' ? (
                                       <>
                                         <div className={clsx('font-bold', isProfit ? 'text-brand-emerald' : 'text-brand-rose')}>{isProfit ? '+' : ''}{pnlPercent.toFixed(1)}%</div>
-                                        <div className={clsx('text-xs', isProfit ? 'text-brand-emerald/70' : 'text-brand-rose/70')}>{isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</div>
+                                        <div className={clsx('text-xs', isProfit ? 'text-brand-emerald/70' : 'text-brand-rose/70')}>{isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} {getTradeCurrency(trade.ticker)}</div>
                                       </>
                                     ) : (
                                       <>
-                                        <div className={clsx('font-bold', isProfit ? 'text-brand-emerald' : 'text-brand-rose')}>{isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</div>
+                                        <div className={clsx('font-bold', isProfit ? 'text-brand-emerald' : 'text-brand-rose')}>{isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} {getTradeCurrency(trade.ticker)}</div>
                                         <div className={clsx('text-xs', isProfit ? 'text-brand-emerald/70' : 'text-brand-rose/70')}>{isProfit ? '+' : ''}{pnlPercent.toFixed(1)}%</div>
                                       </>
                                     )}
@@ -1800,11 +1811,11 @@ export default function PorteføljePage() {
                         </td>
                         <td className="px-4 py-3 text-right font-semibold text-foreground">{trade.quantity}</td>
                         <td className="px-4 py-3 text-right">
-                          <div className="font-semibold text-foreground">{trade.entryPrice.toFixed(2)} kr</div>
+                          <div className="font-semibold text-foreground">{trade.entryPrice.toFixed(2)} {getTradeCurrency(trade.ticker)}</div>
                           <div className="text-xs text-muted-foreground">{new Date(trade.entryDate).toLocaleDateString('nb-NO')}</div>
                         </td>
                         <td className="px-4 py-3 text-center">
-                          <div className="font-semibold text-foreground">→ {exitPrice.toFixed(2)} kr</div>
+                          <div className="font-semibold text-foreground">→ {exitPrice.toFixed(2)} {getTradeCurrency(trade.ticker)}</div>
                           <div className="text-xs text-muted-foreground">
                             {trade.exitDate ? new Date(trade.exitDate).toLocaleDateString('nb-NO') : '—'}
                             {trade.exitReason && <span className="ml-1">({trade.exitReason})</span>}
@@ -1814,11 +1825,11 @@ export default function PorteføljePage() {
                           {displayMode === 'percent' ? (
                             <>
                               <div className={clsx('font-bold', isProfit ? 'text-brand-emerald' : 'text-brand-rose')}>{isProfit ? '+' : ''}{pnlPercent.toFixed(1)}%</div>
-                              <div className={clsx('text-xs', isProfit ? 'text-brand-emerald/70' : 'text-brand-rose/70')}>{isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</div>
+                              <div className={clsx('text-xs', isProfit ? 'text-brand-emerald/70' : 'text-brand-rose/70')}>{isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} {getTradeCurrency(trade.ticker)}</div>
                             </>
                           ) : (
                             <>
-                              <div className={clsx('font-bold', isProfit ? 'text-brand-emerald' : 'text-brand-rose')}>{isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</div>
+                              <div className={clsx('font-bold', isProfit ? 'text-brand-emerald' : 'text-brand-rose')}>{isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} {getTradeCurrency(trade.ticker)}</div>
                               <div className={clsx('text-xs', isProfit ? 'text-brand-emerald/70' : 'text-brand-rose/70')}>{isProfit ? '+' : ''}{pnlPercent.toFixed(1)}%</div>
                             </>
                           )}
@@ -1923,7 +1934,7 @@ export default function PorteføljePage() {
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <span className="text-muted-foreground">Kjøpt:</span>
-                    <span className="ml-2 font-semibold text-foreground">{closingTrade.entryPrice.toFixed(2)} kr</span>
+                    <span className="ml-2 font-semibold text-foreground">{closingTrade.entryPrice.toFixed(2)} {getTradeCurrency(closingTrade.ticker)}</span>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Dato:</span>
@@ -1935,7 +1946,7 @@ export default function PorteføljePage() {
                   </div>
                   <div>
                     <span className="text-muted-foreground">Investert:</span>
-                    <span className="ml-2 font-semibold text-foreground">{(closingTrade.entryPrice * closingTrade.quantity).toLocaleString('nb-NO')} kr</span>
+                    <span className="ml-2 font-semibold text-foreground">{(closingTrade.entryPrice * closingTrade.quantity).toLocaleString('nb-NO')} {getTradeCurrency(closingTrade.ticker)}</span>
                   </div>
                 </div>
               </div>
@@ -2020,7 +2031,7 @@ export default function PorteføljePage() {
                         'text-2xl font-bold',
                         isProfit ? 'text-brand-emerald' : 'text-brand-rose'
                       )}>
-                        {isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr
+                        {isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} {getTradeCurrency(closingTrade.ticker)}
                         <span className="text-base ml-2">
                           ({isProfit ? '+' : ''}{pnlPercent.toFixed(1)}%)
                         </span>

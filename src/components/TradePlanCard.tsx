@@ -8,6 +8,7 @@ interface TradePlanCardProps {
 export default function TradePlanCard({ stock }: TradePlanCardProps) {
   const riskRewardRatio = stock.gainKr / stock.riskKr;
   const riskRewardStatus = riskRewardRatio >= 2 ? 'excellent' : riskRewardRatio >= 1.5 ? 'good' : 'moderate';
+  const currencyLabel = stock.market === 'USA' ? 'USD' : 'kr';
   
   const statusConfig = {
     excellent: { color: 'text-brand-emerald', bg: 'bg-brand-emerald/10', label: '✓ Utmerket' },
@@ -34,7 +35,7 @@ export default function TradePlanCard({ stock }: TradePlanCardProps) {
             <div className="text-2xl font-extrabold text-foreground">
               {stock.price.toFixed(2)}
             </div>
-            <div className="text-xs text-muted-foreground mt-1">NOK</div>
+            <div className="text-xs text-muted-foreground mt-1">{stock.market === 'USA' ? 'USD' : 'NOK'}</div>
           </div>
 
           <div className="bg-red-500/10 dark:bg-red-950/40 rounded-xl p-4">
@@ -84,7 +85,7 @@ export default function TradePlanCard({ stock }: TradePlanCardProps) {
               <div className="text-xl font-bold text-brand-emerald">
                 +{stock.gainPercent.toFixed(1)}%
               </div>
-              <div className="text-xs text-muted-foreground">+{stock.gainKr.toFixed(2)} kr</div>
+              <div className="text-xs text-muted-foreground">+{stock.gainKr.toFixed(2)} {currencyLabel}</div>
             </div>
             <div>
               <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
@@ -94,7 +95,7 @@ export default function TradePlanCard({ stock }: TradePlanCardProps) {
               <div className="text-xl font-bold text-brand-rose">
                 -{stock.riskPercent.toFixed(1)}%
               </div>
-              <div className="text-xs text-muted-foreground">-{stock.riskKr.toFixed(2)} kr</div>
+              <div className="text-xs text-muted-foreground">-{stock.riskKr.toFixed(2)} {currencyLabel}</div>
             </div>
           </div>
 

@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase/client';
 import { Trade, TradeInput } from '@/lib/types';
 import { createTrade, updateTrade, getPortfolios } from '@/lib/store';
 import { StrategyId, STRATEGIES } from '@/lib/strategies';
+import { OSLO_STOCKS_FULL } from '@/lib/constants';
 
 interface AddTradeModalProps {
   isOpen: boolean;
@@ -86,6 +87,13 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
   }, [isOpen, editTrade]);
 
   if (!isOpen) return null;
+
+  // Oslo = NOK/kr (inkl. FRO uten .OL). USA = USD. Ved tom ticker vis NOK som standard.
+  const tickerUpper = formData.ticker.trim().toUpperCase();
+  const isOsloTicker = tickerUpper.endsWith('.OL') || (tickerUpper.length > 0 && OSLO_STOCKS_FULL.includes(`${tickerUpper}.OL`));
+  const isUSATicker = tickerUpper.length > 0 && !isOsloTicker;
+  const tradeCurrency = isUSATicker ? 'USD' : 'NOK';
+  const tradeCurrencyLabel = isUSATicker ? 'USD' : 'kr';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -303,7 +311,7 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-bold text-foreground mb-2">
-                Inngangspris (NOK) *
+                Inngangspris ({tradeCurrency}) *
               </label>
               <input
                 type="number"
@@ -343,7 +351,7 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-bold text-foreground mb-2">
-                  Stop Loss (NOK)
+                  Stop Loss ({tradeCurrency})
                 </label>
                 <input
                   type="number"
@@ -360,7 +368,7 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
 
               <div>
                 <label className="block text-sm font-bold text-foreground mb-2">
-                  Target (NOK)
+                  Target ({tradeCurrency})
                 </label>
                 <input
                   type="number"
@@ -418,7 +426,7 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-bold text-amber-600 dark:text-amber-400 mb-2">
-                    Salgspris (NOK)
+                    Salgspris ({tradeCurrency})
                   </label>
                   <input
                     type="number"
@@ -475,7 +483,7 @@ export default function AddTradeModal({ isOpen, onClose, onSuccess, editTrade }:
                     const isProfit = pnl >= 0;
                     return (
                       <div className={`text-lg font-bold ${isProfit ? 'text-green-500' : 'text-red-500'}`}>
-                        {isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr
+                        {isProfit ? '+' : ''}{pnl.toLocaleString('nb-NO', { maximumFractionDigits: 0 })} {tradeCurrencyLabel}
                         <span className="text-sm ml-2">
                           ({isProfit ? '+' : ''}{pnlPercent.toFixed(1)}%)
                         </span>

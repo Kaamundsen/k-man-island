@@ -233,7 +233,7 @@ export default function MarkedsskannerContent({ stocks }: MarkedsskannerContentP
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="font-bold text-foreground">
-                        {stock.price.toFixed(2)} NOK
+                        {stock.price.toFixed(2)} {stock.market === 'USA' ? 'USD' : 'NOK'}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">

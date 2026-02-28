@@ -15,6 +15,7 @@ interface StockCardProps {
 export default function StockCard({ stock, rank, reminder, hasNote }: StockCardProps) {
   const isPositive = stock.changePercent >= 0;
   const currency = stock.market === 'USA' ? 'USD' : 'NOK';
+  const currencyLabel = stock.market === 'USA' ? 'USD' : 'kr';
   
   const signalConfig = {
     BUY: { bg: 'bg-brand-emerald', text: 'KJØP', badgeBg: 'bg-white/20', badgeText: 'text-white' },
@@ -173,7 +174,7 @@ export default function StockCard({ stock, rank, reminder, hasNote }: StockCardP
             {/* Gevinst */}
             <div>
               <div className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1">GEVINST</div>
-              <div className="text-base font-bold text-brand-emerald">+{stock.gainKr.toFixed(2)} kr</div>
+              <div className="text-base font-bold text-brand-emerald">+{stock.gainKr.toFixed(2)} {currencyLabel}</div>
               <div className="text-xs text-brand-emerald font-semibold">+{stock.gainPercent.toFixed(0)}%</div>
             </div>
             
@@ -188,7 +189,7 @@ export default function StockCard({ stock, rank, reminder, hasNote }: StockCardP
             {/* Risiko */}
             <div className="text-right">
               <div className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1">RISIKO</div>
-              <div className="text-base font-bold text-brand-rose">-{stock.riskKr.toFixed(2)} kr</div>
+              <div className="text-base font-bold text-brand-rose">-{stock.riskKr.toFixed(2)} {currencyLabel}</div>
               <div className="text-xs text-brand-rose font-semibold">-{stock.riskPercent.toFixed(1)}%</div>
             </div>
           </div>

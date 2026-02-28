@@ -678,10 +678,45 @@ export function NewsAggregator({
         )}
       </div>
       
+      {/* External Sources Section */}
+      {showLinks && (
+        <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border-t border-gray-100 dark:border-dark-border">
+          <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+            📰 Kilder uten RSS (besøk direkte):
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <a
+              href="https://finansavisen.no/bors"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded bg-[#2b5797] text-white hover:bg-[#1e4178] transition-colors"
+            >
+              Finansavisen <ExternalLink className="h-3 w-3" />
+            </a>
+            <a
+              href="https://newsweb.oslobors.no"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded bg-[#003366] text-white hover:bg-[#002244] transition-colors"
+            >
+              Oslo Børs Newsweb <ExternalLink className="h-3 w-3" />
+            </a>
+            <a
+              href="https://live.euronext.com/nb/markets/oslo"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded bg-[#1e3a5f] text-white hover:bg-[#152a45] transition-colors"
+            >
+              Euronext Oslo <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+        </div>
+      )}
+      
       {/* Info footer */}
       <div className="p-3 bg-gray-50 dark:bg-dark-bg border-t border-gray-100 dark:border-dark-border">
         <p className="text-xs text-gray-500 dark:text-dark-muted text-center">
-          💡 Overskrifter og sammendrag fra RSS. Klikk for å lese hele artikkelen.
+          💡 RSS-nyheter fra E24, DN, Investornytt. Finansavisen og Oslo Børs har ikke offentlige RSS-feeds.
         </p>
       </div>
     </div>

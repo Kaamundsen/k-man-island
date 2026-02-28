@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFinnhubQuote, getFinnhubCandles } from '@/lib/api/finnhub';
+import { USA_CORE_STOCKS } from '@/lib/constants';
 
 export interface QuoteResponse {
   [ticker: string]: {
@@ -47,13 +48,13 @@ function isOsloBorsOpen(): { isOpen: boolean; reason: string } {
   return { isOpen: true, reason: 'open' };
 }
 
-// Normaliser ticker til Oslo Børs format
-function normalizeOsloTicker(ticker: string): string {
-  // Hvis ticker ikke har suffix og ser norsk ut, legg til .OL
-  if (!ticker.includes('.') && !ticker.includes('/')) {
-    return `${ticker}.OL`;
-  }
-  return ticker;
+// Normaliser ticker: USA-tickere (f.eks. MSFT) beholdes, Oslo uten .OL får .OL
+function normalizeTicker(ticker: string): string {
+  const t = ticker.trim();
+  const upper = t.toUpperCase();
+  if (upper.endsWith('.OL') || upper.includes('.')) return upper;
+  if (USA_CORE_STOCKS.includes(upper)) return upper; // USA-aksje – ikke legg på .OL
+  return `${upper}.OL`; // Oslo – legg på .OL
 }
 
 // Sjekk cache
@@ -87,8 +88,8 @@ export async function GET(request: NextRequest) {
   // Sjekk om Oslo Børs er åpen
   const marketStatus = isOsloBorsOpen();
   
-  // Normaliser og begrens til 10 tickers
-  const tickers = rawTickers.slice(0, 10).map(t => normalizeOsloTicker(t.trim()));
+  // Normaliser og begrens til 10 tickers (USA som MSFT beholdes, Oslo får .OL)
+  const tickers = rawTickers.slice(0, 10).map(t => normalizeTicker(t.trim()));
   const quotes: QuoteResponse = {};
   
   // Hvis børsen er stengt, prøv å bruke cache først
@@ -97,7 +98,7 @@ export async function GET(request: NextRequest) {
     
     let allCached = true;
     for (const ticker of tickers) {
-      const originalTicker = rawTickers.find(t => normalizeOsloTicker(t.trim()) === ticker) || ticker;
+      const originalTicker = rawTickers.find(t => normalizeTicker(t.trim()) === ticker) || ticker;
       const cached = getCachedQuote(ticker, false);
       
       if (cached) {
@@ -117,7 +118,7 @@ export async function GET(request: NextRequest) {
   }
   
   for (const ticker of tickers) {
-    const originalTicker = rawTickers.find(t => normalizeOsloTicker(t.trim()) === ticker) || ticker;
+    const originalTicker = rawTickers.find(t => normalizeTicker(t.trim()) === ticker) || ticker;
     
     // Sjekk cache først (selv når åpen, for rask respons)
     const cached = getCachedQuote(ticker, marketStatus.isOpen);

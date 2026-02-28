@@ -167,7 +167,7 @@ export default function StockAnalyseContent({ stock, allStocks }: StockAnalyseCo
             <div className="text-2xl font-extrabold text-brand-emerald mb-1">
               +{stock.gainPercent.toFixed(0)}%
             </div>
-            <div className="text-xs text-muted-foreground">+{stock.gainKr.toFixed(2)} kr</div>
+            <div className="text-xs text-muted-foreground">+{stock.gainKr.toFixed(2)} {currency === 'USD' ? 'USD' : 'kr'}</div>
           </div>
 
           <div className="bg-card rounded-xl p-4 border border-border">
@@ -177,7 +177,7 @@ export default function StockAnalyseContent({ stock, allStocks }: StockAnalyseCo
             <div className="text-2xl font-extrabold text-brand-rose mb-1">
               -{stock.riskPercent.toFixed(1)}%
             </div>
-            <div className="text-xs text-muted-foreground">-{stock.riskKr.toFixed(2)} kr</div>
+            <div className="text-xs text-muted-foreground">-{stock.riskKr.toFixed(2)} {currency === 'USD' ? 'USD' : 'kr'}</div>
           </div>
 
           <div className="bg-card rounded-xl p-4 border border-border">

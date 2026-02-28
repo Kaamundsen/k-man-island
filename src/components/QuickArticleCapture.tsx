@@ -941,15 +941,69 @@ export default function QuickArticleCapture({ isOpen, onClose, onSaved }: QuickA
       let detectedUrl = '';
       let detectedSource = '';
       
-      // 1. Sjekk for full URL først (med eller uten https://)
-      const fullUrlMatch = rawText.match(/(?:https?:\/\/)?(?:www\.)?(e24\.no|dn\.no|finansavisen\.no|newsweb\.oslobors\.no|investtech\.com|investornytt\.no)[^\s\n]*/i);
-      if (fullUrlMatch) {
-        // Legg til https:// hvis det mangler
-        detectedUrl = fullUrlMatch[0].startsWith('http') ? fullUrlMatch[0] : `https://${fullUrlMatch[0]}`;
-        detectedSource = fullUrlMatch[1]?.toLowerCase() || '';
+      // 1. Sjekk for full E24 URL først (mest vanlig)
+      // E24 URLs: https://e24.no/boers-og-finans/i/XXXXX/tittel eller lignende
+      const e24FullMatch = rawText.match(/https?:\/\/(?:www\.)?e24\.no\/[^\s\n\]"'>]+/i);
+      if (e24FullMatch) {
+        detectedUrl = e24FullMatch[0];
+        detectedSource = 'e24.no';
       }
       
-      // 2. E24: Ofte bare path i starten, f.eks "/boers-og-finans/i/16BWgM/..."
+      // 2. DN URL
+      if (!detectedUrl) {
+        const dnFullMatch = rawText.match(/https?:\/\/(?:www\.)?dn\.no\/[^\s\n\]"'>]+/i);
+        if (dnFullMatch) {
+          detectedUrl = dnFullMatch[0];
+          detectedSource = 'dn.no';
+        }
+      }
+      
+      // 3. Finansavisen URL
+      if (!detectedUrl) {
+        const faFullMatch = rawText.match(/https?:\/\/(?:www\.)?finansavisen\.no\/[^\s\n\]"'>]+/i);
+        if (faFullMatch) {
+          detectedUrl = faFullMatch[0];
+          detectedSource = 'finansavisen.no';
+        }
+      }
+      
+      // 4. Investornytt URL
+      if (!detectedUrl) {
+        const invFullMatch = rawText.match(/https?:\/\/(?:www\.)?investornytt\.no\/[^\s\n\]"'>]+/i);
+        if (invFullMatch) {
+          detectedUrl = invFullMatch[0];
+          detectedSource = 'investornytt.no';
+        }
+      }
+      
+      // 5. Newsweb URL
+      if (!detectedUrl) {
+        const nwFullMatch = rawText.match(/https?:\/\/(?:www\.)?newsweb\.oslobors\.no\/[^\s\n\]"'>]+/i);
+        if (nwFullMatch) {
+          detectedUrl = nwFullMatch[0];
+          detectedSource = 'newsweb.oslobors.no';
+        }
+      }
+      
+      // 6. Investtech URL
+      if (!detectedUrl) {
+        const itFullMatch = rawText.match(/https?:\/\/(?:www\.)?investtech\.com\/[^\s\n\]"'>]+/i);
+        if (itFullMatch) {
+          detectedUrl = itFullMatch[0];
+          detectedSource = 'investtech.com';
+        }
+      }
+      
+      // 7. Fallback: Sjekk for URL uten protokoll (bare e24.no/... i starten)
+      if (!detectedUrl) {
+        const noProtocolMatch = rawText.match(/^((?:www\.)?(e24\.no|dn\.no|finansavisen\.no|investornytt\.no)\/[^\s\n]+)/mi);
+        if (noProtocolMatch) {
+          detectedUrl = `https://${noProtocolMatch[1].replace(/^www\./, '')}`;
+          detectedSource = noProtocolMatch[2]?.toLowerCase() || '';
+        }
+      }
+      
+      // 8. E24: Ofte bare path i starten, f.eks "/boers-og-finans/i/16BWgM/..."
       if (!detectedUrl) {
         const e24PathMatch = rawText.match(/^\s*(\/boers-og-finans\/[^\s\n]+)/m);
         if (e24PathMatch) {
@@ -958,43 +1012,30 @@ export default function QuickArticleCapture({ isOpen, onClose, onSaved }: QuickA
         }
       }
       
-      // 3. Investornytt: Path som "/bors/..." - sjekk FØR DN siden begge bruker /bors/
+      // 9. DN: Ofte path som "/bors/..." eller "/marked/..."
       if (!detectedUrl) {
-        const pathMatch = rawText.match(/^\s*(\/(?:bors|nyheter|aksjer)\/[^\s\n]+)/m);
-        if (pathMatch && rawText.toLowerCase().includes('investornytt')) {
-          detectedUrl = `https://www.investornytt.no${pathMatch[1]}`;
-          detectedSource = 'investornytt.no';
-        }
-      }
-      
-      // 4. DN: Ofte path som "/bors/..." eller "/marked/..."
-      if (!detectedUrl) {
-        const dnPathMatch = rawText.match(/^\s*(\/(?:bors|marked|nyheter)\/[^\s\n]+)/m);
+        const dnPathMatch = rawText.match(/^\s*(\/(?:bors|marked|nyheter|etterbors)\/[^\s\n]+)/m);
         if (dnPathMatch && !rawText.toLowerCase().includes('investornytt') && !rawText.toLowerCase().includes('finansavisen')) {
           detectedUrl = `https://www.dn.no${dnPathMatch[1]}`;
           detectedSource = 'dn.no';
         }
       }
       
-      // 5. Finansavisen: Path som "/bors/..." eller "/nyheter/..."
-      if (!detectedUrl) {
-        const faPathMatch = rawText.match(/^\s*(\/(?:bors|nyheter|finans)\/[^\s\n]+)/m);
-        if (faPathMatch && rawText.toLowerCase().includes('finansavisen')) {
-          detectedUrl = `https://finansavisen.no${faPathMatch[1]}`;
-          detectedSource = 'finansavisen.no';
-        }
-      }
-      
       // Sett URL og kilde
       if (detectedUrl) {
+        // Rens URL for trailing tegn som kan ha blitt med
+        detectedUrl = detectedUrl.replace(/[.,;:!?\]"'>]+$/, '');
         setUrl(detectedUrl);
         
+        // Sett kilde basert på URL
         if (detectedSource.includes('e24')) setSource('E24');
         else if (detectedSource.includes('investornytt')) setSource('Investornytt');
         else if (detectedSource.includes('dn.no')) setSource('DN');
         else if (detectedSource.includes('finansavisen')) setSource('Finansavisen');
         else if (detectedSource.includes('newsweb')) setSource('Newsweb');
         else if (detectedSource.includes('investtech')) setSource('Investtech');
+        
+        console.log('🔗 Auto-detektert URL:', detectedUrl, 'Kilde:', detectedSource);
       }
       
       // 🧹 Rens teksten automatisk
@@ -1091,6 +1132,96 @@ export default function QuickArticleCapture({ isOpen, onClose, onSaved }: QuickA
     setDetectedStocks(prev => prev.filter(s => 
       s.ticker !== tickerOrName && s.name !== tickerOrName
     ));
+  };
+  
+  // 🆕 Manuell aksje-søk og -tillegg
+  const [stockSearchQuery, setStockSearchQuery] = useState('');
+  const [stockSearchResults, setStockSearchResults] = useState<Array<{ticker: string; name: string}>>([]);
+  
+  const handleStockSearch = (query: string) => {
+    setStockSearchQuery(query);
+    
+    if (query.length < 2) {
+      setStockSearchResults([]);
+      return;
+    }
+    
+    const queryUpper = query.toUpperCase();
+    const queryLower = query.toLowerCase();
+    
+    // Søk i TICKER_MAP
+    const results: Array<{ticker: string; name: string}> = [];
+    const seenTickers = new Set<string>();
+    
+    for (const [keyword, stock] of Object.entries(TICKER_MAP)) {
+      // Skip analytiker-hus
+      if (stock.name.includes('Analytiker')) continue;
+      // Skip allerede valgte
+      if (detectedStocks.some(s => s.ticker === stock.ticker)) continue;
+      // Skip duplikater
+      if (seenTickers.has(stock.ticker)) continue;
+      
+      // Match på ticker eller navn
+      if (keyword.toUpperCase().includes(queryUpper) || 
+          stock.name.toLowerCase().includes(queryLower) ||
+          stock.ticker.includes(queryUpper)) {
+        results.push(stock);
+        seenTickers.add(stock.ticker);
+      }
+      
+      // Begrens resultater
+      if (results.length >= 8) break;
+    }
+    
+    setStockSearchResults(results);
+  };
+  
+  const addManualStock = (stock: {ticker: string; name: string}) => {
+    setDetectedStocks(prev => [
+      ...prev,
+      {
+        ticker: stock.ticker,
+        name: stock.name,
+        sentiment: 'neutral' as const,
+        highlight: '',
+        isExternal: false,
+      }
+    ]);
+    setStockSearchQuery('');
+    setStockSearchResults([]);
+  };
+  
+  // Legg til egendefinert aksje (hvis ikke funnet i listen)
+  const addCustomStock = () => {
+    const query = stockSearchQuery.trim().toUpperCase();
+    if (query.length < 2) return;
+    
+    // Sjekk om allerede lagt til
+    if (detectedStocks.some(s => s.ticker === query || s.ticker === `${query}.OL` || s.name.toUpperCase() === query)) {
+      setStockSearchQuery('');
+      return;
+    }
+    
+    // Prøv å finne i TICKER_MAP først
+    const found = TICKER_MAP[query];
+    if (found) {
+      addManualStock(found);
+      return;
+    }
+    
+    // Legg til som custom ticker
+    setDetectedStocks(prev => [
+      ...prev,
+      {
+        ticker: query.includes('.') ? query : `${query}.OL`,
+        name: query,
+        sentiment: 'neutral' as const,
+        highlight: '',
+        isExternal: false,
+      }
+    ]);
+    setStockSearchQuery('');
+    setStockSearchResults([]);
   };
   
   if (!isOpen) return null;
@@ -1219,12 +1350,62 @@ export default function QuickArticleCapture({ isOpen, onClose, onSaved }: QuickA
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block flex items-center gap-2">
                   <Tag className="h-4 w-4" />
-                  Detekterte aksjer ({detectedStocks.length})
+                  Aksjer ({detectedStocks.length})
                 </label>
+                
+                {/* Manuell aksje-søk */}
+                <div className="mb-3 relative">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={stockSearchQuery}
+                      onChange={(e) => handleStockSearch(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (stockSearchResults.length > 0) {
+                            addManualStock(stockSearchResults[0]);
+                          } else {
+                            addCustomStock();
+                          }
+                        }
+                      }}
+                      placeholder="Søk og legg til aksje (ticker eller navn)..."
+                      className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg 
+                                 bg-white dark:bg-dark-bg text-gray-900 dark:text-white
+                                 focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                    />
+                    <button
+                      onClick={addCustomStock}
+                      disabled={stockSearchQuery.length < 2}
+                      className="px-3 py-2 text-sm bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 
+                                 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 disabled:opacity-50 
+                                 disabled:cursor-not-allowed font-medium"
+                    >
+                      + Legg til
+                    </button>
+                  </div>
+                  
+                  {/* Søkeresultater dropdown */}
+                  {stockSearchResults.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                      {stockSearchResults.map((stock) => (
+                        <button
+                          key={stock.ticker}
+                          onClick={() => addManualStock(stock)}
+                          className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-dark-bg flex items-center justify-between text-sm"
+                        >
+                          <span className="font-medium text-gray-900 dark:text-white">{stock.name}</span>
+                          <span className="text-gray-500 dark:text-gray-400 text-xs">{stock.ticker}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 
                 {detectedStocks.length === 0 ? (
                   <p className="text-sm text-gray-500 dark:text-dark-muted italic">
-                    Ingen aksjer funnet i teksten
+                    Ingen aksjer lagt til ennå. Bruk søkefeltet over for å legge til.
                   </p>
                 ) : (
                   <div className="flex flex-wrap gap-2">

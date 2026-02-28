@@ -116,7 +116,7 @@ export default function StockCardOriginal({ stock, rank, reminder, hasNote }: St
         <div className="flex items-baseline justify-between mb-5">
           <div>
             <div className="text-3xl font-extrabold text-[#1E293B]">
-              {stock.price.toFixed(2)} <span className="text-base text-gray-400 font-semibold">NOK</span>
+              {stock.price.toFixed(2)} <span className="text-base text-gray-400 font-semibold">{stock.market === 'USA' ? 'USD' : 'NOK'}</span>
             </div>
           </div>
           <div className="text-right">
@@ -175,7 +175,7 @@ export default function StockCardOriginal({ stock, rank, reminder, hasNote }: St
             {/* Gevinst */}
             <div>
               <div className="text-xs text-gray-400 uppercase tracking-wide font-semibold mb-1">GEVINST</div>
-              <div className="text-base font-bold text-[#10B981]">+{stock.gainKr.toFixed(2)} kr</div>
+              <div className="text-base font-bold text-[#10B981]">+{stock.gainKr.toFixed(2)} {stock.market === 'USA' ? 'USD' : 'kr'}</div>
               <div className="text-xs text-[#10B981] font-semibold">+{stock.gainPercent.toFixed(0)}%</div>
             </div>
             
@@ -190,7 +190,7 @@ export default function StockCardOriginal({ stock, rank, reminder, hasNote }: St
             {/* Risiko */}
             <div className="text-right">
               <div className="text-xs text-gray-400 uppercase tracking-wide font-semibold mb-1">RISIKO</div>
-              <div className="text-base font-bold text-[#EF4444]">-{stock.riskKr.toFixed(2)} kr</div>
+              <div className="text-base font-bold text-[#EF4444]">-{stock.riskKr.toFixed(2)} {stock.market === 'USA' ? 'USD' : 'kr'}</div>
               <div className="text-xs text-[#EF4444] font-semibold">-{stock.riskPercent.toFixed(1)}%</div>
             </div>
           </div>

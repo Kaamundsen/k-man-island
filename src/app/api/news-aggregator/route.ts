@@ -17,8 +17,11 @@ const FEEDS = {
   E24_BORS: 'https://e24.no/rss2/?seksjon=boers-og-finans',
   E24_NYHETER: 'https://e24.no/rss2/',
   INVESTORNYTT: 'https://www.investornytt.no/feed/',
-  DN_BORS: 'https://www.dn.no/rss/bors',
-  FINANSAVISEN: 'https://www.finansavisen.no/rss',
+  // DN - Oppdatert til korrekt API-URL (services.dn.no)
+  DN_ALL: 'https://services.dn.no/api/feed/rss/',
+  DN_BORS: 'https://services.dn.no/api/feed/rss/?category=B%C3%B8rs',
+  DN_FINANS: 'https://services.dn.no/api/feed/rss/?category=Finans',
+  // Finansavisen har ikke offentlig RSS - vi bruker kun lenker
 };
 
 export async function GET(request: NextRequest) {
@@ -95,12 +98,13 @@ export async function GET(request: NextRequest) {
     }
     
     if (source === 'all' || source === 'dn') {
-      fetchPromises.push(fetchRSS(FEEDS.DN_BORS, 'DN', 'dn'));
+      // DN: Hent både børs og finans kategorier
+      fetchPromises.push(fetchRSS(FEEDS.DN_BORS, 'DN', 'dn-bors'));
+      fetchPromises.push(fetchRSS(FEEDS.DN_FINANS, 'DN', 'dn-finans'));
     }
     
-    if (source === 'all' || source === 'finansavisen') {
-      fetchPromises.push(fetchRSS(FEEDS.FINANSAVISEN, 'Finansavisen', 'fa'));
-    }
+    // Finansavisen har ikke offentlig RSS-feed
+    // Nyheter fra Finansavisen vises som eksterne lenker i UI
     
     await Promise.all(fetchPromises);
     

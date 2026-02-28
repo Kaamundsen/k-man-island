@@ -938,7 +938,7 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
                 }
                 
                 const tickerShort = stock.ticker.replace('.OL', '');
-                const currency = stock.market === 'USA' ? '$' : 'kr';
+                const currency = stock.market === 'USA' ? 'USD' : 'kr';
                 const statusConfig: Record<string, { className: string; label: string }> = {
                   BUY: { className: 'badge-buy', label: 'KJØP' },
                   HOLD: { className: 'badge-watch', label: 'WATCH' },
@@ -1023,7 +1023,7 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
                     {/* Price */}
                     <div className="flex flex-col justify-center">
                       <div className="text-sm font-bold text-foreground">
-                        {stock.market === 'USA' ? '$' : ''}{stock.price.toFixed(2)}{stock.market !== 'USA' ? ' kr' : ''}
+                        {stock.price.toFixed(2)} {currency}
                       </div>
                       <div className={clsx('text-[10px] font-semibold', priceChangeColor)}>
                         {stock.changePercent > 0 ? '+' : ''}{stock.changePercent.toFixed(1)}%
@@ -1061,7 +1061,7 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
                     <div className="flex flex-col pl-10">
                       {/* Gevinst | Ratio | Risiko - above */}
                       <div className="flex items-center justify-between text-[10px]">
-                        <span className="text-brand-emerald font-semibold">+{currency === '$' ? '$' : ''}{stock.gainKr.toFixed(0)}{currency !== '$' ? currency : ''}</span>
+                        <span className="text-brand-emerald font-semibold">+{stock.gainKr.toFixed(0)} {currency}</span>
                         <span className={clsx(
                           'font-bold',
                           ratioValue >= 2 ? 'text-brand-emerald' : 
@@ -1069,7 +1069,7 @@ export default function DashboardContent({ initialStocks, onRefresh, isRefreshin
                         )}>
                           {ratioDisplay}
                         </span>
-                        <span className="text-brand-rose font-semibold">-{currency === '$' ? '$' : ''}{stock.riskKr.toFixed(0)}{currency !== '$' ? currency : ''}</span>
+                        <span className="text-brand-rose font-semibold">-{stock.riskKr.toFixed(0)} {currency}</span>
                       </div>
                       {/* R/R bar */}
                       <div className="w-full h-2 bg-muted rounded-full overflow-hidden flex mt-0.5">

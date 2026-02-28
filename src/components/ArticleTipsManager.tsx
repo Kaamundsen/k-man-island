@@ -310,6 +310,73 @@ export default function ArticleTipsManager() {
   );
 }
 
+// ============ Kjente tickers for søk ============
+const COMMON_TICKERS: Record<string, { ticker: string; name: string }> = {
+  'ORKLA': { ticker: 'ORK', name: 'Orkla' },
+  'ORK': { ticker: 'ORK', name: 'Orkla' },
+  'EQUINOR': { ticker: 'EQNR', name: 'Equinor' },
+  'EQNR': { ticker: 'EQNR', name: 'Equinor' },
+  'DNB': { ticker: 'DNB', name: 'DNB' },
+  'NORSK HYDRO': { ticker: 'NHY', name: 'Norsk Hydro' },
+  'NHY': { ticker: 'NHY', name: 'Norsk Hydro' },
+  'HYDRO': { ticker: 'NHY', name: 'Norsk Hydro' },
+  'TELENOR': { ticker: 'TEL', name: 'Telenor' },
+  'TEL': { ticker: 'TEL', name: 'Telenor' },
+  'MOWI': { ticker: 'MOWI', name: 'Mowi' },
+  'YARA': { ticker: 'YAR', name: 'Yara' },
+  'YAR': { ticker: 'YAR', name: 'Yara' },
+  'AKER': { ticker: 'AKER', name: 'Aker' },
+  'AKER BP': { ticker: 'AKRBP', name: 'Aker BP' },
+  'AKRBP': { ticker: 'AKRBP', name: 'Aker BP' },
+  'FRONTLINE': { ticker: 'FRO', name: 'Frontline' },
+  'FRO': { ticker: 'FRO', name: 'Frontline' },
+  'KONGSBERG': { ticker: 'KOG', name: 'Kongsberg Gruppen' },
+  'KOG': { ticker: 'KOG', name: 'Kongsberg Gruppen' },
+  'VOW': { ticker: 'VOW', name: 'Vow' },
+  'KITRON': { ticker: 'KIT', name: 'Kitron' },
+  'KIT': { ticker: 'KIT', name: 'Kitron' },
+  'NEL': { ticker: 'NEL', name: 'Nel' },
+  'SALMAR': { ticker: 'SALM', name: 'SalMar' },
+  'SALM': { ticker: 'SALM', name: 'SalMar' },
+  'TOMRA': { ticker: 'TOM', name: 'Tomra' },
+  'TOM': { ticker: 'TOM', name: 'Tomra' },
+  'SCATEC': { ticker: 'SCATC', name: 'Scatec' },
+  'SCATC': { ticker: 'SCATC', name: 'Scatec' },
+  'STOREBRAND': { ticker: 'STB', name: 'Storebrand' },
+  'STB': { ticker: 'STB', name: 'Storebrand' },
+  'GJENSIDIGE': { ticker: 'GJF', name: 'Gjensidige' },
+  'GJF': { ticker: 'GJF', name: 'Gjensidige' },
+  'VÅR ENERGI': { ticker: 'VAR', name: 'Vår Energi' },
+  'VAR': { ticker: 'VAR', name: 'Vår Energi' },
+  'HAFNIA': { ticker: 'HAFNI', name: 'Hafnia' },
+  'HAFNI': { ticker: 'HAFNI', name: 'Hafnia' },
+  'AUTOSTORE': { ticker: 'AUTO', name: 'AutoStore' },
+  'AUTO': { ticker: 'AUTO', name: 'AutoStore' },
+  'NORDIC SEMICONDUCTOR': { ticker: 'NOD', name: 'Nordic Semiconductor' },
+  'NOD': { ticker: 'NOD', name: 'Nordic Semiconductor' },
+  'LERØY': { ticker: 'LSG', name: 'Lerøy Seafood' },
+  'LSG': { ticker: 'LSG', name: 'Lerøy Seafood' },
+  'BAKKAFROST': { ticker: 'BAKKA', name: 'Bakkafrost' },
+  'BAKKA': { ticker: 'BAKKA', name: 'Bakkafrost' },
+  'SATS': { ticker: 'SATS', name: 'Sats' },
+  'PROTECTOR': { ticker: 'PROT', name: 'Protector Forsikring' },
+  'PROT': { ticker: 'PROT', name: 'Protector Forsikring' },
+  // US stocks
+  'APPLE': { ticker: 'AAPL', name: 'Apple' },
+  'AAPL': { ticker: 'AAPL', name: 'Apple' },
+  'MICROSOFT': { ticker: 'MSFT', name: 'Microsoft' },
+  'MSFT': { ticker: 'MSFT', name: 'Microsoft' },
+  'NVIDIA': { ticker: 'NVDA', name: 'NVIDIA' },
+  'NVDA': { ticker: 'NVDA', name: 'NVIDIA' },
+  'TESLA': { ticker: 'TSLA', name: 'Tesla' },
+  'TSLA': { ticker: 'TSLA', name: 'Tesla' },
+  'META': { ticker: 'META', name: 'Meta Platforms' },
+  'AMAZON': { ticker: 'AMZN', name: 'Amazon' },
+  'AMZN': { ticker: 'AMZN', name: 'Amazon' },
+  'GOOGLE': { ticker: 'GOOGL', name: 'Alphabet' },
+  'GOOGL': { ticker: 'GOOGL', name: 'Alphabet' },
+};
+
 // ============ Add/Edit Article Modal ============
 
 function AddArticleModal({ 
@@ -335,6 +402,64 @@ function AddArticleModal({
     tags: editArticle?.tags.join(', ') || '',
     mentions: existingMentions,
   });
+
+  // 🆕 Aksje-søk state
+  const [stockSearch, setStockSearch] = useState('');
+  const [searchResults, setSearchResults] = useState<Array<{ticker: string; name: string}>>([]);
+
+  const handleStockSearch = (query: string) => {
+    setStockSearch(query);
+    if (query.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    
+    const queryUpper = query.toUpperCase();
+    const queryLower = query.toLowerCase();
+    const results: Array<{ticker: string; name: string}> = [];
+    const seenTickers = new Set<string>();
+    
+    for (const [keyword, stock] of Object.entries(COMMON_TICKERS)) {
+      if (seenTickers.has(stock.ticker)) continue;
+      if (keyword.toUpperCase().includes(queryUpper) || 
+          stock.name.toLowerCase().includes(queryLower) ||
+          stock.ticker.includes(queryUpper)) {
+        results.push(stock);
+        seenTickers.add(stock.ticker);
+      }
+      if (results.length >= 6) break;
+    }
+    setSearchResults(results);
+  };
+
+  const addStockToMentions = (stock: {ticker: string; name: string}) => {
+    const currentMentions = formData.mentions.trim();
+    const newLine = `${stock.ticker}: `;
+    const newMentions = currentMentions 
+      ? `${currentMentions}\n${newLine}`
+      : newLine;
+    setFormData(f => ({ ...f, mentions: newMentions }));
+    setStockSearch('');
+    setSearchResults([]);
+  };
+
+  const addCustomStock = () => {
+    const query = stockSearch.trim().toUpperCase();
+    if (query.length < 2) return;
+    
+    // Check if already in mentions
+    if (formData.mentions.toUpperCase().includes(query)) {
+      setStockSearch('');
+      return;
+    }
+    
+    const found = COMMON_TICKERS[query];
+    if (found) {
+      addStockToMentions(found);
+    } else {
+      addStockToMentions({ ticker: query, name: query });
+    }
+  };
 
   const handleSubmit = () => {
     // Parse mentions
@@ -468,8 +593,58 @@ function AddArticleModal({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-dark-text mb-1">
-              Aksjer nevnt (én per linje: TICKER: highlight)
+              Aksjer nevnt
             </label>
+            
+            {/* 🆕 Aksje-søk */}
+            <div className="mb-2 relative">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={stockSearch}
+                  onChange={(e) => handleStockSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (searchResults.length > 0) {
+                        addStockToMentions(searchResults[0]);
+                      } else {
+                        addCustomStock();
+                      }
+                    }
+                  }}
+                  placeholder="Søk etter aksje å legge til..."
+                  className="flex-1 px-3 py-1.5 text-sm border border-gray-300 dark:border-dark-border rounded-lg bg-white dark:bg-dark-bg text-brand-slate dark:text-white"
+                />
+                <button
+                  type="button"
+                  onClick={addCustomStock}
+                  disabled={stockSearch.length < 2}
+                  className="px-3 py-1.5 text-sm bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 
+                             rounded-lg hover:bg-emerald-200 dark:hover:bg-emerald-900/50 disabled:opacity-50 font-medium"
+                >
+                  + Legg til
+                </button>
+              </div>
+              
+              {/* Søkeresultater */}
+              {searchResults.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                  {searchResults.map((stock) => (
+                    <button
+                      key={stock.ticker}
+                      type="button"
+                      onClick={() => addStockToMentions(stock)}
+                      className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-dark-bg flex items-center justify-between text-sm"
+                    >
+                      <span className="font-medium text-brand-slate dark:text-white">{stock.name}</span>
+                      <span className="text-gray-500 dark:text-gray-400 text-xs">{stock.ticker}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            
             <textarea
               value={formData.mentions}
               onChange={(e) => setFormData(f => ({ ...f, mentions: e.target.value }))}
@@ -478,6 +653,9 @@ function AddArticleModal({
 VOW: 14 innsidekjøp siste 12 mnd
 KITRON: Maksimalt positiv på innsiderangering"
             />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Skriv én aksje per linje. Format: TICKER: kommentar
+            </p>
           </div>
         </div>
 

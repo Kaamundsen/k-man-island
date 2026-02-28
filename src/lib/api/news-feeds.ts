@@ -68,11 +68,16 @@ export const RSS_FEEDS = {
   E24_BORS: 'https://e24.no/rss2/?seksjon=boers-og-finans',
   E24_NYHETER: 'https://e24.no/rss2/',
   
-  // DN - Krever ofte innlogging, men RSS er ofte tilgjengelig
-  DN_BORS: 'https://www.dn.no/rss/bors',
+  // DN - Oppdatert til korrekt API-URL (services.dn.no)
+  DN_ALL: 'https://services.dn.no/api/feed/rss/',
+  DN_BORS: 'https://services.dn.no/api/feed/rss/?category=B%C3%B8rs',
+  DN_FINANS: 'https://services.dn.no/api/feed/rss/?category=Finans',
   
-  // Finansavisen
-  FINANSAVISEN: 'https://finansavisen.no/rss',
+  // Investornytt
+  INVESTORNYTT: 'https://www.investornytt.no/feed/',
+  
+  // Finansavisen - Har ikke offentlig RSS-feed
+  // Bruk kun eksterne lenker
   
   // Google News - Kan filtreres på søkeord
   GOOGLE_NEWS: (query: string) => 
