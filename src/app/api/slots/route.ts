@@ -5,11 +5,13 @@
  * POST /api/slots       → create new slot from a signal
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase/client';
+import { getSupabase } from '@/lib/supabase/client';
 
 export async function GET() {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('slots')
     .select('*, trades(*)')
     .eq('status', 'ACTIVE')
@@ -22,7 +24,7 @@ export async function GET() {
   // Enrich with latest price
   const enriched = await Promise.all(
     (data || []).map(async (slot) => {
-      const { data: price } = await supabase
+      const { data: price } = await getSupabase()
         .from('prices_daily')
         .select('close, date')
         .eq('symbol', slot.symbol)
@@ -62,7 +64,7 @@ export async function POST(request: Request) {
   }
 
   // Get signal
-  const { data: signal, error: sigError } = await supabase
+  const { data: signal, error: sigError } = await getSupabase()
     .from('signals')
     .select('*')
     .eq('id', signal_id)
@@ -73,7 +75,7 @@ export async function POST(request: Request) {
   }
 
   // Create trade
-  const { data: trade, error: tradeError } = await supabase
+  const { data: trade, error: tradeError } = await getSupabase()
     .from('trades')
     .insert({
       portfolio_id: null, // Will be set when user picks portfolio
@@ -100,7 +102,7 @@ export async function POST(request: Request) {
   }
 
   // Create slot
-  const { data: slot, error: slotError } = await supabase
+  const { data: slot, error: slotError } = await getSupabase()
     .from('slots')
     .insert({
       trade_id: trade.id,
@@ -125,7 +127,7 @@ export async function POST(request: Request) {
   }
 
   // Mark signal as taken
-  await supabase
+  await getSupabase()
     .from('signals')
     .update({ was_taken: true })
     .eq('id', signal_id);

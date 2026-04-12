@@ -6,15 +6,17 @@
  * GET /api/signals?days=7       → last 7 days
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase/client';
+import { getSupabase } from '@/lib/supabase/client';
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const date = url.searchParams.get('date');
   const days = parseInt(url.searchParams.get('days') || '1');
 
-  let query = supabase
+  let query = getSupabase()
     .from('signals')
     .select('*')
     .order('score', { ascending: false });

@@ -5,7 +5,7 @@
  * Called by cron route with market='OSE' or market='US'.
  */
 
-import { supabase } from '@/lib/supabase/client';
+import { getSupabase } from '@/lib/supabase/client';
 
 interface YahooCandle {
   date: string;
@@ -73,7 +73,7 @@ async function fetchYahooChart(symbol: string, days: number = 30): Promise<Yahoo
  * Get the last stored date for a symbol (to avoid re-fetching)
  */
 async function getLastStoredDate(symbol: string): Promise<string | null> {
-  const { data } = await supabase
+  const { data } = await getSupabase()
     .from('prices_daily')
     .select('date')
     .eq('symbol', symbol)
@@ -95,7 +95,7 @@ export async function fetchPricesForMarket(
   const { fullHistory = false, batchSize = 10 } = options;
 
   // Get active symbols for this market
-  const { data: symbols, error } = await supabase
+  const { data: symbols, error } = await getSupabase()
     .from('universe')
     .select('symbol')
     .eq('market', market)
@@ -166,7 +166,7 @@ export async function fetchPricesForMarket(
           volume: c.volume,
         }));
 
-        const { error: upsertError } = await supabase
+        const { error: upsertError } = await getSupabase()
           .from('prices_daily')
           .upsert(rows, { onConflict: 'symbol,date' });
 

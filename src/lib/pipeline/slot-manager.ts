@@ -12,7 +12,7 @@
  * 5. Hard stop: if close < current_stop → EXIT next open
  */
 
-import { supabase } from '@/lib/supabase/client';
+import { getSupabase } from '@/lib/supabase/client';
 
 export interface SlotAction {
   trade_id: string;
@@ -29,7 +29,7 @@ export interface SlotAction {
  */
 export async function evaluateSlots(): Promise<SlotAction[]> {
   // Get all active slots
-  const { data: slots, error } = await supabase
+  const { data: slots, error } = await getSupabase()
     .from('slots')
     .select('*, trades(*)')
     .eq('status', 'ACTIVE');
@@ -44,7 +44,7 @@ export async function evaluateSlots(): Promise<SlotAction[]> {
     const symbol = slot.symbol;
 
     // Get latest indicator
-    const { data: indicator } = await supabase
+    const { data: indicator } = await getSupabase()
       .from('indicators_daily')
       .select('*')
       .eq('symbol', symbol)
@@ -53,7 +53,7 @@ export async function evaluateSlots(): Promise<SlotAction[]> {
       .single();
 
     // Get latest price
-    const { data: price } = await supabase
+    const { data: price } = await getSupabase()
       .from('prices_daily')
       .select('*')
       .eq('symbol', symbol)
@@ -78,12 +78,12 @@ export async function evaluateSlots(): Promise<SlotAction[]> {
 
     // Update highest price seen
     if (currentClose > (slot.highest_price || 0)) {
-      await supabase
+      await getSupabase()
         .from('slots')
         .update({ highest_price: currentClose, days_held: (slot.days_held || 0) + 1 })
         .eq('id', slot.id);
     } else {
-      await supabase
+      await getSupabase()
         .from('slots')
         .update({ days_held: (slot.days_held || 0) + 1 })
         .eq('id', slot.id);
@@ -101,7 +101,7 @@ export async function evaluateSlots(): Promise<SlotAction[]> {
       });
 
       // Update slot status
-      await supabase
+      await getSupabase()
         .from('slots')
         .update({ status: 'CLOSED' })
         .eq('id', slot.id);
@@ -136,7 +136,7 @@ export async function evaluateSlots(): Promise<SlotAction[]> {
         reason: '+1R target',
       }];
 
-      await supabase
+      await getSupabase()
         .from('slots')
         .update({
           partial_exits: newPartials,
@@ -176,7 +176,7 @@ export async function evaluateSlots(): Promise<SlotAction[]> {
         message: `🟢 ${symbol}: Flytt stop ${currentStop.toFixed(2)} → ${newStop.toFixed(2)} (${slot.trailing_method})`,
       });
 
-      await supabase
+      await getSupabase()
         .from('slots')
         .update({ current_stop: newStop })
         .eq('id', slot.id);

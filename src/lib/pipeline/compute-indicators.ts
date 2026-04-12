@@ -5,7 +5,7 @@
  * Designed to run after fetch-prices in the daily pipeline.
  */
 
-import { supabase } from '@/lib/supabase/client';
+import { getSupabase } from '@/lib/supabase/client';
 
 interface PriceRow {
   date: string;
@@ -121,7 +121,7 @@ export async function computeIndicators(
   if (symbols && symbols.length > 0) {
     targetSymbols = symbols;
   } else {
-    const { data } = await supabase
+    const { data } = await getSupabase()
       .from('universe')
       .select('symbol')
       .eq('is_active', true);
@@ -134,7 +134,7 @@ export async function computeIndicators(
   for (const symbol of targetSymbols) {
     try {
       // Fetch all prices for this symbol (need ~252 days for 52w high/low)
-      const { data: prices, error } = await supabase
+      const { data: prices, error } = await getSupabase()
         .from('prices_daily')
         .select('*')
         .eq('symbol', symbol)
@@ -146,7 +146,7 @@ export async function computeIndicators(
       }
 
       // Get last computed indicator date
-      const { data: lastIndicator } = await supabase
+      const { data: lastIndicator } = await getSupabase()
         .from('indicators_daily')
         .select('date')
         .eq('symbol', symbol)
@@ -235,7 +235,7 @@ export async function computeIndicators(
       }
 
       if (indicators.length > 0) {
-        const { error: upsertError } = await supabase
+        const { error: upsertError } = await getSupabase()
           .from('indicators_daily')
           .upsert(indicators, { onConflict: 'symbol,date' });
 

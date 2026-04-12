@@ -12,7 +12,7 @@
  * 5. SMART_MONEY   — Insider/Teigland buy detected
  */
 
-import { supabase } from '@/lib/supabase/client';
+import { getSupabase } from '@/lib/supabase/client';
 
 export interface ScanResult {
   symbol: string;
@@ -351,7 +351,7 @@ export async function runScanner(
   const targetDate = date || new Date().toISOString().split('T')[0];
 
   // Get portfolio config
-  const { data: configRows } = await supabase
+  const { data: configRows } = await getSupabase()
     .from('portfolio_config')
     .select('key, value')
     .in('key', ['total_capital', 'risk_per_trade_pct']);
@@ -363,7 +363,7 @@ export async function runScanner(
   const totalCapital = config.total_capital || 656000;
 
   // Get all indicators for this date
-  const { data: indicators, error } = await supabase
+  const { data: indicators, error } = await getSupabase()
     .from('indicators_daily')
     .select('*')
     .eq('date', targetDate);
@@ -377,7 +377,7 @@ export async function runScanner(
 
   for (const ind of indicators) {
     // Fetch last 20 price bars for pattern context
-    const { data: prices } = await supabase
+    const { data: prices } = await getSupabase()
       .from('prices_daily')
       .select('*')
       .eq('symbol', ind.symbol)
@@ -443,7 +443,7 @@ export async function runAndStoreSignals(date?: string): Promise<{
     reasons: s.reasons,
   }));
 
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('signals')
     .upsert(rows, { onConflict: 'symbol,date,signal_type' });
 

@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  LayoutDashboard, 
-  Search, 
+import {
+  LayoutDashboard,
+  Search,
   TrendingUp,
   Briefcase,
   FileText,
@@ -16,7 +16,8 @@ import {
   Settings2,
   Settings,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Radar
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useState } from 'react';
@@ -24,6 +25,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { name: 'Scanner', href: '/scanner', icon: Radar },
   { name: 'Portefølje', href: '/portefolje', icon: Briefcase },
   { name: 'Rapport', href: '/rapport', icon: FileText },
   { name: 'Markedsskanner', href: '/markedsskanner', icon: Search },

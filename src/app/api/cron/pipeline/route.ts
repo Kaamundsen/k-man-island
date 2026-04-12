@@ -12,6 +12,8 @@
  * OR ?manual=true for dashboard-triggered runs (rate limited).
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 import { fetchPricesForMarket } from '@/lib/pipeline/fetch-prices';
 import { computeIndicators } from '@/lib/pipeline/compute-indicators';

@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import DashboardClient from '@/components/DashboardClient';
+import DashboardContent from '@/components/DashboardContent';
 import { fetchAllStocksWithKMomentum, fetchLiveStockData } from '@/lib/api/stock-data';
 import { mockStocks } from '@/lib/mock-data';
 
@@ -60,7 +60,7 @@ export default async function Home() {
 
   return (
     <Suspense fallback={<DashboardLoading />}>
-      <DashboardClient initialStocks={stocks} initialTimestamp={timestamp} />
+      <DashboardContent initialStocks={stocks} lastUpdated={timestamp} />
     </Suspense>
   );
 }
