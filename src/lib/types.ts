@@ -26,6 +26,10 @@ export interface Stock {
   sector?: string;
   marketCap?: number;
   dividendYield?: number;
+  // Data quality flags
+  dataSource?: 'yahoo' | 'finnhub' | 'fallback';
+  historyDays?: number;
+  insufficientHistory?: boolean;
 }
 
 export interface Trade {

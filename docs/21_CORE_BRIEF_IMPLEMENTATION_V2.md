@@ -1,153 +1,203 @@
 # 21_CORE_BRIEF_IMPLEMENTATION_V2
 
-## Formål
-Generere en daglig **CORE Brief** som er:
-- tekstlig
-- kort (30–60 sek)
-- én kilde til sannhet for CORE
-- tydelig prioritert rekkefølge på handlinger
+## Status: Implemented
+Date: 2026-01-19
 
-Input er kun CORE pipeline (CORE_ENGINE + SLOT_MANAGER + ACTION_ENGINE).
-Ingen UI-regler. Ingen strategi-miks.
+## Overview
+Documents Core Brief implementation per 14_CORE_BRIEF_V2.md.
 
 ---
 
-## 1) Inputs
-CORE Brief bygges av:
+## File Locations
 
-- `asOfDate`
-- `slotSummary`
-  - `maxSlots`
-  - `activeCount`
-  - `openSlots`
-- `activeTrades[]` (CORE only)
-  - symbol, profile, entry, stop (nåværende), status
-- `decisions[]` (fra Action Engine, CORE only)
-  - ENTER / HOLD / MOVE_STOP / EXIT
-  - priority
-  - reasons[]
-  - params (newStop, entryPlan)
+### V2 Core Brief Renderer
+`src/v2/core/core-brief/index.ts`
 
-**Regel:** Hvis CORE ikke kan kjøres (datafeil), må brief fortsatt returneres med tydelig status.
+### Rapport Page (UI)
+`src/app/rapport/page.tsx`
 
 ---
 
-## 2) Output format (markdown string)
-Brief skal alltid produseres i samme struktur:
+## V2 Text Renderer
 
-1) Header (dato + status)
-2) Slots (kapasitet)
-3) ACTIONS (prioritert)
-4) Active CORE trades (kort status)
-5) Blocked / Watch (kun hvis relevant)
-6) Notes (maks 3 linje# 3) Header
-Format:
-- `# CORE BRIEF — YYYY-MM-DD`
-- `Status: OK | PARTIAL_DATA | NO_DATA`
+```typescript
+export function renderCoreBrief(asOfDate: string, decisions: CoreDecision[]): string {
+  const lines: string[] = [];
+  lines.push(`# CORE BRIEF — ${asOfDate}`);
+  lines.push("");
 
-Regler:
-- `OK` når alle nødvendige symboler/trades ble evaluert
-- `PARTIAL_DATA` når noen mangler data (list hvilke)
-- `NO_DATA` når pipeline ikke kunne kjøres
+  const groups: Record<string, CoreDecision[]> = {
+    EXIT: [],
+    MOVE_STOP: [],
+    ENTER: [],
+    HOLD: [],
+  };
 
----
+  for (const d of decisions) groups[d.action].push(d);
 
-## 4) Slots-seksjon
-Kort og alltid med:
+  const order: Array<keyof typeof groups> = ["EXIT", "MOVE_STOP", "ENTER", "HOLD"];
 
-- `Slots: X/Y active (Z open)`
-- Hvis `openSlots == 0`: skriv `CORE FULL`
+  for (const key of order) {
+    const arr = groups[key];
+    if (!arr.length) continue;
+    lines.push(`## ${key}`);
+    for (const d of arr) {
+      const reasons = d.reasons?.length ? ` — ${d.reasons.slice(0, 3).join(", ")}` : "";
+      lines.push(`- [${d.action}] ${d.symbol}${reasons}`);
+    }
+    lines.push("");
+  }
 
-Eksempel:
-- `Slots: 4/5 active (1 open)`
-- `Slots: 5/5 active (0 open) — CORE FULL`
-
----
-
-## 5) ACTIONS (prioritert rekkefølge)
-Brief skal gruppere actions i denne rekkefølgen:
-
-1) **EXIT** (HIGH → MED)
-2) **MOVE_STOP** (HIGH → MED)
-3) **ENTER** (HIGH → MED) (maks 1–2)
-4) **HOLD** (valgfritt å liste alle; kan oppsummeres)
-
-### 5.1 Presentasjon per action-linje
-Format pr linje:
-- `- [ACTION] SYMBOL (PROFILE) — short reason(s)`
-
-MOVE_STOP inkluderer ny stop:
-- `- [MOVE_STOP] EQNR (TREND) — newS, TREND_STRONG`
-
-ENTER inkluderer entryPlan (minimalt):
-- `- [ENTER] NHY (ASYM) — entry: NEXT_OPEN — stop: 92.4 — ASYM_SETUP, RISK_GOOD`
-
-EXIT inkluderer exitReason:
-- `- [EXIT] VAR (TREND) — STOP_HIT`
-
-**Regel:** maks 6 reasons total per linje (helst 2–3).
+  return lines.join("\n");
+}
+```
 
 ---
 
-## 6) Active CORE trades (kort statusliste)
-Denne seksjonen skal gi deg rask oversikt uten støy.
+## UI Implementation
 
-Format:
-- `## Active CORE Trades`
-- `- SYMBOL (PROFILE) — entry: X — stop: Y — status: HOLD|PROTECT|WEAK`
+### Data Structure
 
-Status kan avledes fra beslutning:
-- EXIT → `WEAK`
-- MOVE_STOP → `PROTECT`
-- HOLD → `HOLD`
-
----
-
-## 7) Blocked / Watch (kun ved behov)
-Vis kun hvis:
-- `openSlots == 0` og det finnes sterke ENTER-kandidater
-- eller hvis Action Engine har “blocked candidates”
-
-Format:
-- `## Blocked (CORE FULL)`
-- `- SYMBOL (TREND) — score: 84 — waiting for slot`
-
----
-
-## 8) Error/partial-data håndtering
-Hvis `PARTIAL_DATA`:
-- list symbols som manglet data i en egen linje:
-  Hvis `NO_DATA`:
-- brief skal fortsatt gi:
-  - dato
-  - status
-  - kort “no actions generated”
-  - og en enkel anbefaling: “rerun later”
-
-Ingen lange feilmeldinger i brief.
+```typescript
+interface CoreBriefData {
+  asOfDate: string;
+  coreStatus: {
+    slotsUsed: number;
+    maxSlots: number;
+    trendCount: number;
+    asymCount: number;
+    openSlots: number;
+  };
+  actions: {
+    exits: Array<{ ticker: string; reason: string }>;
+    moveStops: Array<{ ticker: string; action: string }>;
+    enters: Array<{ ticker: string; profile: string; rr: number }>;
+    holds: Array<{ ticker: string; note: string }>;
+  };
+  candidates: Array<{ 
+    ticker: string; 
+    profile: string; 
+    score: number; 
+    blockedReason?: string 
+  }>;
+  riskCheck: {
+    maxRiskPerTrade: boolean;
+    totalExposure: boolean;
+    overtrading: boolean;
+  };
+}
+```
 
 ---
 
-## 9) Determinisme
-Regler:
-- Samme inputs → samme brief
-- Brief rekkefølge er stabil:
-  - sortér per action group på `priority desc`, deretter `softScore desc` (hvis tilgjengelig), deretter symbol
+## Brief Structure (per V2 spec)
+
+### 1. CORE STATUS
+- Slots used / max (e.g., "3 / 5")
+- Profile mix (TREND: 2, ASYM: 1)
+- Open slots
+- New qualified candidates today
+
+### 2. TODAY'S ACTIONS (most important)
+Actions in priority order:
+- **EXIT** (red) - Stop triggered, target hit
+- **MOVE_STOP** (amber) - Risk reduction
+- **ENTER** (green) - New positions
+
+If no actions: "Ingen aktive handlinger i dag."
+
+### 3. HOLD OVERVIEW
+Trades with no action needed:
+- Ticker + note ("God fremgang" / "Plan intakt")
+
+### 4. NEW CANDIDATES
+Stocks that qualify for CORE but can't enter:
+- Blocked reason if slots full
+
+### 5. RISK & DISCIPLINE CHECK
+Three checkmarks:
+- Max risk per trade: OK/Warning
+- Total exposure: OK/Warning  
+- Overtrading: OK/Warning
+
+### 6. DAILY MANTRA
+> "I dag skal jeg kun gjøre det Core Brief sier."
 
 ---
 
-## 10) Done-kriterier for 21
-21 er ferdig når:
-- Brief format er fast og konsekvent
-- Prioritet og grouping følger Action Engine
-- Brief er lesbar på 30–60 sek
-- Den tåler partial/no data uten å knekke
+## Visual Design
+
+```jsx
+// Core Brief Section (emerald theme)
+<div className="bg-gradient-to-br from-emerald-900 to-emerald-950">
+  {/* Header with slot indicator */}
+  <span className="bg-emerald-800 text-emerald-200 rounded-full">
+    {slotsUsed} / {maxSlots} slots
+  </span>
+  
+  {/* Status grid */}
+  <div className="grid grid-cols-4 gap-4">
+    <div>Aktive slots</div>
+    <div className="text-emerald-400">TREND</div>
+    <div className="text-amber-400">ASYM</div>
+    <div>Ledige</div>
+  </div>
+  
+  {/* Actions with color coding */}
+  <div className="bg-red-900/30">EXIT</div>
+  <div className="bg-amber-900/30">MOVE STOP</div>
+  <div className="bg-emerald-900/30">ENTER</div>
+</div>
+```
 
 ---
 
-## Neste dokument (22)
-**22_UI_SEPARATION_AND_SCOREBOARDS_V2**
-- CORE-board (default)
-- SWING/DAYTRADE/TRACKERS boards
-- null strategimiks
+## Action Labels (V2 compliant)
 
+| Old Label | New Label | Color |
+|-----------|-----------|-------|
+| STRONG_SELL | EXIT | Red |
+| SELL | EXIT | Red |
+| - | MOVE_STOP | Amber |
+| BUY, STRONG_BUY | ENTER | Green |
+| HOLD | HOLD | Yellow |
+
+---
+
+## Slot Manager Integration
+
+```typescript
+const maxSlots = getMaxCoreSlots(); // 5
+
+// Over-slot warning
+{summary.totalTrades > maxSlots && (
+  <div className="bg-amber-50 border border-amber-200">
+    Over CORE-grense: {totalTrades} trades aktive, 
+    maks {maxSlots} anbefalt
+  </div>
+)}
+```
+
+---
+
+## Key Principles (from 14_CORE_BRIEF_V2.md)
+
+1. **Readable in 30-60 seconds**
+2. **Actions only, no analysis**
+3. **Never contradicts Action Engine**
+4. **Max 1-2 ENTER per day**
+5. **No news, graphs, or "maybe"**
+
+---
+
+## Portfolio Review Section
+
+Below Core Brief, the rapport shows:
+- Quick summary cards (trades, P/L, action count, win rate)
+- Slot warning if over limit
+- Recommendation breakdown
+
+Actions are labeled with V2 terminology:
+- EXIT (was SELL)
+- ENTER (was BUY)
+- HOLD (unchanged)

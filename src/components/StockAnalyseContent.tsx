@@ -1,14 +1,34 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Stock } from '@/lib/types';
 import PriceChart from '@/components/PriceChart';
 import TradePlanCard from '@/components/TradePlanCard';
 import NewsWidget from '@/components/NewsWidget';
 import InsiderAlert from '@/components/InsiderAlert';
-import { ArrowLeft, TrendingUp, TrendingDown, AlertCircle, Zap, Shield } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, AlertCircle, Zap, Shield, Loader2 } from 'lucide-react';
 import { clsx } from 'clsx';
+
+interface ChartCandle {
+  date: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
+interface ChartData {
+  ticker: string;
+  source: 'yahoo' | 'finnhub' | 'fallback' | 'error';
+  candles: ChartCandle[];
+  count: number;
+  totalAvailable: number;
+  lastUpdated: string;
+  insufficientHistory: boolean;
+  error?: string;
+}
 
 interface StockAnalyseContentProps {
   stock: Stock;
@@ -18,25 +38,43 @@ interface StockAnalyseContentProps {
 export default function StockAnalyseContent({ stock, allStocks }: StockAnalyseContentProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'chart' | 'plan' | 'insider' | 'news'>('chart');
+  const [chartData, setChartData] = useState<ChartData | null>(null);
+  const [chartLoading, setChartLoading] = useState(true);
+  const [chartError, setChartError] = useState<string | null>(null);
 
-  // Generate mock price data for chart
-  const priceData = useMemo(() => {
-    const data = [];
-    const days = 90;
-    const basePrice = stock.price;
-    
-    for (let i = days; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      const variation = (Math.random() - 0.5) * (basePrice * 0.15);
-      data.push({
-        date: date.toLocaleDateString('nb-NO', { day: '2-digit', month: 'short' }),
-        price: Number((basePrice + variation).toFixed(2))
-      });
+  // Fetch real historical data from API
+  useEffect(() => {
+    async function loadChartData() {
+      setChartLoading(true);
+      setChartError(null);
+      
+      try {
+        const response = await fetch(`/api/chart/${stock.ticker}?days=180`);
+        const data: ChartData = await response.json();
+        
+        if (data.candles && data.candles.length > 0) {
+          setChartData(data);
+        } else if (data.error) {
+          setChartError(data.error);
+        } else {
+          setChartError('Ingen historisk data tilgjengelig');
+        }
+      } catch (err) {
+        console.error('Failed to load chart data:', err);
+        setChartError('Kunne ikke laste graf-data');
+      } finally {
+        setChartLoading(false);
+      }
     }
     
-    return data;
-  }, [stock.price]);
+    loadChartData();
+  }, [stock.ticker]);
+
+  // Transform candle data for chart component
+  const priceData = chartData?.candles.map(candle => ({
+    date: new Date(candle.date).toLocaleDateString('nb-NO', { day: '2-digit', month: 'short' }),
+    price: candle.close,
+  })) || [];
 
   const tickerShort = stock.ticker.replace('.OL', '');
   const isPositive = stock.changePercent >= 0;
@@ -186,17 +224,80 @@ export default function StockAnalyseContent({ stock, allStocks }: StockAnalyseCo
         <div className="lg:col-span-2">
           {activeTab === 'chart' && (
             <div className="space-y-6">
-              <PriceChart 
-                data={priceData}
-                target={stock.target}
-                stopLoss={stock.stopLoss}
-                currentPrice={stock.price}
-              />
+              {/* Data Source Warning */}
+              {chartData && (
+                <div className={clsx(
+                  'rounded-xl p-3 text-sm',
+                  chartData.source === 'yahoo' ? 'bg-green-50 text-green-800' :
+                  chartData.source === 'finnhub' ? 'bg-blue-50 text-blue-800' :
+                  'bg-amber-50 text-amber-800'
+                )}>
+                  <div className="flex items-center justify-between">
+                    <span>
+                      <strong>Datakilde:</strong> {chartData.source === 'yahoo' ? 'Yahoo Finance' : 
+                        chartData.source === 'finnhub' ? 'Finnhub' : 'Fallback'}
+                      {' | '}{chartData.count} dager
+                    </span>
+                    {chartData.insufficientHistory && (
+                      <span className="flex items-center gap-1 text-amber-600 font-medium">
+                        <AlertCircle className="w-4 h-4" />
+                        Utilstrekkelig historikk for full analyse
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {/* Loading State */}
+              {chartLoading && (
+                <div className="bg-surface rounded-2xl p-12 border border-surface-border flex items-center justify-center">
+                  <Loader2 className="w-8 h-8 animate-spin text-brand-emerald" />
+                  <span className="ml-3 text-gray-600">Laster historisk data...</span>
+                </div>
+              )}
+              
+              {/* Error State */}
+              {chartError && !chartLoading && (
+                <div className="bg-red-50 border border-red-200 rounded-2xl p-6">
+                  <div className="flex items-center gap-2 text-red-800">
+                    <AlertCircle className="w-5 h-5" />
+                    <span className="font-medium">{chartError}</span>
+                  </div>
+                  <p className="text-sm text-red-600 mt-2">
+                    Grafen kan ikke vises uten historisk data. Strategisignaler kan være upålitelige.
+                  </p>
+                </div>
+              )}
+              
+              {/* Chart */}
+              {!chartLoading && !chartError && priceData.length > 0 && (
+                <PriceChart 
+                  data={priceData}
+                  target={stock.target}
+                  stopLoss={stock.stopLoss}
+                  currentPrice={stock.price}
+                />
+              )}
               
               <div className="bg-surface rounded-2xl p-6 border border-surface-border">
                 <h3 className="text-xl font-bold text-brand-slate mb-4">🔍 Teknisk Analyse</h3>
                 
-                {stock.signal === 'BUY' && (
+                {/* Insufficient History Warning */}
+                {chartData?.insufficientHistory && (
+                  <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-4 mb-4">
+                    <h4 className="font-bold text-amber-800 mb-2 flex items-center gap-2">
+                      <AlertCircle className="w-5 h-5" />
+                      Begrenset Analyse
+                    </h4>
+                    <p className="text-sm text-amber-700">
+                      Kun {chartData.count} dager med historikk tilgjengelig (anbefalt: 500+ dager).
+                      Signaler og K-Score kan være mindre pålitelige.
+                    </p>
+                  </div>
+                )}
+                
+                {/* BUY with sufficient history */}
+                {stock.signal === 'BUY' && !chartData?.insufficientHistory && (
                   <div className="bg-brand-emerald/10 border-2 border-brand-emerald rounded-xl p-4">
                     <h4 className="font-bold text-brand-emerald mb-2 flex items-center gap-2">
                       <span className="text-2xl">✓</span>
@@ -206,6 +307,20 @@ export default function StockAnalyseContent({ stock, allStocks }: StockAnalyseCo
                       Aksjen oppfyller alle kriterier for et kjøpssignal. K-Score på {stock.kScore} 
                       indikerer god momentum og teknisk styrke. Pris er over viktige glidende gjennomsnitt 
                       og RSI viser rom for oppside.
+                    </p>
+                  </div>
+                )}
+                
+                {/* BUY with INSUFFICIENT history - show warning */}
+                {stock.signal === 'BUY' && chartData?.insufficientHistory && (
+                  <div className="bg-amber-50 border-2 border-amber-400 rounded-xl p-4">
+                    <h4 className="font-bold text-amber-700 mb-2 flex items-center gap-2">
+                      <AlertCircle className="w-5 h-5" />
+                      Mulig Kjøpssignal - Begrenset Data
+                    </h4>
+                    <p className="text-sm text-amber-800 leading-relaxed">
+                      Tekniske indikatorer antyder et kjøpssignal, men analysen er basert på kun {chartData.count} dager historikk.
+                      <strong className="block mt-2">Anbefaling: Bekreft signalet med andre kilder før handling.</strong>
                     </p>
                   </div>
                 )}

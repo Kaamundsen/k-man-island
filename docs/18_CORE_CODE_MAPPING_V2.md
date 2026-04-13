@@ -1,216 +1,124 @@
 # 18_CORE_CODE_MAPPING_V2
 
-## Formål
-Mappe V2-kontrakter (11–16) til dagens kodebase slik at vi vet **nøyaktig**:
-- hva som blir CORE (V2)
-- hva som blir adapters
-- hva som blir legacy / Strategy Packs
-- hvilke funksjoner som deprecates (men ikke fjernes ennå)
+## Status: Implemented
+Date: 2026-01-19
 
-Ingen ny strategi. Ingen endring av kontrakter. Kun mapping og isolasjon.
+## Overview
+This document maps the V2 architecture to actual files in `src/`.
 
 ---
 
-## 1) V2-moduler (må opprettes / eies i V2-namespace)
+## CORE Engine Files
 
-### 1.1 CORE_ENGINE (11_CORE_ENGINE_V2)
-**Blir til:**
-- `src/v2/core/core-engine/index.ts`
-- `src/v2/core/core-engine/trend.ts`
-- `src/v2/core/core-engine/asym.ts`
-- `src/v2/core/core-engine/types.ts` (kun CORE internt)
+### Core Engine
+- `src/v2/core/core-engine/index.ts` - Main core engine runner
+- `src/v2/core/core-engine/types.ts` - CoreProfile, CoreEngineOutput types
+- `src/v2/core/core-engine/profiles/trend.ts` - CORE_TREND scoring
+- `src/v2/core/core-engine/profiles/asym.ts` - CORE_ASYM scoring
 
-**Input kommer fra:**
-- `src/v2/adapters/market-data/*`
-- `src/v2/adapters/analysis/*` (hvis dere har ferdig “validated analysis”)
+### Slot Manager
+- `src/v2/core/slot-manager/index.ts` - initSlotManager, getOpenSlots, addSlot
+- `src/v2/core/slot-manager/types.ts` - SlotManagerState, CoreSlot types
+- `src/v2/core/slot-manager/apply-core.ts` - applyCoreOutputsToSlots
 
-**IKKE lov å importere fra:**
-- `src/strategy-packs/**`
-- legacy `calculateCompositeScore`
-- legacy `calculateStrategyScores`
+### Action Engine
+- `src/v2/core/action-engine/index.ts` - decide() function
+- `src/v2/core/action-engine/types.ts` - CoreAction, CoreDecision types
 
----
+### Core Brief
+- `src/v2/core/core-brief/index.ts` - renderCoreBrief()
 
-### 1.2 CORE_SLOT_MANAGER (12_CORE_SLOT_MANAGER_V2)
-**Blir til:**
-- `src/v2/core/slot-manager/index.ts`
-- `src/v2/core/slot-manag`
-- `src/v2/core/slot-manager/types.ts`
-
-**Input kommer fra:**
-- `src/v2/adapters/portfolio/*` (holdings, trades, tags)
-- `src/v2/adapters/storage/*` (persist CORE state)
+### Entry Point
+- `src/v2/core/index.ts` - runV2Core() - full pipeline
 
 ---
 
-### 1.3 ACTION_ENGINE (13_ACTION_ENGINE_V2)
-**Blir til:**
-- `src/v2/core/action-engine/index.ts`
-- `src/v2/core/action-engine/decisions.ts`
-- `src/v2/core/action-engine/types.ts`
+## Strategy Registry
 
-**Input kommer fra:**
-- CORE_ENGINE output
-- SLOT_MANAGER state
-- `src/v2/adapters/portfolio/*` (trade snapshots)
+### Main Registry
+- `src/lib/strategies/registry.ts` - V2-compliant strategy registry
+  - StrategyPackType: CORE | SATELLITE | TRACKER
+  - CoreProfile: CORE_TREND | CORE_ASYM
+  - SatelliteProfile: SWING | REBOUND | DAYTRADER | WEEK_PICK
+  - TrackerProfile: TVEITEREID | BUFFETT | DNB | INVESTTECH
 
----
+### Functions
+- `calculateStrategyScore(stock, profile)` - Strategy-specific scoring
+- `passesStrategyFilters(stock, profile)` - Filter validation
+- `rankByStrategy(stocks, profile)` - Ranked stock list
+- `qualifiesForCore(stock)` - Check CORE eligibility
+- `getMaxCoreSlots()` - Returns 5 (TREND: 3 + ASYM: 2)
 
-### 1.4 CORE_BRIEF (14_CORE_BRIEF_V2)
-**Blir til:**
-- `src/v2/core/core-brief/index.ts`
-- `src/v2/core/core-brief/render.ts`
-- `src/v2/core/core-brief/types.ts`
-
-**Input kommer fra:**
-- Action Engine decisions
-- Slot Manager summary
+### Legacy Strategies
+- `src/lib/strategies/index.ts` - Full strategy definitions
+- Includes: MOMENTUM_TREND, MOMENTUM_ASYM, BUFFETT, TVEITEREID, etc.
+- Evaluator functions for each strategy
 
 ---
 
-## 2) Adapter-lag (kobler dagens system → V2)
+## Data Pipeline
 
-### 2.1 Market Data Adapter (16_DATA_AND_API_REQUIREMENTS_V2)
-**Blir til:**
+### Canonical Stock Data
+- `src/lib/api/stock-data.ts` - **SINGLE SOURCE OF TRUTH**
+  - `fetchLiveStockData(limit?)` - Fetch stock list from Yahoo Finance
+  - `getWatchlist()` - Returns default watchlist symbols
+  - `isMarketOpen()` - Check Oslo market hours
+
+### Single Stock Quotes
+- `src/lib/api/stock-data-v2.ts`
+  - `fetchSingleStockQuote(ticker)` - For detail pages
+
+### K-Momentum (Finnhub)
+- `src/strategy-packs/legacy/api/stock-data-v2.ts`
+  - `fetchAllStocksWithKMomentum()` - Uses Finnhub API
+
+---
+
+## API Routes
+
+### Stock List
+- `src/app/api/stocks/route.ts`
+  - GET /api/stocks?limit=50
+  - Returns: { stocks, timestamp, count }
+
+### Quotes
+- `src/app/api/quotes/route.ts`
+  - GET /api/quotes?tickers=EQNR.OL,DNB.OL
+
+---
+
+## Adapters
+
+### Analysis Adapter
+- `src/v2/adapters/analysis/index.ts`
+- `src/v2/adapters/analysis/legacyIndicators.ts`
+
+### Portfolio Adapter
+- `src/v2/adapters/portfolio/index.ts`
+- `src/v2/adapters/portfolio/legacyPortfolio.ts`
+
+### Market Data Adapter
+- `src/v2/adapters/market-data/index.ts`
 - `src/v2/adapters/market-data/yahooDaily.ts`
-- `src/v2/adapters/market-data/cache.ts`
-- `src/v2/adapters/market-data/types.ts`
-
-**Kobles til eksisterende:**
-- dagens Yahoo fetch / caching / price history funksjoner  
-  (behold implementasjon, men flytt “public API” inn bak adapter)
-
-**Regel:**
-- CORE bruker kun DAILY.
+- `src/v2/adapters/market-data/stooq.ts`
 
 ---
 
-### 2.2 Analysis Adapter (AS-IS analysis → CORE input)
-**Blir til:**
-- `src/v2/adapters/analysis/from-validated-analysis.ts`
-- `src/v2/adapters/analysis/types.ts`
+## UI Components
 
-**Kobles til eksisterende:**
-- `getValidatedAnalysis` (hvis finnes)
-- deler av `calculateTechnicalIndicators` (kun de som produserer grunnlagsfelt)
+### Dashboard
+- `src/app/page.tsx` - Main dashboard page
+- `src/components/DashboardClient.tsx` - Client-side refresh handler
+- `src/components/DashboardContent.tsx` - Dashboard UI with filters
 
-**Viktig:**
-- `BUY/HOLD/SELL` fra legacy er ikke input til CORE.
+### Report
+- `src/app/rapport/page.tsx` - Daily report with Core Brief + Portfolio Review
 
 ---
 
-### 2.3 Portfolio Adapter
-**Blir til:**
-- `src/v2/adapters/portfolio/from-portfolio.ts`
-- `src/v2/adapters/portfolio/types.obles til eksisterende:**
-- portfolio modeller (positions/trades)
-- bulk import
-- trade move/labels
+## Type Definitions
 
----
-
-### 2.4 Storage Adapter (CORE state)
-**Blir til:**
-- `src/v2/adapters/storage/coreStateStore.ts`
-
-**Kobles til eksisterende:**
-- det dere bruker i dag (db/local/json) for å lagre app-state
-- minimum: `coreTrades[]`, `activeSlots`, `lastRunDate`
-
----
-
-## 3) Legacy / Strategy Packs (behold, men isoler)
-
-### 3.1 Strategy Packs (legacy)
-**Flyttes/merkes som:**
-- `src/strategy-packs/legacy/`
-
-**Inneholder fortsatt:**
-- `calculateStrategyScores`
-- K-score
-- daytrade, rebound, trackers (hvis de ligger i samme område)
-
-**Regel:**
-- De kan ha egen UI senere (22), men påvirker ikkORE.
-
----
-
-### 3.2 Deprecate (men ikke fjern)
-**Kandidater (eksempler):**
-- `calculateCompositeScore` som “global dashboard ranking”
-- `BUY/HOLD/SELL` output brukt som global sannhet
-
-**Ny regel:**
-- Dashboard “CORE board” bruker kun CORE pipeline (senere i 22)
-
----
-
-## 4) Eksakt mapping: dagens funksjoner → V2 ansvar
-
-### 4.1 `calculateTechnicalIndicators`
-**Deler gjenbrukes via adapters:**
-- pris/returns/avgDailyMove/sma/rsi/52w-range/volatility (hvis dere har)
-**Deler blir legacy-only:**
-- global BUY/HOLD/SELL
-- target/stop som “global trading truth”
-
-→ Output skal mappes til **CORE input DTO** via `AnalysisAdapter`.
-
----
-
-### 4.2 `calculateStrategyScores`
-**Blir:**
-- `src/strategy-palateStrategyScores.ts`
-
-→ Ikke brukt av CORE.
-
----
-
-### 4.3 K-score
-**Blir:**
-- `src/strategy-packs/legacy/k-score/*`
-
-→ Ikke brukt av CORE.
-
----
-
-### 4.4 `calculateCompositeScore`
-**Blir:**
-- legacy dashboard-sortering for packs
-**CORE får:**
-- egen ranking basert på CORE-kontrakt-output
-
----
-
-## 5) Første PR-plan (kun mapping + isolasjon)
-
-### PR1 — Opprett mapper + flytt/alias legacy
-- opprett `src/v2/**`
-- opprett `src/strategy-packs/legacy/**`
-- legg inn “barrel exports” så gammel import fortsatt virker internt
-
-### PR2 — Adapters scaffolding
-- `market-data` adapter peker på Yahoo funksjoner
-- `analysis` adapter peker på validated analysis / tech indicators
-- `portfolio` adapter peker på portfolio service
-
-**Ingen CORE-logikk i disse PR-ene.**
-
----
-
-## 6) Output fra 18 (Done-kriterier)
-18 er ferdig når vi har:
-- en eksplisitt filstruktur for V2 CORE og V2 adapters
-- en eksplisitt liste over dagens filer/funksjoner som:
-  - flyttes til `strategy-packs/legacy`
-  - brukes kun via adaptmen beholdes)
-- en PR-sekvens som kan merges uten runtime-endring
-
----
-
-## 7) Neste dokument (19)
-**19_CORE_SCORE_IMPLEMENTATION**
-- definere endelig TREND + ASYM scoring
-- hard filters vs soft score
-- terskler for ENTER/EXIT/SLOT-priority
-
+- `src/lib/types.ts` - Stock, Trade, Portfolio, Dividend types
+- `src/v2/core/core-engine/types.ts` - CoreProfile, CoreEngineOutput
+- `src/v2/core/action-engine/types.ts` - CoreAction, CoreDecision
+- `src/v2/core/slot-manager/types.ts` - SlotManagerState, CoreSlot

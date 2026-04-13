@@ -1,152 +1,193 @@
 # 19_CORE_SCORE_IMPLEMENTATION_V2
 
-## Formål
-Definere **én endelig** CORE scoringmodell som brukes av CORE (TREND + ASYM) på en konsistent måte.
-Dette dokumentet beskriver:
-- hard filters vs soft score
-- vekting
-- terskler for ENTER / EXIT / SLOT-priority
-- krav til determinisme og forklarbarhet
+## Status: Implemented
+Date: 2026-01-19
 
-**Viktig**
-- Endrer ikke kontrakter i 11–14
-- Ingen nye strategier
-- Ingen ML / fancy
-- Kun CORE
+## Overview
+Documents how CORE scoring is implemented, aligned with 11_CORE_ENGINE_V2.md.
 
 ---
 
-## 1) Score-ramme (TREND + ASYM)
-CORE-score består av to profiler:
-- **TREND**: kvalitet på trend + robusthet
-- **ASYM**: asymmetrisk payoff / “fat right tail” med kontrollert downside
+## Two-Tier Scoring System
 
-Resultat per kandidat:
-- `profile`: TREND | ASYM | NONE
-- `hardPass`: true/false (må være true for ENTER / slot-opptak)
-- `softScore`: 0–100 (brukes for ranking/prioritet)
-- `reasons[]`: korte forklaringer (maks 6)
+### 1. Strategy Registry Scoring (`src/lib/strategies/registry.ts`)
 
----
+Each strategy profile has configurable weights:
 
-## 2) Hard filters (må passere)
-Hard filters brukes for å sikre at CORE ikke tar “dårlige” trades selv om score er høy.
+```typescript
+scoreWeights: {
+  kScore: number;     // K-Momentum score (0-1)
+  rsi: number;        // RSI (0-1)
+  riskReward: number; // Risk/Reward (0-1)
+  trend: number;      // Trend alignment (0-1)
+  volume: number;     // Volume/liquidity (0-1)
+}
+```
 
-### 2.1 Datakvalitet
-- Daily data komplett (min hist, ingen future bale=NONE`, `hardPass=false`, reason: `INSUFFICIENT_DATA`
+#### CORE_TREND Weights
+- kScore: 0.35
+- rsi: 0.15
+- riskReward: 0.25
+- trend: 0.20
+- volume: 0.05
 
-### 2.2 Likviditet / handelbarhet (enkelt, stabilt)
-- kandidat må være “handelbar” iht. V2 data-krav (16)
-- hvis fail → `hardPass=false`, reason: `NOT_TRADEABLE`
+#### CORE_ASYM Weights
+- kScore: 0.25
+- rsi: 0.10
+- riskReward: 0.40 (highest for asymmetric)
+- trend: 0.15
+- volume: 0.10
 
-### 2.3 Volatilitet / bevegelse (minimum)
-- må ha minimum daglig bevegelse/volatilitet for at stops/targets gir mening
-- hvis fail → `hardPass=false`, reason: `TOO_STATIC`
+### 2. V2 Core Engine Scoring (`src/v2/core/core-engine/profiles/`)
 
-> NB: terskelverdier settes i config (ingen tuning her), men regelen skal finnes.
+#### trend.ts - CORE_TREND Profile
+Hard filters:
+- Price > SMA50
+- SMA50 > SMA200
+- RSI 40-70
+- R/R >= 1.8
 
----
+Soft score components:
+- Trend strength
+- Volume confirmation
+- Distance from 52-week high
 
-## 3) Soft score (0–100)
-Soft score brukes til:
-- ranking av kandidater
-- prioritering når slots er fulle
-- “hvem får ENTER først”
+#### asym.ts - CORE_ASYM Profile
+Hard filters:
+- ATR% >= 3%
+- R/R >= 3.0
 
-### 3.1 Score-komponenter (TREND)
-TREND soft score summerer vektede komponenter:
-- Trend strength (f.eks. pris over relevante MA/ability (lav “whipsaw” / jevnhet)
-- Pullback quality (entry på “ikke-extreme” nivåer)
-- Risk quality (stop-avstand vs forventet move)
-
-### 3.2 Score-komponenter (ASYM)
-ASYM soft score summerer:
-- Asymmetry potential (stor oppside vs kontrollert downside)
-- Compression → expansion signal (stram range før mulig break)
-- Optional catalyst-agnostic momentum (kun price/volume daily)
-- Risk containment (stop kan settes uten å bli “for nær”)
-
----
-
-## 4) Profilvalg (TREND vs ASYM)
-Regler:
-- Kandidat evalueres for begge profiler.
-- Velg profilen med:
-  - `hardPass=true`
-  - høyest `softScore`
-- Hvis ingen hardPass → `profile=NONE`
+Soft score components:
+- Asymmetry potential
+- Breakout proximity
+- Volume spike detection
 
 ---
 
-## 5) Terskler og beslutningsregler
+## Score Calculation Function
 
-### 5.1 ENTER threshold
-ENTER kan kun skje hvis:
-- `hardPass=true`
-- `softScore >= ENTER_MIN`
-- Slot Manager har kapasitet, eller Action Engigjør slot
-
-Output:
-- `action = ENTER`
-- `priority` settes fra score + slot-trykk
-
-### 5.2 EXIT threshold
-EXIT trigges av:
-- Hard exit: stop/invalid state (alltid)
-- Soft exit: score faller under `EXIT_MIN` (bare hvis ikke i “protect mode”)
-
-Output:
-- `action = EXIT`
-
-### 5.3 MOVE_STOP rule
-MOVE_STOP trigges når:
-- trade har oppnådd definert progress (f.eks. +1R eller “structure break”)
-- ny stop er høyere (for long) og gyldig iht. risk rules
-
-Output:
-- `action = MOVE_STOP`
-- `newStop`
-
-### 5.4 SLOT priority
-Når slots er fulle:
-- Slot Manager rangerer:
-  - behold trades med høyest “hold quality”
-  - frigjør trades som bryter exit rules eller lavest score
+```typescript
+export function calculateStrategyScore(stock: Stock, profile: StrategyProfile): number {
+  const config = STRATEGY_REGISTRY[profile];
+  const weights = config.scoreWeights;
+  let score = 0;
+  
+  // K-Score component (0-100)
+  score += stock.kScore * weights.kScore;
+  
+  // RSI component (optimal around 50)
+  const rsiOptimal = 50;
+  const rsiDistance = Math.abs(stock.rsi - rsiOptimal);
+  const rsiScore = Math.max(0, 100 - (rsiDistance * 2));
+  score += rsiScore * weights.rsi;
+  
+  // Risk/Reward component
+  const riskRewardRatio = stock.gainPercent / Math.max(0.1, stock.riskPercent);
+  const rrScore = Math.min(100, riskRewardRatio * 25);
+  score += rrScore * weights.riskReward;
+  
+  // Trend component
+  const trendScore = Math.max(0, Math.min(100, 50 + (stock.changePercent * 10)));
+  score += trendScore * weights.trend;
+  
+  // Volume component
+  score += 70 * weights.volume;
+  
+  return Math.round(Math.min(100, score));
+}
+```
 
 ---
 
-## 6) Forklarbarhet (reasons)
-Krav:
-- Hver score eval skal gi maks 6 grunner.
-- kens, f.eks:
-  - `TREND_STRONG`
-  - `MA_ALIGNMENT`
-  - `LOW_WHIPSAW`
-  - `ASYM_SETUP`
-  - `RISK_GOOD`
-  - `SCORE_DROP`
+## Filter Implementation
 
-Dette er viktig for CORE Brief.
-
----
-
-## 7) Determinisme og caching
-Regler:
-- Samme input (daily data + state) → samme score
-- Ingen tilfeldighet
-- Ingen intraday
-- Cache keyed på: (symbol, asOfDate, profileVersion)
+```typescript
+export function passesStrategyFilters(stock: Stock, profile: StrategyProfile): boolean {
+  const filters = STRATEGY_REGISTRY[profile].filters;
+  
+  if (filters.minKScore && stock.kScore < filters.minKScore) return false;
+  if (filters.maxRsi && stock.rsi > filters.maxRsi) return false;
+  if (filters.minRsi && stock.rsi < filters.minRsi) return false;
+  
+  const rr = stock.gainPercent / Math.max(0.1, stock.riskPercent);
+  if (filters.minRiskReward && rr < filters.minRiskReward) return false;
+  
+  return true;
+}
+```
 
 ---
 
-## 8) Output til neste dokument (20)
-Når 19 er ferdig har vi:
-- definert hard filters
-- definert scorekomponenter (uten tuning)
-- definert terskler (ENTER_MIN, EXIT_MIN) som konfig
-- definert hvordan score styrer slots og actions
+## CORE Qualification Check
 
-Neste:
-**20_ACTION_ENGINE_IMPLEMENTATION_V2**
-- koble CoreScore + Slots → ENTER/HOLD/MOVE_STOP/EXIT decision object
+```typescript
+export function qualifiesForCore(stock: Stock): { 
+  qualifies: boolean; 
+  profile: CoreProfile | null; 
+  score: number 
+} {
+  const trendPasses = passesStrategyFilters(stock, 'CORE_TREND');
+  const asymPasses = passesStrategyFilters(stock, 'CORE_ASYM');
+  
+  if (!trendPasses && !asymPasses) {
+    return { qualifies: false, profile: null, score: 0 };
+  }
+  
+  const trendScore = trendPasses ? calculateStrategyScore(stock, 'CORE_TREND') : 0;
+  const asymScore = asymPasses ? calculateStrategyScore(stock, 'CORE_ASYM') : 0;
+  
+  // Prefer ASYM if score is higher and passes filters
+  if (asymScore > trendScore && asymPasses) {
+    return { qualifies: true, profile: 'CORE_ASYM', score: asymScore };
+  } else if (trendPasses) {
+    return { qualifies: true, profile: 'CORE_TREND', score: trendScore };
+  }
+  
+  return { qualifies: false, profile: null, score: 0 };
+}
+```
 
+---
+
+## Strategy-Specific Filters
+
+| Profile | minKScore | RSI Range | minR/R | Volume |
+|---------|-----------|-----------|--------|--------|
+| CORE_TREND | 70 | 40-65 | 1.8 | - |
+| CORE_ASYM | 65 | <60 | 3.0 | - |
+| SWING | 65 | 35-65 | 1.5 | - |
+| REBOUND | - | <40 | 2.5 | - |
+| DAYTRADER | - | - | - | 10M+ |
+
+---
+
+## Usage in Dashboard
+
+The dashboard uses composite scoring for ranking:
+
+```typescript
+const calculateCompositeScore = (stock: Stock): number => {
+  let score = 0;
+  score += stock.kScore * 0.5;        // K-Score: 50%
+  
+  const rsiOptimal = 50;
+  const rsiDistance = Math.abs(stock.rsi - rsiOptimal);
+  const rsiScore = Math.max(0, 100 - (rsiDistance * 3));
+  score += rsiScore * 0.2;            // RSI: 20%
+  
+  const riskRewardRatio = stock.gainPercent / stock.riskPercent;
+  const rrScore = Math.min(100, riskRewardRatio * 20);
+  score += rrScore * 0.3;             // R/R: 30%
+  
+  return score;
+};
+```
+
+---
+
+## Notes
+
+- CORE_ASYM has stricter R/R requirements (3.0+) but lower K-Score threshold
+- CORE_TREND prioritizes trend confirmation over asymmetric opportunity
+- Satellite strategies have more relaxed filters for learning/comparison
+- Trackers use filters for classification, not recommendation
