@@ -183,20 +183,31 @@ export default function PipelineRunner({ onComplete }: { onComplete?: () => void
     let batchNum = 0;
 
     try {
-      // Phase 1: Load all prices
-      while (!abortRef.current) {
+      // Phase 1: Load all prices (max 100 batches as safety limit)
+      let consecutiveEmpty = 0;
+      while (!abortRef.current && batchNum < 100) {
         batchNum++;
         const data = await callPipeline('prices');
         totalLoaded += data.prices.success;
+        const totalSymbols = data.prices.total || 0;
+        const done = totalSymbols - (data.prices.remaining || 0);
         setBatchProgress({
-          loaded: totalLoaded,
-          total: data.prices.total || totalLoaded + (data.prices.remaining || 0),
+          loaded: done,
+          total: totalSymbols,
           batch: batchNum,
         });
 
-        if (data.prices.success === 0 && data.prices.failed === 0) break;
-        if (data.prices.remaining === 0) break;
-        if (!data.success) break;
+        // Track consecutive batches with no new data loaded
+        if (data.prices.success === 0) {
+          consecutiveEmpty++;
+        } else {
+          consecutiveEmpty = 0;
+        }
+
+        // Stop conditions
+        if (data.prices.remaining === 0) break; // All done
+        if (consecutiveEmpty >= 3) break; // 3 empty batches = stuck, stop
+        if (!data.success) break; // API error
 
         await new Promise(r => setTimeout(r, 300));
       }

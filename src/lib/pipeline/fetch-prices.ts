@@ -2,8 +2,7 @@
  * Price Fetcher — daily OHLCV from Yahoo Finance → Supabase
  *
  * Designed for Vercel serverless (< 10 sec per batch).
- * Called by cron route with market='OSE' or market='US'.
- * Frontend auto-loops until remaining === 0.
+ * Frontend auto-loops: calls this repeatedly until remaining === 0.
  */
 
 import { getSupabase } from '@/lib/supabase/client';
@@ -19,7 +18,6 @@ interface YahooCandle {
 
 /**
  * Fetch OHLCV from Yahoo Finance for a single symbol.
- * Returns last N days of data.
  */
 async function fetchYahooChart(symbol: string, days: number = 30): Promise<YahooCandle[]> {
   const endDate = Math.floor(Date.now() / 1000);
@@ -86,8 +84,23 @@ async function getLastStoredDate(symbol: string): Promise<string | null> {
 }
 
 /**
+ * Get the last trading day (skip weekends).
+ * If today is Saturday, return Friday. If Sunday, return Friday.
+ * If market is closed for holidays we might be off by a day, but that's fine.
+ */
+function getLastTradingDay(): string {
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun, 6=Sat
+
+  if (day === 0) now.setDate(now.getDate() - 2); // Sunday → Friday
+  else if (day === 6) now.setDate(now.getDate() - 1); // Saturday → Friday
+
+  return now.toISOString().split('T')[0];
+}
+
+/**
  * Fetch and store prices for one batch of symbols.
- * Returns total/remaining so frontend can auto-loop.
+ * Returns total/remaining so frontend can auto-loop until done.
  */
 export async function fetchPricesForMarket(
   market: 'OSE' | 'US',
@@ -120,28 +133,32 @@ export async function fetchPricesForMarket(
   let skipped = 0;
   const processedSymbols: string[] = [];
 
-  // Find symbols that need updating
-  const today = new Date().toISOString().split('T')[0];
+  // Use last trading day instead of today (fixes weekend infinite loop)
+  const lastTradingDay = getLastTradingDay();
+
+  // Check ALL symbols to get accurate remaining count
   const needsUpdate: { symbol: string; lastDate: string | null }[] = [];
-  let checkedCount = 0;
 
   for (const { symbol } of symbols) {
-    checkedCount++;
     const lastDate = await getLastStoredDate(symbol);
-    if (lastDate === today && !fullHistory) {
+    // Consider "up to date" if we have data from last trading day or later
+    if (lastDate && lastDate >= lastTradingDay && !fullHistory) {
       skipped++;
     } else {
       needsUpdate.push({ symbol, lastDate });
-      if (needsUpdate.length >= batchSize) break; // Got enough for one batch
     }
   }
 
+  // Take only batchSize from needsUpdate
+  const batch = needsUpdate.slice(0, batchSize);
+  const remaining = needsUpdate.length - batch.length;
+
   // Process this batch
   await Promise.allSettled(
-    needsUpdate.map(async ({ symbol, lastDate }) => {
+    batch.map(async ({ symbol, lastDate }) => {
       let days = 30;
       if (fullHistory || !lastDate) {
-        days = 520;
+        days = 520; // ~2 years for initial load
       } else {
         const lastMs = new Date(lastDate).getTime();
         const nowMs = Date.now();
@@ -152,7 +169,9 @@ export async function fetchPricesForMarket(
       const candles = await fetchYahooChart(symbol, days);
 
       if (candles.length === 0) {
+        // Yahoo returned nothing — mark as failed but don't retry forever
         failed++;
+        console.error(`✗ ${symbol}: no data from Yahoo`);
         return;
       }
 
@@ -161,6 +180,7 @@ export async function fetchPricesForMarket(
         : candles;
 
       if (newCandles.length === 0) {
+        // Already up to date (data just not from "today" which is fine)
         skipped++;
         return;
       }
@@ -189,10 +209,6 @@ export async function fetchPricesForMarket(
       }
     })
   );
-
-  // Estimate remaining (symbols we didn't even check yet + those that need update but weren't in this batch)
-  const unchecked = total - checkedCount;
-  const remaining = unchecked; // Symbols we haven't checked yet
 
   return { success, failed, skipped, total, remaining, symbols: processedSymbols };
 }
