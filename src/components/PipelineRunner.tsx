@@ -46,7 +46,19 @@ export default function PipelineRunner({ onComplete }: { onComplete?: () => void
 
       const res = await fetch(`/api/cron/pipeline?${params}`);
       const data = await res.json();
-      setResult(data);
+
+      // Normalize response — API may return partial data on error/429
+      setResult({
+        success: data.success ?? false,
+        market: data.market ?? market,
+        duration: data.duration ?? '0s',
+        prices: data.prices ?? { success: 0, failed: 0, skipped: 0 },
+        indicators: data.indicators ?? { computed: 0, failed: 0 },
+        signals: data.signals ?? [],
+        slot_actions: data.slot_actions ?? [],
+        log: data.log ?? [],
+        error: data.error,
+      });
 
       if (data.success) {
         onComplete?.();
