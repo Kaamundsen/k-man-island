@@ -3,6 +3,7 @@
  *
  * Designed for Vercel serverless (< 10 sec per batch).
  * Called by cron route with market='OSE' or market='US'.
+ * Frontend auto-loops until remaining === 0.
  */
 
 import { getSupabase } from '@/lib/supabase/client';
@@ -85,13 +86,20 @@ async function getLastStoredDate(symbol: string): Promise<string | null> {
 }
 
 /**
- * Fetch and store prices for all symbols in a market.
- * Processes in batches to stay under Vercel timeout.
+ * Fetch and store prices for one batch of symbols.
+ * Returns total/remaining so frontend can auto-loop.
  */
 export async function fetchPricesForMarket(
   market: 'OSE' | 'US',
   options: { fullHistory?: boolean; batchSize?: number } = {}
-): Promise<{ success: number; failed: number; skipped: number; symbols: string[] }> {
+): Promise<{
+  success: number;
+  failed: number;
+  skipped: number;
+  total: number;
+  remaining: number;
+  symbols: string[];
+}> {
   const { fullHistory = false, batchSize = 10 } = options;
 
   // Get active symbols for this market
@@ -103,40 +111,41 @@ export async function fetchPricesForMarket(
 
   if (error || !symbols) {
     console.error('Failed to fetch universe:', error);
-    return { success: 0, failed: 0, skipped: 0, symbols: [] };
+    return { success: 0, failed: 0, skipped: 0, total: 0, remaining: 0, symbols: [] };
   }
 
+  const total = symbols.length;
   let success = 0;
   let failed = 0;
   let skipped = 0;
   const processedSymbols: string[] = [];
 
-  // First, find symbols that actually need updating (no data or stale)
+  // Find symbols that need updating
   const today = new Date().toISOString().split('T')[0];
   const needsUpdate: { symbol: string; lastDate: string | null }[] = [];
+  let checkedCount = 0;
 
   for (const { symbol } of symbols) {
-    if (needsUpdate.length >= batchSize) break; // Only check enough for one batch
+    checkedCount++;
     const lastDate = await getLastStoredDate(symbol);
     if (lastDate === today && !fullHistory) {
       skipped++;
     } else {
       needsUpdate.push({ symbol, lastDate });
+      if (needsUpdate.length >= batchSize) break; // Got enough for one batch
     }
   }
 
-  // Process only this batch (stays well under Vercel 10s timeout)
-  const results = await Promise.allSettled(
+  // Process this batch
+  await Promise.allSettled(
     needsUpdate.map(async ({ symbol, lastDate }) => {
-      // Determine how many days to fetch
-      let days = 30; // default: last 30 days (incremental)
+      let days = 30;
       if (fullHistory || !lastDate) {
-        days = 520; // ~2 years for full history
+        days = 520;
       } else {
-        // Calculate days since last stored date
         const lastMs = new Date(lastDate).getTime();
         const nowMs = Date.now();
-        days = Math.ceil((nowMs - lastMs) / (24 * 60 * 60 * 1000)) + 5; // +5 buffer
+        days = Math.ceil((nowMs - lastMs) / (24 * 60 * 60 * 1000)) + 5;
         days = Math.min(days, 520);
       }
 
@@ -147,7 +156,6 @@ export async function fetchPricesForMarket(
         return;
       }
 
-      // Filter to only new data if we have existing
       const newCandles = lastDate
         ? candles.filter(c => c.date > lastDate)
         : candles;
@@ -157,7 +165,6 @@ export async function fetchPricesForMarket(
         return;
       }
 
-      // Upsert to Supabase
       const rows = newCandles.map(c => ({
         symbol,
         date: c.date,
@@ -183,11 +190,9 @@ export async function fetchPricesForMarket(
     })
   );
 
-  // Count remaining symbols that still need data
-  const remaining = symbols.length - skipped - needsUpdate.length;
-  if (remaining > 0) {
-    console.log(`${remaining} symbols still need price data — click "Hent priser" again`);
-  }
+  // Estimate remaining (symbols we didn't even check yet + those that need update but weren't in this batch)
+  const unchecked = total - checkedCount;
+  const remaining = unchecked; // Symbols we haven't checked yet
 
-  return { success, failed, skipped, symbols: processedSymbols };
+  return { success, failed, skipped, total, remaining, symbols: processedSymbols };
 }

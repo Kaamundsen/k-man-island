@@ -42,7 +42,7 @@ export async function GET(request: Request) {
   const log: string[] = [];
 
   try {
-    let priceResult = { success: 0, failed: 0, skipped: 0, symbols: [] as string[] };
+    let priceResult = { success: 0, failed: 0, skipped: 0, total: 0, remaining: 0, symbols: [] as string[] };
     let indicatorResult = { computed: 0, failed: 0 };
     let scanResult = { signals: [] as any[], stored: 0 };
     let slotActions: any[] = [];
