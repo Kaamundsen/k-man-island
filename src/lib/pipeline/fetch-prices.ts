@@ -1,8 +1,8 @@
 /**
  * Price Fetcher — daily OHLCV from Yahoo Finance → Supabase
  *
- * Designed for Vercel serverless (< 10 sec per batch).
  * Frontend auto-loops: calls this repeatedly until remaining === 0.
+ * Tracks failed symbols so they don't cause infinite retries.
  */
 
 import { getSupabase } from '@/lib/supabase/client';
@@ -16,9 +16,6 @@ interface YahooCandle {
   volume: number;
 }
 
-/**
- * Fetch OHLCV from Yahoo Finance for a single symbol.
- */
 async function fetchYahooChart(symbol: string, days: number = 30): Promise<YahooCandle[]> {
   const endDate = Math.floor(Date.now() / 1000);
   const startDate = endDate - (days * 24 * 60 * 60);
@@ -68,9 +65,6 @@ async function fetchYahooChart(symbol: string, days: number = 30): Promise<Yahoo
   return candles;
 }
 
-/**
- * Get the last stored date for a symbol (to avoid re-fetching)
- */
 async function getLastStoredDate(symbol: string): Promise<string | null> {
   const { data } = await getSupabase()
     .from('prices_daily')
@@ -83,24 +77,17 @@ async function getLastStoredDate(symbol: string): Promise<string | null> {
   return data?.date || null;
 }
 
-/**
- * Get the last trading day (skip weekends).
- * If today is Saturday, return Friday. If Sunday, return Friday.
- * If market is closed for holidays we might be off by a day, but that's fine.
- */
 function getLastTradingDay(): string {
   const now = new Date();
-  const day = now.getDay(); // 0=Sun, 6=Sat
-
-  if (day === 0) now.setDate(now.getDate() - 2); // Sunday → Friday
-  else if (day === 6) now.setDate(now.getDate() - 1); // Saturday → Friday
-
+  const day = now.getDay();
+  if (day === 0) now.setDate(now.getDate() - 2);
+  else if (day === 6) now.setDate(now.getDate() - 1);
   return now.toISOString().split('T')[0];
 }
 
 /**
  * Fetch and store prices for one batch of symbols.
- * Returns total/remaining so frontend can auto-loop until done.
+ * Failed symbols get deactivated so they don't loop forever.
  */
 export async function fetchPricesForMarket(
   market: 'OSE' | 'US',
@@ -111,11 +98,11 @@ export async function fetchPricesForMarket(
   skipped: number;
   total: number;
   remaining: number;
+  failedSymbols: string[];
   symbols: string[];
 }> {
   const { fullHistory = false, batchSize = 10 } = options;
 
-  // Get active symbols for this market
   const { data: symbols, error } = await getSupabase()
     .from('universe')
     .select('symbol')
@@ -124,7 +111,7 @@ export async function fetchPricesForMarket(
 
   if (error || !symbols) {
     console.error('Failed to fetch universe:', error);
-    return { success: 0, failed: 0, skipped: 0, total: 0, remaining: 0, symbols: [] };
+    return { success: 0, failed: 0, skipped: 0, total: 0, remaining: 0, failedSymbols: [], symbols: [] };
   }
 
   const total = symbols.length;
@@ -132,16 +119,15 @@ export async function fetchPricesForMarket(
   let failed = 0;
   let skipped = 0;
   const processedSymbols: string[] = [];
+  const failedSymbols: string[] = [];
 
-  // Use last trading day instead of today (fixes weekend infinite loop)
   const lastTradingDay = getLastTradingDay();
 
-  // Check ALL symbols to get accurate remaining count
+  // Check ALL symbols to get accurate count
   const needsUpdate: { symbol: string; lastDate: string | null }[] = [];
 
   for (const { symbol } of symbols) {
     const lastDate = await getLastStoredDate(symbol);
-    // Consider "up to date" if we have data from last trading day or later
     if (lastDate && lastDate >= lastTradingDay && !fullHistory) {
       skipped++;
     } else {
@@ -149,16 +135,15 @@ export async function fetchPricesForMarket(
     }
   }
 
-  // Take only batchSize from needsUpdate
+  // Take one batch
   const batch = needsUpdate.slice(0, batchSize);
   const remaining = needsUpdate.length - batch.length;
 
-  // Process this batch
   await Promise.allSettled(
     batch.map(async ({ symbol, lastDate }) => {
       let days = 30;
       if (fullHistory || !lastDate) {
-        days = 520; // ~2 years for initial load
+        days = 520;
       } else {
         const lastMs = new Date(lastDate).getTime();
         const nowMs = Date.now();
@@ -169,9 +154,16 @@ export async function fetchPricesForMarket(
       const candles = await fetchYahooChart(symbol, days);
 
       if (candles.length === 0) {
-        // Yahoo returned nothing — mark as failed but don't retry forever
         failed++;
-        console.error(`✗ ${symbol}: no data from Yahoo`);
+        failedSymbols.push(symbol);
+        console.error(`✗ ${symbol}: no data from Yahoo — deactivating`);
+
+        // DEACTIVATE this symbol so it doesn't retry forever
+        await getSupabase()
+          .from('universe')
+          .update({ is_active: false })
+          .eq('symbol', symbol);
+
         return;
       }
 
@@ -180,7 +172,6 @@ export async function fetchPricesForMarket(
         : candles;
 
       if (newCandles.length === 0) {
-        // Already up to date (data just not from "today" which is fine)
         skipped++;
         return;
       }
@@ -202,6 +193,7 @@ export async function fetchPricesForMarket(
       if (upsertError) {
         console.error(`Upsert error for ${symbol}:`, upsertError);
         failed++;
+        failedSymbols.push(symbol);
       } else {
         success++;
         processedSymbols.push(symbol);
@@ -210,5 +202,5 @@ export async function fetchPricesForMarket(
     })
   );
 
-  return { success, failed, skipped, total, remaining, symbols: processedSymbols };
+  return { success, failed, skipped, total, remaining, failedSymbols, symbols: processedSymbols };
 }
