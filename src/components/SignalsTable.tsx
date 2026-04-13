@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { clsx } from 'clsx';
 import { TrendingUp, Zap, BarChart3, Target, ChevronRight, Loader2 } from 'lucide-react';
 
@@ -38,11 +38,7 @@ export default function SignalsTable({ onTakeSignal }: SignalsTableProps) {
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState(1);
 
-  useEffect(() => {
-    fetchSignals();
-  }, [days]);
-
-  async function fetchSignals() {
+  const fetchSignals = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/signals?days=${days}`);
@@ -53,7 +49,11 @@ export default function SignalsTable({ onTakeSignal }: SignalsTableProps) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [days]);
+
+  useEffect(() => {
+    fetchSignals();
+  }, [fetchSignals]);
 
   if (loading) {
     return (

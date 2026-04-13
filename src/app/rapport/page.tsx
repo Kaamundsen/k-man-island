@@ -413,7 +413,7 @@ export default function RapportPage() {
               {/* Daily mantra */}
               <div className="text-center pt-4 border-t border-emerald-700">
                 <p className="text-emerald-300 italic text-sm">
-                  "I dag skal jeg kun gjøre det Core Brief sier."
+                  &ldquo;I dag skal jeg kun gjøre det Core Brief sier.&rdquo;
                 </p>
               </div>
             </div>
