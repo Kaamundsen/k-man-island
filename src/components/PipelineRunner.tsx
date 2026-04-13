@@ -208,7 +208,7 @@ export default function PipelineRunner({ onComplete }: { onComplete?: () => void
 
         // Stop conditions
         if (remaining === 0) break;           // All done!
-        if (consecutiveNoNew >= 1 && batchNum > 3) break; // 1 empty after initial = done
+        if (consecutiveNoNew >= 3) break;     // 3 empty in a row = stuck
         if (!data.success) break;             // API error
 
         await new Promise(r => setTimeout(r, 500));
