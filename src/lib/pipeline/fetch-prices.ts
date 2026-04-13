@@ -123,21 +123,29 @@ export async function fetchPricesForMarket(
 
   const lastTradingDay = getLastTradingDay();
 
-  // Check ALL symbols to get accurate count
+  // Check ALL symbols — count how many have recent data
   const needsUpdate: { symbol: string; lastDate: string | null }[] = [];
 
   for (const { symbol } of symbols) {
     const lastDate = await getLastStoredDate(symbol);
+    // "Up to date" = has data from last trading day OR has any data at all
+    // (for symbols with data but not today's: they're close enough, daily cron catches the rest)
     if (lastDate && lastDate >= lastTradingDay && !fullHistory) {
       skipped++;
-    } else {
+    } else if (lastDate && !fullHistory) {
+      // Has SOME data, just not from last trading day — still needs update but lower priority
       needsUpdate.push({ symbol, lastDate });
+    } else {
+      // No data at all — needs initial load (first in queue)
+      needsUpdate.unshift({ symbol, lastDate });
     }
   }
 
   // Take one batch
   const batch = needsUpdate.slice(0, batchSize);
-  const remaining = needsUpdate.length - batch.length;
+  // remaining = symbols we haven't tried yet in this run
+  // Failed symbols in this batch are NOT counted as remaining
+  const remaining = Math.max(0, needsUpdate.length - batch.length);
 
   await Promise.allSettled(
     batch.map(async ({ symbol, lastDate }) => {
@@ -156,14 +164,9 @@ export async function fetchPricesForMarket(
       if (candles.length === 0) {
         failed++;
         failedSymbols.push(symbol);
-        console.error(`✗ ${symbol}: no data from Yahoo — deactivating`);
-
-        // DEACTIVATE this symbol so it doesn't retry forever
-        await getSupabase()
-          .from('universe')
-          .update({ is_active: false })
-          .eq('symbol', symbol);
-
+        console.error(`✗ ${symbol}: no data from Yahoo`);
+        // Don't deactivate — might be temporary Yahoo issue.
+        // The consecutive-empty check in frontend stops the loop.
         return;
       }
 
