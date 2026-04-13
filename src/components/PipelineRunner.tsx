@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import { clsx } from 'clsx';
-import { Play, Loader2, CheckCircle2, XCircle, Clock, RefreshCcw } from 'lucide-react';
+import { Play, Loader2, CheckCircle2, XCircle, Clock, RefreshCcw, Download, Radar } from 'lucide-react';
 
 interface PipelineResult {
   success: boolean;
   market: string;
+  step: string;
   duration: string;
   prices: { success: number; failed: number; skipped: number };
   indicators: { computed: number; failed: number };
@@ -30,27 +31,29 @@ interface PipelineResult {
 
 export default function PipelineRunner({ onComplete }: { onComplete?: () => void }) {
   const [running, setRunning] = useState(false);
+  const [runningStep, setRunningStep] = useState<string | null>(null);
   const [result, setResult] = useState<PipelineResult | null>(null);
   const [market, setMarket] = useState<'OSE' | 'US'>('OSE');
 
-  async function runPipeline(fullHistory = false) {
+  async function runPipeline(step?: 'prices' | 'scan') {
     setRunning(true);
+    setRunningStep(step || 'full');
     setResult(null);
 
     try {
       const params = new URLSearchParams({
         manual: 'true',
         market,
-        ...(fullHistory ? { full: 'true' } : {}),
+        ...(step ? { step } : {}),
       });
 
       const res = await fetch(`/api/cron/pipeline?${params}`);
       const data = await res.json();
 
-      // Normalize response — API may return partial data on error/429
       setResult({
         success: data.success ?? false,
         market: data.market ?? market,
+        step: data.step ?? step ?? 'full',
         duration: data.duration ?? '0s',
         prices: data.prices ?? { success: 0, failed: 0, skipped: 0 },
         indicators: data.indicators ?? { computed: 0, failed: 0 },
@@ -67,6 +70,7 @@ export default function PipelineRunner({ onComplete }: { onComplete?: () => void
       setResult({
         success: false,
         market,
+        step: step || 'full',
         duration: '0s',
         prices: { success: 0, failed: 0, skipped: 0 },
         indicators: { computed: 0, failed: 0 },
@@ -77,6 +81,7 @@ export default function PipelineRunner({ onComplete }: { onComplete?: () => void
       });
     } finally {
       setRunning(false);
+      setRunningStep(null);
     }
   }
 
@@ -108,18 +113,46 @@ export default function PipelineRunner({ onComplete }: { onComplete?: () => void
             ))}
           </div>
 
-          {/* Run button */}
+          {/* Fetch Prices — can click many times */}
           <button
-            onClick={() => runPipeline(false)}
+            onClick={() => runPipeline('prices')}
+            disabled={running}
+            className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-dark-border text-brand-slate dark:text-white rounded-xl text-sm font-bold hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {runningStep === 'prices' ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
+            Hent priser
+          </button>
+
+          {/* Run Scanner */}
+          <button
+            onClick={() => runPipeline('scan')}
+            disabled={running}
+            className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-xl text-sm font-bold hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {runningStep === 'scan' ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Radar className="w-4 h-4" />
+            )}
+            Kjor Scanner
+          </button>
+
+          {/* Full Pipeline */}
+          <button
+            onClick={() => runPipeline()}
             disabled={running}
             className="flex items-center gap-2 px-4 py-2 bg-brand-emerald text-white rounded-xl text-sm font-bold hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {running ? (
+            {runningStep === 'full' ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <Play className="w-4 h-4" />
             )}
-            {running ? 'Kjorer...' : 'Kjor Pipeline'}
+            Kjor Alt
           </button>
         </div>
       </div>
@@ -140,7 +173,11 @@ export default function PipelineRunner({ onComplete }: { onComplete?: () => void
               <XCircle className="w-4 h-4" />
             )}
             {result.success
-              ? `Ferdig på ${result.duration} — ${result.signals.length} signaler funnet`
+              ? result.step === 'prices'
+                ? `Priser hentet: ${result.prices.success} oppdatert, ${result.prices.skipped} uendret (${result.duration})`
+                : result.step === 'scan'
+                ? `Scanner ferdig: ${result.signals.length} signaler funnet (${result.duration})`
+                : `Ferdig pa ${result.duration} — ${result.signals.length} signaler funnet`
               : `Feilet: ${result.error || 'ukjent feil'}`
             }
             <Clock className="w-3.5 h-3.5 ml-auto opacity-50" />
