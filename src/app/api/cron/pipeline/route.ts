@@ -91,6 +91,8 @@ export async function GET(request: Request) {
         stop: s.stop_price,
         size_nok: s.position_size_nok,
         reasons: s.reasons,
+        rel_volume: s.rel_volume ?? 0,
+        rel_strength: s.rel_strength ?? 0,
       })),
       slot_actions: slotActions.map((a: any) => ({
         symbol: a.symbol,
