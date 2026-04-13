@@ -1,8 +1,8 @@
 /**
  * Price Fetcher — daily OHLCV from Yahoo Finance → Supabase
  *
- * Frontend auto-loops: calls this repeatedly until remaining === 0.
- * Tracks failed symbols so they don't cause infinite retries.
+ * Designed for Vercel serverless (< 10 sec per batch).
+ * Uses single DB query to find which symbols need updating (fast).
  */
 
 import { getSupabase } from '@/lib/supabase/client';
@@ -65,18 +65,6 @@ async function fetchYahooChart(symbol: string, days: number = 30): Promise<Yahoo
   return candles;
 }
 
-async function getLastStoredDate(symbol: string): Promise<string | null> {
-  const { data } = await getSupabase()
-    .from('prices_daily')
-    .select('date')
-    .eq('symbol', symbol)
-    .order('date', { ascending: false })
-    .limit(1)
-    .single();
-
-  return data?.date || null;
-}
-
 function getLastTradingDay(): string {
   const now = new Date();
   const day = now.getDay();
@@ -87,7 +75,7 @@ function getLastTradingDay(): string {
 
 /**
  * Fetch and store prices for one batch of symbols.
- * Failed symbols get deactivated so they don't loop forever.
+ * Uses ONE SQL query to find symbols needing updates (instead of 287 individual queries).
  */
 export async function fetchPricesForMarket(
   market: 'OSE' | 'US',
@@ -101,59 +89,73 @@ export async function fetchPricesForMarket(
   failedSymbols: string[];
   symbols: string[];
 }> {
-  const { fullHistory = false, batchSize = 10 } = options;
+  const { fullHistory = false, batchSize = 5 } = options;
+  const lastTradingDay = getLastTradingDay();
 
-  const { data: symbols, error } = await getSupabase()
-    .from('universe')
-    .select('symbol')
-    .eq('market', market)
-    .eq('is_active', true);
+  // ONE query: get all active symbols + their latest price date
+  const { data: symbolsWithDates, error } = await getSupabase()
+    .rpc('get_symbols_needing_update', { p_market: market, p_since: lastTradingDay });
 
-  if (error || !symbols) {
-    console.error('Failed to fetch universe:', error);
-    return { success: 0, failed: 0, skipped: 0, total: 0, remaining: 0, failedSymbols: [], symbols: [] };
+  // Fallback if RPC doesn't exist yet: use raw query
+  let needsUpdate: { symbol: string; last_date: string | null }[] = [];
+  let totalActive = 0;
+
+  if (error || !symbolsWithDates) {
+    // Fallback: two simple queries instead of 287
+    const { data: allSymbols } = await getSupabase()
+      .from('universe')
+      .select('symbol')
+      .eq('market', market)
+      .eq('is_active', true);
+
+    if (!allSymbols) {
+      return { success: 0, failed: 0, skipped: 0, total: 0, remaining: 0, failedSymbols: [], symbols: [] };
+    }
+
+    totalActive = allSymbols.length;
+
+    // Get symbols that already have recent data (one query)
+    const { data: upToDate } = await getSupabase()
+      .from('prices_daily')
+      .select('symbol')
+      .gte('date', lastTradingDay)
+      .in('symbol', allSymbols.map(s => s.symbol));
+
+    const upToDateSet = new Set((upToDate || []).map(r => r.symbol));
+
+    needsUpdate = allSymbols
+      .filter(s => !upToDateSet.has(s.symbol) || fullHistory)
+      .map(s => ({ symbol: s.symbol, last_date: null }));
+  } else {
+    needsUpdate = symbolsWithDates;
+    // Count total from universe
+    const { count } = await getSupabase()
+      .from('universe')
+      .select('symbol', { count: 'exact', head: true })
+      .eq('market', market)
+      .eq('is_active', true);
+    totalActive = count || 0;
   }
 
-  const total = symbols.length;
+  const total = totalActive;
+  const skipped = total - needsUpdate.length;
   let success = 0;
   let failed = 0;
-  let skipped = 0;
   const processedSymbols: string[] = [];
   const failedSymbols: string[] = [];
 
-  const lastTradingDay = getLastTradingDay();
-
-  // Check ALL symbols — count how many have recent data
-  const needsUpdate: { symbol: string; lastDate: string | null }[] = [];
-
-  for (const { symbol } of symbols) {
-    const lastDate = await getLastStoredDate(symbol);
-    // "Up to date" = has data from last trading day OR has any data at all
-    // (for symbols with data but not today's: they're close enough, daily cron catches the rest)
-    if (lastDate && lastDate >= lastTradingDay && !fullHistory) {
-      skipped++;
-    } else if (lastDate && !fullHistory) {
-      // Has SOME data, just not from last trading day — still needs update but lower priority
-      needsUpdate.push({ symbol, lastDate });
-    } else {
-      // No data at all — needs initial load (first in queue)
-      needsUpdate.unshift({ symbol, lastDate });
-    }
-  }
-
   // Take one batch
   const batch = needsUpdate.slice(0, batchSize);
-  // remaining = symbols we haven't tried yet in this run
-  // Failed symbols in this batch are NOT counted as remaining
   const remaining = Math.max(0, needsUpdate.length - batch.length);
 
+  // Fetch prices for this batch
   await Promise.allSettled(
-    batch.map(async ({ symbol, lastDate }) => {
+    batch.map(async ({ symbol, last_date }) => {
       let days = 30;
-      if (fullHistory || !lastDate) {
+      if (fullHistory || !last_date) {
         days = 520;
       } else {
-        const lastMs = new Date(lastDate).getTime();
+        const lastMs = new Date(last_date).getTime();
         const nowMs = Date.now();
         days = Math.ceil((nowMs - lastMs) / (24 * 60 * 60 * 1000)) + 5;
         days = Math.min(days, 520);
@@ -165,17 +167,15 @@ export async function fetchPricesForMarket(
         failed++;
         failedSymbols.push(symbol);
         console.error(`✗ ${symbol}: no data from Yahoo`);
-        // Don't deactivate — might be temporary Yahoo issue.
-        // The consecutive-empty check in frontend stops the loop.
         return;
       }
 
-      const newCandles = lastDate
-        ? candles.filter(c => c.date > lastDate)
+      const newCandles = last_date
+        ? candles.filter(c => c.date > last_date)
         : candles;
 
       if (newCandles.length === 0) {
-        skipped++;
+        // Has data but nothing new — that's fine
         return;
       }
 
