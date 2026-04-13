@@ -111,80 +111,82 @@ export async function fetchPricesForMarket(
   let skipped = 0;
   const processedSymbols: string[] = [];
 
-  // Process in batches
-  for (let i = 0; i < symbols.length; i += batchSize) {
-    const batch = symbols.slice(i, i + batchSize);
+  // First, find symbols that actually need updating (no data or stale)
+  const today = new Date().toISOString().split('T')[0];
+  const needsUpdate: { symbol: string; lastDate: string | null }[] = [];
 
-    const results = await Promise.allSettled(
-      batch.map(async ({ symbol }) => {
-        // Check last stored date
-        const lastDate = await getLastStoredDate(symbol);
-        const today = new Date().toISOString().split('T')[0];
-
-        if (lastDate === today && !fullHistory) {
-          skipped++;
-          return;
-        }
-
-        // Determine how many days to fetch
-        let days = 30; // default: last 30 days (incremental)
-        if (fullHistory || !lastDate) {
-          days = 520; // ~2 years for full history
-        } else {
-          // Calculate days since last stored date
-          const lastMs = new Date(lastDate).getTime();
-          const nowMs = Date.now();
-          days = Math.ceil((nowMs - lastMs) / (24 * 60 * 60 * 1000)) + 5; // +5 buffer
-          days = Math.min(days, 520);
-        }
-
-        const candles = await fetchYahooChart(symbol, days);
-
-        if (candles.length === 0) {
-          failed++;
-          return;
-        }
-
-        // Filter to only new data if we have existing
-        const newCandles = lastDate
-          ? candles.filter(c => c.date > lastDate)
-          : candles;
-
-        if (newCandles.length === 0) {
-          skipped++;
-          return;
-        }
-
-        // Upsert to Supabase
-        const rows = newCandles.map(c => ({
-          symbol,
-          date: c.date,
-          open: c.open,
-          high: c.high,
-          low: c.low,
-          close: c.close,
-          volume: c.volume,
-        }));
-
-        const { error: upsertError } = await getSupabase()
-          .from('prices_daily')
-          .upsert(rows, { onConflict: 'symbol,date' });
-
-        if (upsertError) {
-          console.error(`Upsert error for ${symbol}:`, upsertError);
-          failed++;
-        } else {
-          success++;
-          processedSymbols.push(symbol);
-          console.log(`✓ ${symbol}: +${newCandles.length} days`);
-        }
-      })
-    );
-
-    // Small delay between batches to be nice to Yahoo
-    if (i + batchSize < symbols.length) {
-      await new Promise(r => setTimeout(r, 500));
+  for (const { symbol } of symbols) {
+    if (needsUpdate.length >= batchSize) break; // Only check enough for one batch
+    const lastDate = await getLastStoredDate(symbol);
+    if (lastDate === today && !fullHistory) {
+      skipped++;
+    } else {
+      needsUpdate.push({ symbol, lastDate });
     }
+  }
+
+  // Process only this batch (stays well under Vercel 10s timeout)
+  const results = await Promise.allSettled(
+    needsUpdate.map(async ({ symbol, lastDate }) => {
+      // Determine how many days to fetch
+      let days = 30; // default: last 30 days (incremental)
+      if (fullHistory || !lastDate) {
+        days = 520; // ~2 years for full history
+      } else {
+        // Calculate days since last stored date
+        const lastMs = new Date(lastDate).getTime();
+        const nowMs = Date.now();
+        days = Math.ceil((nowMs - lastMs) / (24 * 60 * 60 * 1000)) + 5; // +5 buffer
+        days = Math.min(days, 520);
+      }
+
+      const candles = await fetchYahooChart(symbol, days);
+
+      if (candles.length === 0) {
+        failed++;
+        return;
+      }
+
+      // Filter to only new data if we have existing
+      const newCandles = lastDate
+        ? candles.filter(c => c.date > lastDate)
+        : candles;
+
+      if (newCandles.length === 0) {
+        skipped++;
+        return;
+      }
+
+      // Upsert to Supabase
+      const rows = newCandles.map(c => ({
+        symbol,
+        date: c.date,
+        open: c.open,
+        high: c.high,
+        low: c.low,
+        close: c.close,
+        volume: c.volume,
+      }));
+
+      const { error: upsertError } = await getSupabase()
+        .from('prices_daily')
+        .upsert(rows, { onConflict: 'symbol,date' });
+
+      if (upsertError) {
+        console.error(`Upsert error for ${symbol}:`, upsertError);
+        failed++;
+      } else {
+        success++;
+        processedSymbols.push(symbol);
+        console.log(`✓ ${symbol}: +${newCandles.length} days`);
+      }
+    })
+  );
+
+  // Count remaining symbols that still need data
+  const remaining = symbols.length - skipped - needsUpdate.length;
+  if (remaining > 0) {
+    console.log(`${remaining} symbols still need price data — click "Hent priser" again`);
   }
 
   return { success, failed, skipped, symbols: processedSymbols };
