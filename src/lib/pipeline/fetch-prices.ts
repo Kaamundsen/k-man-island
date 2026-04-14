@@ -67,11 +67,25 @@ async function fetchYahooChart(symbol: string, days: number = 30): Promise<Yahoo
   }
 }
 
+/**
+ * Get the last COMPLETED trading day.
+ * If it's before 22:00 UTC (midnight CET), use yesterday.
+ * On weekends, go back to Friday.
+ */
 function getLastTradingDay(): string {
   const now = new Date();
+  const utcHour = now.getUTCHours();
+
+  // Before 22:00 UTC = before market data is fully available → use previous day
+  if (utcHour < 22) {
+    now.setDate(now.getDate() - 1);
+  }
+
+  // Skip weekends
   const day = now.getDay();
-  if (day === 0) now.setDate(now.getDate() - 2);
-  else if (day === 6) now.setDate(now.getDate() - 1);
+  if (day === 0) now.setDate(now.getDate() - 2); // Sunday → Friday
+  else if (day === 6) now.setDate(now.getDate() - 1); // Saturday → Friday
+
   return now.toISOString().split('T')[0];
 }
 
@@ -127,6 +141,9 @@ export async function fetchPricesForMarket(
   const skipped = totalActive - needsUpdate.length;
   const batch = needsUpdate.slice(0, batchSize);
   const remaining = Math.max(0, needsUpdate.length - batch.length);
+
+  console.log(`[fetch-prices] market=${market} total=${totalActive} upToDate=${upToDateSet.size} needsUpdate=${needsUpdate.length} batch=${batch.length} remaining=${remaining}`);
+  console.log(`[fetch-prices] lastTradingDay=${lastTradingDay} batch symbols: ${batch.join(', ')}`);
 
   let success = 0;
   let failed = 0;

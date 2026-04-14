@@ -51,7 +51,11 @@ export async function GET(request: Request) {
     if (step === 'prices' || !step) {
       log.push(`Henter priser for ${market}...`);
       priceResult = await fetchPricesForMarket(market, { fullHistory, batchSize: 5 });
-      log.push(`Priser: ${priceResult.success} oppdatert, ${priceResult.failed} feilet, ${priceResult.skipped} uendret`);
+      log.push(`Priser: ${priceResult.success} oppdatert, ${priceResult.failed} feilet, ${priceResult.skipped} uendret, ${priceResult.remaining} gjenstår`);
+      if (priceResult.failedSymbols && priceResult.failedSymbols.length > 0) {
+        log.push(`Feilet symboler: ${priceResult.failedSymbols.join(', ')}`);
+      }
+      log.push(`Total aktive: ${priceResult.total}`);
     }
 
     // Step: scan only — fast, runs on existing data

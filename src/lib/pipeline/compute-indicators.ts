@@ -1,8 +1,8 @@
 /**
  * Indicator Engine — compute technical indicators from stored prices
  *
- * Pure math, no side effects. Reads prices_daily, writes indicators_daily.
- * Designed to run after fetch-prices in the daily pipeline.
+ * Smart batching: only processes symbols with new price data.
+ * Uses bulk queries to find what needs computing.
  */
 
 import { getSupabase } from '@/lib/supabase/client';
@@ -66,9 +66,6 @@ function atr(highs: number[], lows: number[], closes: number[], period: number =
   return trueRanges.reduce((a, b) => a + b, 0) / period;
 }
 
-/**
- * Detect consolidation: ATR declining for N consecutive days
- */
 function detectConsolidation(
   highs: number[],
   lows: number[],
@@ -77,7 +74,6 @@ function detectConsolidation(
 ): { isConsolidating: boolean; days: number } {
   if (closes.length < 30) return { isConsolidating: false, days: 0 };
 
-  // Compute rolling 14-day ATR for last 30 days
   const atrs: number[] = [];
   for (let end = closes.length - 30; end <= closes.length; end++) {
     if (end < 15) continue;
@@ -88,7 +84,6 @@ function detectConsolidation(
     if (a !== null) atrs.push(a);
   }
 
-  // Count consecutive declining ATR days from the end
   let consecutiveDecline = 0;
   for (let i = atrs.length - 1; i > 0; i--) {
     if (atrs[i] <= atrs[i - 1]) {
@@ -109,43 +104,66 @@ function detectConsolidation(
 // ============================================================
 
 /**
- * Compute indicators for all symbols that have new price data.
- * Only computes for dates that don't have indicators yet.
+ * Compute indicators for symbols that have new price data.
+ * Batched: max 30 symbols per call to fit in Vercel 10s.
  */
 export async function computeIndicators(
   symbols?: string[]
 ): Promise<{ computed: number; failed: number }> {
-  // Get symbols to process
   let targetSymbols: string[];
 
   if (symbols && symbols.length > 0) {
     targetSymbols = symbols;
   } else {
-    const { data } = await getSupabase()
-      .from('universe')
+    // Smart: find symbols that have prices but missing/stale indicators
+    // Query 1: symbols with price data (distinct)
+    const { data: priceSymbols } = await getSupabase()
+      .from('prices_daily')
       .select('symbol')
-      .eq('is_active', true);
-    targetSymbols = data?.map(d => d.symbol) || [];
+      .order('symbol');
+
+    if (!priceSymbols || priceSymbols.length === 0) {
+      return { computed: 0, failed: 0 };
+    }
+
+    // Deduplicate
+    const uniquePriceSymbols = [...new Set(priceSymbols.map(r => r.symbol))];
+
+    // Query 2: symbols with recent indicators (last 3 days)
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+    const sinceDate = threeDaysAgo.toISOString().split('T')[0];
+
+    const { data: recentIndicators } = await getSupabase()
+      .from('indicators_daily')
+      .select('symbol')
+      .gte('date', sinceDate);
+
+    const hasRecentIndicators = new Set((recentIndicators || []).map(r => r.symbol));
+
+    // Only compute for symbols missing recent indicators
+    targetSymbols = uniquePriceSymbols.filter(s => !hasRecentIndicators.has(s));
   }
+
+  // Batch limit: max 30 symbols per call
+  const batch = targetSymbols.slice(0, 30);
+  console.log(`Computing indicators for ${batch.length} of ${targetSymbols.length} symbols`);
 
   let computed = 0;
   let failed = 0;
 
-  for (const symbol of targetSymbols) {
+  for (const symbol of batch) {
     try {
-      // Fetch all prices for this symbol (need ~252 days for 52w high/low)
       const { data: prices, error } = await getSupabase()
         .from('prices_daily')
         .select('*')
         .eq('symbol', symbol)
         .order('date', { ascending: true });
 
-      if (error || !prices || prices.length < 30) {
-        console.warn(`Skipping ${symbol}: ${prices?.length || 0} price rows`);
-        continue;
-      }
+      if (error || !prices || prices.length < 30) continue;
 
-      // Get last computed indicator date
+      // Only compute for the LAST date (most recent) to be fast
+      // Full history computation happens on first load
       const { data: lastIndicator } = await getSupabase()
         .from('indicators_daily')
         .select('date')
@@ -155,8 +173,6 @@ export async function computeIndicators(
         .single();
 
       const lastComputedDate = lastIndicator?.date || '2000-01-01';
-
-      // Only compute for new dates
       const newDates = prices.filter(p => p.date > lastComputedDate);
       if (newDates.length === 0) continue;
 
@@ -168,9 +184,8 @@ export async function computeIndicators(
       const indicators = [];
 
       for (const priceRow of newDates) {
-        // Find index in full price array
         const idx = prices.findIndex((p: PriceRow) => p.date === priceRow.date);
-        if (idx < 14) continue; // Need at least 14 days of history
+        if (idx < 14) continue;
 
         const closesUpTo = closes.slice(0, idx + 1);
         const highsUpTo = highs.slice(0, idx + 1);
@@ -179,27 +194,20 @@ export async function computeIndicators(
 
         const currentClose = closesUpTo[closesUpTo.length - 1];
 
-        // Moving averages
         const sma10 = sma(closesUpTo, 10);
         const sma20 = sma(closesUpTo, 20);
         const sma50 = sma(closesUpTo, 50);
         const sma200 = sma(closesUpTo, 200);
-
-        // RSI
         const rsi14 = rsi(closesUpTo, 14);
-
-        // ATR
         const atr14 = atr(highsUpTo, lowsUpTo, closesUpTo, 14);
         const atrPct = atr14 && currentClose > 0 ? (atr14 / currentClose) * 100 : null;
 
-        // Volume
         const volSma50 = volumesUpTo.length >= 50
           ? Math.round(volumesUpTo.slice(-50).reduce((a, b) => a + b, 0) / 50)
           : null;
         const todayVol = volumesUpTo[volumesUpTo.length - 1];
         const relVolume = volSma50 && volSma50 > 0 ? todayVol / volSma50 : null;
 
-        // 52-week high/low
         const lookback252 = Math.min(252, closesUpTo.length);
         const high252 = highsUpTo.slice(-lookback252);
         const low252 = lowsUpTo.slice(-lookback252);
@@ -208,7 +216,6 @@ export async function computeIndicators(
         const pctFromHigh = ((currentClose - high52w) / high52w) * 100;
         const pctFromLow = ((currentClose - low52w) / low52w) * 100;
 
-        // Consolidation
         const { isConsolidating, days: consolidationDays } = detectConsolidation(
           highsUpTo, lowsUpTo, closesUpTo
         );
@@ -240,15 +247,14 @@ export async function computeIndicators(
           .upsert(indicators, { onConflict: 'symbol,date' });
 
         if (upsertError) {
-          console.error(`Indicator upsert error for ${symbol}:`, upsertError);
+          console.error(`Indicator error for ${symbol}:`, upsertError);
           failed++;
         } else {
           computed += indicators.length;
-          console.log(`✓ ${symbol}: ${indicators.length} indicator rows computed`);
         }
       }
     } catch (err) {
-      console.error(`Error computing indicators for ${symbol}:`, err);
+      console.error(`Error for ${symbol}:`, err);
       failed++;
     }
   }

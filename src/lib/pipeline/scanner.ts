@@ -568,10 +568,12 @@ function scanFailedBreakout(
 // ============================================================
 
 export async function runScanner(date?: string): Promise<ScanResult[]> {
-  // Use last trading day if no date given
+  // Use last completed trading day if no date given
   let targetDate = date;
   if (!targetDate) {
     const now = new Date();
+    const utcHour = now.getUTCHours();
+    if (utcHour < 22) now.setDate(now.getDate() - 1);
     const day = now.getDay();
     if (day === 0) now.setDate(now.getDate() - 2);
     else if (day === 6) now.setDate(now.getDate() - 1);
@@ -694,6 +696,8 @@ export async function runAndStoreSignals(date?: string): Promise<{
   // Use the date from the first signal (scanner may have adjusted it)
   const targetDate = date || (() => {
     const now = new Date();
+    const utcHour = now.getUTCHours();
+    if (utcHour < 22) now.setDate(now.getDate() - 1);
     const day = now.getDay();
     if (day === 0) now.setDate(now.getDate() - 2);
     else if (day === 6) now.setDate(now.getDate() - 1);
