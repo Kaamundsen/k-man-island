@@ -40,7 +40,7 @@ interface SignalsTableProps {
 export default function SignalsTable({ onTakeSignal, refreshKey }: SignalsTableProps) {
   const [signals, setSignals] = useState<Signal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [days, setDays] = useState(7);
+  const [days, setDays] = useState(14);
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
 
   const fetchSignals = useCallback(async () => {

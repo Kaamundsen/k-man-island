@@ -14,7 +14,7 @@ import { getSupabase } from '@/lib/supabase/client';
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const date = url.searchParams.get('date');
-  const days = parseInt(url.searchParams.get('days') || '1');
+  const days = parseInt(url.searchParams.get('days') || '14');
 
   let query = getSupabase()
     .from('signals')
@@ -23,13 +23,10 @@ export async function GET(request: Request) {
 
   if (date) {
     query = query.eq('date', date);
-  } else if (days > 1) {
+  } else {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
     query = query.gte('date', startDate.toISOString().split('T')[0]);
-  } else {
-    // Today
-    query = query.eq('date', new Date().toISOString().split('T')[0]);
   }
 
   const { data, error } = await query.limit(50);
