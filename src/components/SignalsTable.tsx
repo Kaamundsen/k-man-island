@@ -20,6 +20,7 @@ interface Signal {
   r_target_3: number;
   reasons: string[];
   was_taken: boolean;
+  company_name: string;
 }
 
 const signalTypeConfig: Record<string, { icon: typeof TrendingUp; label: string; color: string }> = {
@@ -188,7 +189,7 @@ export default function SignalsTable({ onTakeSignal, refreshKey }: SignalsTableP
                     isFailed && 'bg-red-50/50 dark:bg-red-900/10'
                   )}
                 >
-                  {/* Ticker */}
+                  {/* Ticker + Company Name */}
                   <div>
                     <div className={clsx(
                       'text-base font-bold group-hover:text-brand-emerald transition-colors',
@@ -197,7 +198,7 @@ export default function SignalsTable({ onTakeSignal, refreshKey }: SignalsTableP
                       {tickerShort}
                     </div>
                     <div className="text-xs text-gray-400 mt-0.5 line-clamp-1">
-                      {signal.reasons[0] || ''}
+                      {signal.company_name || signal.reasons[0] || ''}
                     </div>
                   </div>
 

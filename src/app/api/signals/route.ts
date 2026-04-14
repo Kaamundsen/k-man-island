@@ -35,8 +35,22 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // Enrich with company names from universe table
+  const symbols = [...new Set((data || []).map((s: any) => s.symbol))];
+  const { data: names } = symbols.length > 0
+    ? await getSupabase().from('universe').select('symbol, name').in('symbol', symbols)
+    : { data: [] };
+
+  const nameMap: Record<string, string> = {};
+  (names || []).forEach((r: any) => { nameMap[r.symbol] = r.name; });
+
+  const enriched = (data || []).map((s: any) => ({
+    ...s,
+    company_name: nameMap[s.symbol] || s.symbol.replace('.OL', ''),
+  }));
+
   return NextResponse.json({
-    count: data?.length || 0,
-    signals: data || [],
+    count: enriched.length,
+    signals: enriched,
   });
 }
