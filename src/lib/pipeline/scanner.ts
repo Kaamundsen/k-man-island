@@ -180,10 +180,10 @@ function scanVCPBreakout(
   reasons.push('Uptrend: close > SMA50 > SMA200');
   score += 20;
 
-  // Consolidating 8+ days
-  if (!ind.is_consolidating || ind.consolidation_days < 8) return null;
+  // Consolidating 5+ days
+  if (!ind.is_consolidating || ind.consolidation_days < 5) return null;
   reasons.push(`Konsolidert ${ind.consolidation_days} dager`);
-  score += 15;
+  score += ind.consolidation_days >= 10 ? 20 : 15;
 
   // Breakout above SMA20
   if (!ind.sma_20 || latest.close <= ind.sma_20) return null;
@@ -237,10 +237,15 @@ function scan52WeekBreakout(
   const reasons: string[] = [];
   let score = 0;
 
-  // At or above 52w high
-  if (ind.pct_from_52w_high === null || ind.pct_from_52w_high < -1) return null;
-  reasons.push('Ny 52-ukers hoy!');
-  score += 30;
+  // At or near 52w high (within 3%)
+  if (ind.pct_from_52w_high === null || ind.pct_from_52w_high < -3) return null;
+  if (ind.pct_from_52w_high >= -1) {
+    reasons.push('Ny 52-ukers hoy!');
+    score += 30;
+  } else {
+    reasons.push(`Naer 52u-topp (${ind.pct_from_52w_high.toFixed(1)}%)`);
+    score += 20;
+  }
 
   // Base period
   if (ind.consolidation_days >= 5) {
@@ -299,21 +304,29 @@ function scanVolumeSurge(
   const rv = ind.rel_volume ?? 0;
   if (rv < 2.0) return null;
 
-  // Dry-up check
+  // Dry-up check (relaxed: 2+ days below 70% avg in last 10 days)
   const avgVol = ind.vol_sma_50;
   let dryUpDays = 0;
   for (let i = prices.length - 10; i < prices.length - 1; i++) {
-    if (i >= 0 && prices[i].volume < avgVol * 0.5) dryUpDays++;
+    if (i >= 0 && prices[i].volume < avgVol * 0.7) dryUpDays++;
   }
-  if (dryUpDays < 3) return null;
 
-  reasons.push(`${dryUpDays} dager volum-pause → ${rv.toFixed(1)}x eksplosjon`);
-  score += 40;
+  if (dryUpDays >= 3) {
+    reasons.push(`${dryUpDays} dager volum-pause → ${rv.toFixed(1)}x eksplosjon`);
+    score += 40;
+  } else if (dryUpDays >= 2) {
+    reasons.push(`${dryUpDays} dager lavt volum → ${rv.toFixed(1)}x spike`);
+    score += 25;
+  } else {
+    reasons.push(`Volum-spike ${rv.toFixed(1)}x (uten dry-up)`);
+    score += 15;
+  }
 
-  // Up day
-  if (latest.close <= latest.open) return null;
-  reasons.push('Opp-dag med volum');
-  score += 10;
+  // Up day bonus (not required)
+  if (latest.close > latest.open) {
+    reasons.push('Opp-dag med volum');
+    score += 10;
+  }
 
   if (latest.close > ind.sma_50) {
     reasons.push('Over SMA50');
@@ -323,7 +336,7 @@ function scanVolumeSurge(
   if (ind.sma_200 && ind.sma_50 > ind.sma_200) score += 10;
   if (ind.rsi_14 && ind.rsi_14 >= 40 && ind.rsi_14 <= 75) score += 10;
 
-  if (score < 50) return null;
+  if (score < 35) return null;
 
   return buildResult(ind.symbol, 'BREAKOUT', 'VOLUME_SURGE', score, latest.close,
     ind.atr_14, capital, reasons, rv, calcRelativeStrength(ind, latest.close));
@@ -431,13 +444,16 @@ function scanContinuation(
     score += 10;
   }
 
-  // Today should show bounce (close > open, or close > yesterday's close)
+  // Today should show bounce or stabilization
   if (latest.close > prev.close && latest.close > latest.open) {
     reasons.push('Bounce-dag (gronn candle)');
     score += 15;
   } else if (latest.close > prev.close) {
     reasons.push('Hoyere close enn i gar');
     score += 10;
+  } else if (latest.close > latest.open) {
+    reasons.push('Gronn candle (men under gars close)');
+    score += 5;
   } else {
     return null; // Still falling, wait
   }
