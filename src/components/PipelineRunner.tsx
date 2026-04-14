@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { clsx } from 'clsx';
-import { Play, Loader2, CheckCircle2, XCircle, Clock, RefreshCcw, Download, Radar, Square } from 'lucide-react';
+import { Play, Loader2, CheckCircle2, XCircle, Clock, RefreshCcw, Radar } from 'lucide-react';
 
 interface PipelineResult {
   success: boolean;
@@ -35,10 +35,8 @@ export default function PipelineRunner({ onComplete }: { onComplete?: () => void
   const [result, setResult] = useState<PipelineResult | null>(null);
   const [market, setMarket] = useState<'OSE' | 'US'>('OSE');
 
-  // Auto-loader state
-  const [autoLoading, setAutoLoading] = useState(false);
-  const [batchProgress, setBatchProgress] = useState({ loaded: 0, total: 0, batch: 0 });
-  const abortRef = useRef(false);
+  // Not used anymore — prices loaded locally
+  const autoLoading = false;
 
   // Single API call
   const callPipeline = useCallback(async (step?: 'prices' | 'scan', mkt?: 'OSE' | 'US'): Promise<PipelineResult> => {
@@ -64,84 +62,6 @@ export default function PipelineRunner({ onComplete }: { onComplete?: () => void
       error: data.error,
     };
   }, [market]);
-
-  // Auto-load ALL prices — runs batch after batch until done
-  async function autoLoadPrices() {
-    setAutoLoading(true);
-    setRunning(true);
-    setRunningStep('auto');
-    abortRef.current = false;
-
-    let totalLoaded = 0;
-    let batchNum = 0;
-    let lastResult: PipelineResult | null = null;
-
-    try {
-      while (!abortRef.current) {
-        batchNum++;
-        const data = await callPipeline('prices');
-        lastResult = data;
-
-        totalLoaded += data.prices.success;
-        setBatchProgress({
-          loaded: totalLoaded,
-          total: data.prices.total || totalLoaded + (data.prices.remaining || 0),
-          batch: batchNum,
-        });
-
-        // Stop if nothing new was loaded (all done or all failed)
-        if (data.prices.success === 0 && data.prices.failed === 0) {
-          break;
-        }
-
-        // Stop if no remaining
-        if (data.prices.remaining === 0) {
-          break;
-        }
-
-        // Stop on error
-        if (!data.success) {
-          break;
-        }
-
-        // Small pause between batches
-        await new Promise(r => setTimeout(r, 300));
-      }
-
-      // Set final result
-      if (lastResult) {
-        setResult({
-          ...lastResult,
-          prices: { ...lastResult.prices, success: totalLoaded },
-          log: [...(lastResult.log || []), `Auto-loader ferdig: ${totalLoaded} aksjer lastet i ${batchNum} batches`],
-        });
-      }
-
-      onComplete?.();
-    } catch (err) {
-      setResult({
-        success: false,
-        market,
-        step: 'auto',
-        duration: '0s',
-        prices: { success: totalLoaded, failed: 0, skipped: 0, total: 0, remaining: 0 },
-        indicators: { computed: 0, failed: 0 },
-        signals: [],
-        slot_actions: [],
-        log: [`Feil etter ${batchNum} batches: ${err instanceof Error ? err.message : 'Ukjent feil'}`],
-        error: err instanceof Error ? err.message : 'Ukjent feil',
-      });
-    } finally {
-      setAutoLoading(false);
-      setRunning(false);
-      setRunningStep(null);
-    }
-  }
-
-  // Stop auto-loading
-  function stopAutoLoad() {
-    abortRef.current = true;
-  }
 
   // Regular single-step run
   async function runPipeline(step?: 'prices' | 'scan') {
@@ -172,72 +92,23 @@ export default function PipelineRunner({ onComplete }: { onComplete?: () => void
     }
   }
 
-  // Auto-load + scan in sequence
-  async function runFullAuto() {
-    setAutoLoading(true);
+  // Run full scan (indicators + scanner) — NO Yahoo calls, safe on Vercel
+  async function runFullScan() {
     setRunning(true);
-    setRunningStep('auto');
-    abortRef.current = false;
-
-    let totalLoaded = 0;
-    let batchNum = 0;
+    setRunningStep('scan');
+    setResult(null);
 
     try {
-      // Phase 1: Load all prices (max 60 batches = 300 symbols at 5/batch)
-      let consecutiveNoNew = 0;
-      let totalFailed = 0;
-      while (!abortRef.current && batchNum < 60) {
-        batchNum++;
-        const data = await callPipeline('prices');
-        totalLoaded += data.prices.success;
-        totalFailed += data.prices.failed;
-        const remaining = data.prices.remaining ?? 0;
-        const totalSymbols = data.prices.total || 0;
-        setBatchProgress({
-          loaded: totalSymbols - remaining,
-          total: totalSymbols,
-          batch: batchNum,
-        });
-
-        // Track consecutive batches with no successful loads
-        if (data.prices.success === 0) {
-          consecutiveNoNew++;
-        } else {
-          consecutiveNoNew = 0;
-        }
-
-        // Stop conditions
-        if (remaining === 0) break;           // All done!
-        if (consecutiveNoNew >= 3) break;     // 3 empty in a row = stuck
-        if (!data.success) break;             // API error
-
-        await new Promise(r => setTimeout(r, 500));
-      }
-
-      if (abortRef.current) return;
-
-      // Phase 2: Run scanner
-      setRunningStep('scan');
-      setBatchProgress(prev => ({ ...prev, batch: -1 })); // -1 = scanning phase
-      const scanData = await callPipeline('scan');
-
-      setResult({
-        ...scanData,
-        prices: { ...scanData.prices, success: totalLoaded },
-        log: [
-          `Auto-loader: ${totalLoaded} aksjer lastet i ${batchNum} batches`,
-          ...(scanData.log || []),
-        ],
-      });
-
-      onComplete?.();
+      const data = await callPipeline('scan');
+      setResult(data);
+      if (data.success) onComplete?.();
     } catch (err) {
       setResult({
         success: false,
         market,
-        step: 'auto',
+        step: 'scan',
         duration: '0s',
-        prices: { success: totalLoaded, failed: 0, skipped: 0, total: 0, remaining: 0 },
+        prices: { success: 0, failed: 0, skipped: 0, total: 0, remaining: 0 },
         indicators: { computed: 0, failed: 0 },
         signals: [],
         slot_actions: [],
@@ -245,15 +116,10 @@ export default function PipelineRunner({ onComplete }: { onComplete?: () => void
         error: err instanceof Error ? err.message : 'Ukjent feil',
       });
     } finally {
-      setAutoLoading(false);
       setRunning(false);
       setRunningStep(null);
     }
   }
-
-  const progressPct = batchProgress.total > 0
-    ? Math.round((batchProgress.loaded / batchProgress.total) * 100)
-    : 0;
 
   return (
     <div className="bg-surface dark:bg-dark-surface rounded-3xl border border-surface-border dark:border-dark-border p-6">
@@ -297,55 +163,22 @@ export default function PipelineRunner({ onComplete }: { onComplete?: () => void
             Scanner
           </button>
 
-          {/* Auto-load + scan — the main button */}
-          {autoLoading ? (
-            <button
-              onClick={stopAutoLoad}
-              className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-xl text-sm font-bold hover:bg-red-600 transition-colors"
-            >
-              <Square className="w-4 h-4" />
-              Stopp
-            </button>
-          ) : (
-            <button
-              onClick={runFullAuto}
-              disabled={running}
-              className="flex items-center gap-2 px-4 py-2 bg-brand-emerald text-white rounded-xl text-sm font-bold hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {running ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Play className="w-4 h-4" />
-              )}
-              Last & Scan
-            </button>
-          )}
+          {/* Full scan — indicators + scanner, NO Yahoo calls */}
+          <button
+            onClick={runFullScan}
+            disabled={running}
+            className="flex items-center gap-2 px-4 py-2 bg-brand-emerald text-white rounded-xl text-sm font-bold hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {running && runningStep === 'scan' ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Play className="w-4 h-4" />
+            )}
+            Kjør Scan
+          </button>
         </div>
       </div>
 
-      {/* Auto-loader progress bar */}
-      {autoLoading && (
-        <div className="mb-4 space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-500 dark:text-gray-400">
-              {batchProgress.batch === -1
-                ? 'Kjorer scanner...'
-                : `Laster priser — batch ${batchProgress.batch}`
-              }
-            </span>
-            <span className="font-bold text-brand-emerald">
-              {batchProgress.loaded} / {batchProgress.total || '?'} aksjer
-              {batchProgress.total > 0 && ` (${progressPct}%)`}
-            </span>
-          </div>
-          <div className="w-full bg-gray-100 dark:bg-dark-border rounded-full h-2.5 overflow-hidden">
-            <div
-              className="bg-brand-emerald h-full rounded-full transition-all duration-500 ease-out"
-              style={{ width: `${Math.max(progressPct, 2)}%` }}
-            />
-          </div>
-        </div>
-      )}
 
       {/* Result */}
       {result && !autoLoading && (
