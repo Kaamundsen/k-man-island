@@ -71,10 +71,10 @@ export default function MarkedsskannerContent({ stocks }: MarkedsskannerContentP
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-4xl font-extrabold text-brand-slate tracking-tight mb-2">
+            <h1 className="text-4xl font-extrabold text-brand-slate dark:text-white tracking-tight mb-2">
               Markedsskanner
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               Komplett oversikt over alle aksjer med sortering og filtrering
             </p>
           </div>
@@ -89,16 +89,16 @@ export default function MarkedsskannerContent({ stocks }: MarkedsskannerContentP
             placeholder="Søk etter ticker eller navn..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
+            className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface text-brand-slate dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-brand-emerald focus:ring-2 focus:ring-brand-emerald/20 outline-none transition-all"
           />
         </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-4 gap-4 mb-8">
-        <div className="bg-surface rounded-2xl p-4 border border-surface-border">
-          <div className="text-sm text-gray-600 mb-1">Totalt Aksjer</div>
-          <div className="text-3xl font-extrabold text-brand-slate">{stocks.length}</div>
+        <div className="bg-white dark:bg-dark-surface rounded-2xl p-4 border border-gray-100 dark:border-dark-border">
+          <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Totalt Aksjer</div>
+          <div className="text-3xl font-extrabold text-brand-slate dark:text-white">{stocks.length}</div>
         </div>
         <div className="bg-gradient-to-br from-brand-emerald to-emerald-600 rounded-2xl p-4 text-white">
           <div className="text-sm opacity-75 mb-1">Kjøpssignaler</div>
@@ -115,39 +115,39 @@ export default function MarkedsskannerContent({ stocks }: MarkedsskannerContentP
       </div>
 
       {/* Table */}
-      <div className="bg-surface rounded-3xl border border-surface-border overflow-hidden">
+      <div className="bg-white dark:bg-dark-surface rounded-3xl border border-gray-100 dark:border-dark-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 dark:bg-dark-muted border-b border-gray-200 dark:border-dark-border">
               <tr>
                 <th className="px-6 py-4 text-left">
                   <button
                     onClick={() => handleSort('ticker')}
-                    className="flex items-center gap-2 font-bold text-sm text-gray-700 hover:text-brand-slate transition-colors"
+                    className="flex items-center gap-2 font-bold text-sm text-gray-700 dark:text-gray-300 hover:text-brand-slate dark:hover:text-white transition-colors"
                   >
                     Ticker
                     <SortIcon field="ticker" />
                   </button>
                 </th>
                 <th className="px-6 py-4 text-left">
-                  <div className="font-bold text-sm text-gray-700">Navn</div>
+                  <div className="font-bold text-sm text-gray-700 dark:text-gray-300">Navn</div>
                 </th>
                 <th className="px-6 py-4 text-left">
                   <button
                     onClick={() => handleSort('kScore')}
-                    className="flex items-center gap-2 font-bold text-sm text-gray-700 hover:text-brand-slate transition-colors"
+                    className="flex items-center gap-2 font-bold text-sm text-gray-700 dark:text-gray-300 hover:text-brand-slate dark:hover:text-white transition-colors"
                   >
                     K-Score
                     <SortIcon field="kScore" />
                   </button>
                 </th>
                 <th className="px-6 py-4 text-left">
-                  <div className="font-bold text-sm text-gray-700">Signal</div>
+                  <div className="font-bold text-sm text-gray-700 dark:text-gray-300">Signal</div>
                 </th>
                 <th className="px-6 py-4 text-right">
                   <button
                     onClick={() => handleSort('price')}
-                    className="flex items-center gap-2 ml-auto font-bold text-sm text-gray-700 hover:text-brand-slate transition-colors"
+                    className="flex items-center gap-2 ml-auto font-bold text-sm text-gray-700 dark:text-gray-300 hover:text-brand-slate dark:hover:text-white transition-colors"
                   >
                     Pris
                     <SortIcon field="price" />
@@ -156,7 +156,7 @@ export default function MarkedsskannerContent({ stocks }: MarkedsskannerContentP
                 <th className="px-6 py-4 text-right">
                   <button
                     onClick={() => handleSort('changePercent')}
-                    className="flex items-center gap-2 ml-auto font-bold text-sm text-gray-700 hover:text-brand-slate transition-colors"
+                    className="flex items-center gap-2 ml-auto font-bold text-sm text-gray-700 dark:text-gray-300 hover:text-brand-slate dark:hover:text-white transition-colors"
                   >
                     Endring
                     <SortIcon field="changePercent" />
@@ -165,18 +165,18 @@ export default function MarkedsskannerContent({ stocks }: MarkedsskannerContentP
                 <th className="px-6 py-4 text-right">
                   <button
                     onClick={() => handleSort('gainPercent')}
-                    className="flex items-center gap-2 ml-auto font-bold text-sm text-gray-700 hover:text-brand-slate transition-colors"
+                    className="flex items-center gap-2 ml-auto font-bold text-sm text-gray-700 dark:text-gray-300 hover:text-brand-slate dark:hover:text-white transition-colors"
                   >
                     Potensial
                     <SortIcon field="gainPercent" />
                   </button>
                 </th>
                 <th className="px-6 py-4 text-center">
-                  <div className="font-bold text-sm text-gray-700">Marked</div>
+                  <div className="font-bold text-sm text-gray-700 dark:text-gray-300">Marked</div>
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-100 dark:divide-dark-border">
               {filteredAndSortedStocks.map((stock, index) => {
                 const isPositive = stock.changePercent >= 0;
                 const tickerShort = stock.ticker.replace('.OL', '');
@@ -190,27 +190,27 @@ export default function MarkedsskannerContent({ stocks }: MarkedsskannerContentP
                 const config = signalConfig[stock.signal];
 
                 return (
-                  <tr 
+                  <tr
                     key={stock.ticker}
-                    className="hover:bg-gray-50 transition-colors"
+                    className="hover:bg-gray-50 dark:hover:bg-dark-muted transition-colors"
                   >
                     <td className="px-6 py-4">
-                      <Link 
+                      <Link
                         href={`/analyse/${stock.ticker}`}
-                        className="font-bold text-brand-slate hover:text-brand-emerald transition-colors"
+                        className="font-bold text-brand-slate dark:text-white hover:text-brand-emerald transition-colors"
                       >
                         {tickerShort}
                       </Link>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-gray-600">{stock.name}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">{stock.name}</div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="text-2xl font-extrabold text-brand-slate">
+                        <div className="text-2xl font-extrabold text-brand-slate dark:text-white">
                           {stock.kScore}
                         </div>
-                        <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden w-20">
+                        <div className="flex-1 bg-gray-100 dark:bg-dark-border rounded-full h-2 overflow-hidden w-20">
                           <div 
                             className={clsx(
                               'h-full rounded-full',
@@ -232,7 +232,7 @@ export default function MarkedsskannerContent({ stocks }: MarkedsskannerContentP
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="font-bold text-brand-slate">
+                      <div className="font-bold text-brand-slate dark:text-white">
                         {stock.price.toFixed(2)} NOK
                       </div>
                     </td>

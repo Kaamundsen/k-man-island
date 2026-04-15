@@ -13,6 +13,7 @@ const config: Config = {
         dark: {
           surface: "#0b0f19",
           muted: "#111827",
+          bg: "#111827",        // alias for dark-muted (used widely)
           border: "#1f2937",
           text: "#e5e7eb",
         },

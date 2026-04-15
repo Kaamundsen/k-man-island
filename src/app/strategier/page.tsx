@@ -286,18 +286,18 @@ function StrategyCard({ strategy, scoring }: { strategy: StrategyDefinition; sco
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div className="bg-white dark:bg-dark-surface rounded-2xl border border-gray-100 dark:border-dark-border overflow-hidden">
       {/* Header */}
       <div 
-        className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+        className="p-6 cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-muted transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <span className="text-3xl">{strategy.emoji}</span>
             <div>
-              <h3 className="text-lg font-bold text-gray-900">{strategy.name}</h3>
-              <p className="text-sm text-gray-500">{strategy.description}</p>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">{strategy.name}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{strategy.description}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -328,7 +328,7 @@ function StrategyCard({ strategy, scoring }: { strategy: StrategyDefinition; sco
             ) : (
               <AlertTriangle className="w-4 h-4 text-yellow-500" />
             )}
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
               {strategy.enabled ? 'Aktiv' : 'Inaktiv'}
             </span>
           </div>
@@ -337,8 +337,8 @@ function StrategyCard({ strategy, scoring }: { strategy: StrategyDefinition; sco
 
       {/* Expanded content */}
       {expanded && scoring && (
-        <div className="border-t border-gray-100 p-6 bg-gray-50">
-          <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <div className="border-t border-gray-100 dark:border-dark-border p-6 bg-gray-50 dark:bg-dark-muted">
+          <h4 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-brand-emerald" />
             Hvordan scoren beregnes
           </h4>
@@ -347,9 +347,9 @@ function StrategyCard({ strategy, scoring }: { strategy: StrategyDefinition; sco
 
           <div className="space-y-3">
             {scoring.criteria.map((criteria, idx) => (
-              <div key={idx} className="bg-white rounded-lg p-4 border border-gray-200">
+              <div key={idx} className="bg-white dark:bg-dark-surface rounded-lg p-4 border border-gray-200 dark:border-dark-border">
                 <div className="flex items-start justify-between mb-2">
-                  <span className="font-medium text-gray-900">{criteria.name}</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{criteria.name}</span>
                   <span className="text-sm font-mono bg-gray-100 px-2 py-0.5 rounded text-gray-600">
                     {criteria.weight}
                   </span>
@@ -400,16 +400,16 @@ export default function StrategierPage() {
     <main className="min-h-screen p-8 max-w-5xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Strategi-dokumentasjon</h1>
-        <p className="text-gray-600">
+        <h1 className="text-3xl font-bold text-brand-slate dark:text-white mb-2">Strategi-dokumentasjon</h1>
+        <p className="text-gray-600 dark:text-gray-300">
           Oversikt over alle trading-strategier og hvordan de scorer aksjer.
           Oppdatert automatisk ved endringer i systemet.
         </p>
       </div>
 
       {/* Global BUY criteria */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+      <div className="bg-white dark:bg-dark-surface rounded-2xl border border-gray-100 dark:border-dark-border p-6 mb-8">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <CheckCircle2 className="w-6 h-6 text-green-500" />
           Globale BUY-kriterier
         </h2>
@@ -417,57 +417,57 @@ export default function StrategierPage() {
           For at en aksje skal få BUY-signal må den oppfylle <strong>alle</strong> disse kriteriene:
         </p>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-dark-muted rounded-lg">
             <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
               <span className="font-bold text-green-600">K</span>
             </div>
             <div>
               <p className="font-medium">K-Score ≥ {BUY_SIGNAL_CRITERIA.kScore.min}</p>
-              <p className="text-sm text-gray-500">{BUY_SIGNAL_CRITERIA.kScore.description}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{BUY_SIGNAL_CRITERIA.kScore.description}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-dark-muted rounded-lg">
             <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
               <span className="font-bold text-blue-600">RSI</span>
             </div>
             <div>
               <p className="font-medium">RSI: {BUY_SIGNAL_CRITERIA.rsi.min}-{BUY_SIGNAL_CRITERIA.rsi.max}</p>
-              <p className="text-sm text-gray-500">{BUY_SIGNAL_CRITERIA.rsi.description}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{BUY_SIGNAL_CRITERIA.rsi.description}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-dark-muted rounded-lg">
             <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
               <TrendingUp className="w-5 h-5 text-emerald-600" />
             </div>
             <div>
               <p className="font-medium">Positiv momentum</p>
-              <p className="text-sm text-gray-500">{BUY_SIGNAL_CRITERIA.momentum.description}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{BUY_SIGNAL_CRITERIA.momentum.description}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-dark-muted rounded-lg">
             <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center">
               <span className="font-bold text-cyan-600">📈</span>
             </div>
             <div>
               <p className="font-medium">Over SMA50</p>
-              <p className="text-sm text-gray-500">{BUY_SIGNAL_CRITERIA.trend.description}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{BUY_SIGNAL_CRITERIA.trend.description}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-dark-muted rounded-lg">
             <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
               <Shield className="w-5 h-5 text-purple-600" />
             </div>
             <div>
               <p className="font-medium">R/R ≥ {BUY_SIGNAL_CRITERIA.riskReward.min}:1</p>
-              <p className="text-sm text-gray-500">{BUY_SIGNAL_CRITERIA.riskReward.description}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{BUY_SIGNAL_CRITERIA.riskReward.description}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* K-Score forklaring */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+      <div className="bg-white dark:bg-dark-surface rounded-2xl border border-gray-100 dark:border-dark-border p-6 mb-8">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <span className="w-8 h-8 bg-brand-emerald rounded-lg flex items-center justify-center text-white font-bold">K</span>
           K-Score - Validert Momentum-score
         </h2>
@@ -522,7 +522,7 @@ export default function StrategierPage() {
           </div>
         </div>
         
-        <div className="bg-gray-50 rounded-lg p-4 text-sm">
+        <div className="bg-gray-50 dark:bg-dark-muted rounded-lg p-4 text-sm">
           <strong>Hvorfor denne formelen?</strong>
           <p className="text-gray-600 mt-1">
             Momentum-faktoren har vært konsistent lønnsom over flere tiår i ulike markeder.
@@ -534,28 +534,28 @@ export default function StrategierPage() {
 
       {/* Target returns */}
       <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl border border-yellow-200 p-6 mb-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <Target className="w-6 h-6 text-yellow-600" />
           Hvordan oppnå 100-200% årlig avkastning
         </h2>
         
         {/* Realistic calculation */}
-        <div className="bg-white/80 rounded-xl p-4 mb-4">
+        <div className="bg-white/80 dark:bg-dark-surface/80 rounded-xl p-4 mb-4">
           <h3 className="font-semibold text-gray-800 mb-3">📊 Realistisk regnestykke</h3>
           <div className="grid md:grid-cols-4 gap-3 text-sm">
-            <div className="bg-gray-50 rounded-lg p-3 text-center">
+            <div className="bg-gray-50 dark:bg-dark-muted rounded-lg p-3 text-center">
               <p className="text-2xl font-bold text-brand-emerald">20-25</p>
               <p className="text-gray-500">trades/år</p>
             </div>
-            <div className="bg-gray-50 rounded-lg p-3 text-center">
+            <div className="bg-gray-50 dark:bg-dark-muted rounded-lg p-3 text-center">
               <p className="text-2xl font-bold text-blue-600">8-15%</p>
               <p className="text-gray-500">snitt gevinst</p>
             </div>
-            <div className="bg-gray-50 rounded-lg p-3 text-center">
+            <div className="bg-gray-50 dark:bg-dark-muted rounded-lg p-3 text-center">
               <p className="text-2xl font-bold text-purple-600">60%</p>
               <p className="text-gray-500">win-rate</p>
             </div>
-            <div className="bg-gray-50 rounded-lg p-3 text-center">
+            <div className="bg-gray-50 dark:bg-dark-muted rounded-lg p-3 text-center">
               <p className="text-2xl font-bold text-yellow-600">100-200%</p>
               <p className="text-gray-500">årlig mål</p>
             </div>
@@ -588,7 +588,7 @@ export default function StrategierPage() {
           </div>
         </div>
         
-        <div className="mt-4 p-4 bg-white/70 rounded-lg">
+        <div className="mt-4 p-4 bg-white/70 dark:bg-dark-surface/70 rounded-lg">
           <p className="text-sm text-gray-700">
             <strong>🥇 GOLD PICK:</strong> Aksjer som scorer 70+ på BEGGE strategiene har 
             både etablert trend OG asymmetrisk potensial. Disse prioriteres for større posisjonsstørrelser.
@@ -610,7 +610,7 @@ export default function StrategierPage() {
 
       {/* Momentum strategies */}
       <section className="mb-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <Zap className="w-6 h-6 text-yellow-500" />
           Momentum-strategier
         </h2>
@@ -627,7 +627,7 @@ export default function StrategierPage() {
 
       {/* Value strategies */}
       <section className="mb-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <Shield className="w-6 h-6 text-blue-500" />
           Verdi-strategier
         </h2>
@@ -644,7 +644,7 @@ export default function StrategierPage() {
 
       {/* Technical strategies */}
       <section className="mb-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <TrendingUp className="w-6 h-6 text-purple-500" />
           Tekniske strategier
         </h2>
@@ -662,7 +662,7 @@ export default function StrategierPage() {
       {/* Event strategies */}
       {eventStrategies.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <Info className="w-6 h-6 text-pink-500" />
             Hendelsesbaserte strategier
           </h2>
@@ -690,7 +690,7 @@ export default function StrategierPage() {
         </p>
         
         <div className="grid md:grid-cols-2 gap-4 mb-4">
-          <div className="bg-white rounded-lg p-4 border border-red-100">
+          <div className="bg-white dark:bg-dark-surface rounded-lg p-4 border border-red-100 dark:border-red-900/30">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-2xl">🚨</span>
               <span className="font-bold text-red-700">FOMO</span>
@@ -700,7 +700,7 @@ export default function StrategierPage() {
               80%+ av FOMO-kjøp taper penger. Du kjøper på toppen etter alle andre.
             </p>
           </div>
-          <div className="bg-white rounded-lg p-4 border border-red-100">
+          <div className="bg-white dark:bg-dark-surface rounded-lg p-4 border border-red-100 dark:border-red-900/30">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-2xl">🎲</span>
               <span className="font-bold text-red-700">YOLO/Magefølelse</span>
@@ -710,7 +710,7 @@ export default function StrategierPage() {
               Gambling uten analyse. De fleste taper over tid.
             </p>
           </div>
-          <div className="bg-white rounded-lg p-4 border border-orange-100">
+          <div className="bg-white dark:bg-dark-surface rounded-lg p-4 border border-orange-100 dark:border-orange-900/30">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-2xl">💬</span>
               <span className="font-bold text-orange-700">Tips fra noen</span>
@@ -720,7 +720,7 @@ export default function StrategierPage() {
               Tips er ofte allerede priset inn når du hører om det.
             </p>
           </div>
-          <div className="bg-white rounded-lg p-4 border border-blue-100">
+          <div className="bg-white dark:bg-dark-surface rounded-lg p-4 border border-blue-100 dark:border-blue-900/30">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-2xl">💎</span>
               <span className="font-bold text-blue-700">HODL</span>

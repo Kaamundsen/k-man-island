@@ -1,15 +1,81 @@
 {
-  "_note": "Fyll inn dine 8 posisjoner her. Kjør deretter: npx tsx scripts/import-positions.ts",
-  "_fields": {
-    "symbol": "Ticker (f.eks. EQNR.OL eller NVDA)",
-    "quantity": "Antall aksjer",
-    "entry_price": "Kjøpskurs per aksje (NOK/USD)",
-    "entry_date": "YYYY-MM-DD",
-    "stop_loss": "Stop-loss pris (valgfritt — settes automatisk hvis tom)",
-    "bucket": "BREAKOUT / PULLBACK / LONG (valgfritt, default BREAKOUT)"
+  "_note": "Automatisk generert fra transaksjonshistorikk. Kjør: npx tsx scripts/import-positions.ts",
+  "_accounts": {
+    "40153686": "AMUNDSEN KYRRE ANDRE (vanlig konto)",
+    "55702096": "Aksjesparekonto"
   },
   "positions": [
-    { "symbol": "EXAMPLE.OL", "quantity": 100, "entry_price": 50.0, "entry_date": "2026-01-15", "stop_loss": 45.0, "bucket": "BREAKOUT" },
-    { "symbol": "NVDA", "quantity": 50, "entry_price": 120.0, "entry_date": "2026-02-01", "stop_loss": 110.0, "bucket": "LONG" }
+    {
+      "symbol": "VAR.OL",
+      "quantity": 3735,
+      "entry_price": 33.89,
+      "entry_date": "2025-10-10",
+      "bucket": "KJERNE",
+      "_note": "4 kjøp: 735@33.90 (okt), 1600@31.80 (nov), 600@33.16 (feb), 800@38.60 (mar) — snittkurs 33.89"
+    },
+    {
+      "symbol": "SATS.OL",
+      "quantity": 400,
+      "entry_price": 35.10,
+      "entry_date": "2025-11-19",
+      "bucket": "KJERNE",
+      "_note": "Kjøpt nov 2025 etter å ha tatt gevinst på forrige SATS-posisjon feb 2025"
+    },
+    {
+      "symbol": "NOD.OL",
+      "quantity": 470,
+      "entry_price": 113.29,
+      "entry_date": "2025-04-11",
+      "bucket": "KJERNE",
+      "_note": "2 kjøp: 370@103.10 (apr 2025) + 100@151.00 (feb 2026) — snittkurs 113.29"
+    },
+    {
+      "symbol": "THOR.OL",
+      "quantity": 4000,
+      "entry_price": 5.065,
+      "entry_date": "2026-01-27",
+      "bucket": "BREAKOUT",
+      "_note": "2 kjøp: 2000@5.08 (27.jan) + 2000@5.05 (28.jan) — snittkurs 5.065"
+    },
+    {
+      "symbol": "MSFT",
+      "quantity": 3,
+      "entry_price": 436.443,
+      "entry_date": "2026-01-30",
+      "bucket": "KJERNE",
+      "_note": "USD-konto. 3 aksjer @ 436.443 USD"
+    },
+    {
+      "symbol": "KIT.OL",
+      "quantity": 250,
+      "entry_price": 83.00,
+      "entry_date": "2026-02-12",
+      "bucket": "BREAKOUT",
+      "_note": "Kjøpt feb 2026 (tidligere KIT-posisjon solgt feb 2025)"
+    },
+    {
+      "symbol": "ZEN.OL",
+      "quantity": 50000,
+      "entry_price": 0.699,
+      "entry_date": "2026-01-29",
+      "bucket": "BREAKOUT",
+      "_note": "3 kjøp: 22000@0.458 (jan) + 18000@0.730 (mar) + 10000@1.174 (apr) — snittkurs 0.699"
+    },
+    {
+      "symbol": "DSRT.OL",
+      "quantity": 25000,
+      "entry_price": 1.552,
+      "entry_date": "2026-03-11",
+      "bucket": "BREAKOUT",
+      "_note": "3 kjøp: 10000@1.60 (mar 11) + 5000@1.60 (mar 17) + 10000@1.48 (apr 15) — snittkurs 1.552"
+    },
+    {
+      "symbol": "JACK.OL",
+      "quantity": 3400,
+      "entry_price": 4.412,
+      "entry_date": "2026-03-27",
+      "bucket": "BREAKOUT",
+      "_note": "Jacktel — kjøpt mar 2026"
+    }
   ]
 }

@@ -52,7 +52,7 @@ export default function AnalyseContent({ stocks }: AnalyseContentProps) {
             placeholder="Søk etter ticker eller navn... (OKEA, VAR, AAPL)"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-16 pr-6 py-5 rounded-2xl border-2 border-gray-200 focus:border-brand-emerald focus:ring-4 focus:ring-brand-emerald/20 outline-none transition-all text-lg font-medium"
+            className="w-full pl-16 pr-6 py-5 rounded-2xl border-2 border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface text-brand-slate dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-brand-emerald focus:ring-4 focus:ring-brand-emerald/20 outline-none transition-all text-lg font-medium"
           />
         </div>
         
@@ -140,18 +140,18 @@ export default function AnalyseContent({ stocks }: AnalyseContentProps) {
         <div className="mt-12 grid grid-cols-3 gap-4">
           <a 
             href="/markedsskanner"
-            className="bg-surface rounded-2xl p-6 border border-surface-border hover:shadow-card-hover transition-all text-center group"
+            className="bg-white dark:bg-dark-surface rounded-2xl p-6 border border-gray-100 dark:border-dark-border hover:shadow-card-hover transition-all text-center group"
           >
             <div className="w-12 h-12 rounded-xl bg-brand-emerald/10 flex items-center justify-center mx-auto mb-3 group-hover:bg-brand-emerald/20 transition-colors">
               <Search className="w-6 h-6 text-brand-emerald" />
             </div>
-            <h3 className="font-bold text-brand-slate mb-1">Markedsskanner</h3>
-            <p className="text-sm text-gray-600">Se alle aksjer i tabell</p>
+            <h3 className="font-bold text-brand-slate dark:text-white mb-1">Markedsskanner</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Se alle aksjer i tabell</p>
           </a>
 
           <a 
             href="/"
-            className="bg-surface rounded-2xl p-6 border border-surface-border hover:shadow-card-hover transition-all text-center group"
+            className="bg-white dark:bg-dark-surface rounded-2xl p-6 border border-gray-100 dark:border-dark-border hover:shadow-card-hover transition-all text-center group"
           >
             <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center mx-auto mb-3 group-hover:bg-blue-500/20 transition-colors">
               <TrendingUp className="w-6 h-6 text-blue-600" />
