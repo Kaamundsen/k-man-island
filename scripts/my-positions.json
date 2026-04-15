@@ -1,0 +1,15 @@
+{
+  "_note": "Fyll inn dine 8 posisjoner her. Kjør deretter: npx tsx scripts/import-positions.ts",
+  "_fields": {
+    "symbol": "Ticker (f.eks. EQNR.OL eller NVDA)",
+    "quantity": "Antall aksjer",
+    "entry_price": "Kjøpskurs per aksje (NOK/USD)",
+    "entry_date": "YYYY-MM-DD",
+    "stop_loss": "Stop-loss pris (valgfritt — settes automatisk hvis tom)",
+    "bucket": "BREAKOUT / PULLBACK / LONG (valgfritt, default BREAKOUT)"
+  },
+  "positions": [
+    { "symbol": "EXAMPLE.OL", "quantity": 100, "entry_price": 50.0, "entry_date": "2026-01-15", "stop_loss": 45.0, "bucket": "BREAKOUT" },
+    { "symbol": "NVDA", "quantity": 50, "entry_price": 120.0, "entry_date": "2026-02-01", "stop_loss": 110.0, "bucket": "LONG" }
+  ]
+}
