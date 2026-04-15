@@ -86,6 +86,7 @@ export default function SignalsTable({ onTakeSignal, refreshKey }: SignalsTableP
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState(1);
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
+  const [marketFilter, setMarketFilter] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const fetchSignals = useCallback(async () => {
@@ -105,9 +106,9 @@ export default function SignalsTable({ onTakeSignal, refreshKey }: SignalsTableP
     fetchSignals();
   }, [fetchSignals, refreshKey]);
 
-  const filteredSignals = typeFilter
-    ? signals.filter(s => s.signal_type === typeFilter)
-    : signals;
+  const filteredSignals = signals
+    .filter(s => !marketFilter || (marketFilter === 'OSE' ? s.symbol.endsWith('.OL') : !s.symbol.endsWith('.OL')))
+    .filter(s => !typeFilter || s.signal_type === typeFilter);
 
   const typeCounts: Record<string, number> = {};
   signals.forEach(s => {
@@ -132,15 +133,29 @@ export default function SignalsTable({ onTakeSignal, refreshKey }: SignalsTableP
           <h2 className="text-2xl font-bold text-brand-slate dark:text-white">Signaler</h2>
           <span className="text-sm text-gray-500 dark:text-gray-400">{filteredSignals.length} funnet</span>
         </div>
-        <div className="flex items-center gap-2 bg-gray-100 dark:bg-dark-border rounded-xl p-1">
-          {[1, 3, 7, 14].map(d => (
-            <button key={d} onClick={() => setDays(d)}
-              className={clsx('px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
-                days === d ? 'bg-white dark:bg-dark-surface shadow-sm text-brand-emerald' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
-              )}>
-              {d === 1 ? 'I dag' : `${d}d`}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          {/* Market filter */}
+          <div className="flex items-center gap-1 bg-gray-100 dark:bg-dark-border rounded-xl p-1">
+            {[null, 'OSE', 'US'].map(m => (
+              <button key={m ?? 'all'} onClick={() => setMarketFilter(m)}
+                className={clsx('px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
+                  marketFilter === m ? 'bg-white dark:bg-dark-surface shadow-sm text-brand-emerald' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+                )}>
+                {m ?? 'Alle'}
+              </button>
+            ))}
+          </div>
+          {/* Days filter */}
+          <div className="flex items-center gap-1 bg-gray-100 dark:bg-dark-border rounded-xl p-1">
+            {[1, 3, 7, 14].map(d => (
+              <button key={d} onClick={() => setDays(d)}
+                className={clsx('px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
+                  days === d ? 'bg-white dark:bg-dark-surface shadow-sm text-brand-emerald' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
+                )}>
+                {d === 1 ? 'I dag' : `${d}d`}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
