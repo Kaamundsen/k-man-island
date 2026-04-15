@@ -68,6 +68,18 @@ function passesQualityFilter(ind: IndicatorRow, prices: PriceRow[]): boolean {
   if (ind.vol_sma_50 && ind.vol_sma_50 < 10000) return false;
   if (ind.atr_pct && ind.atr_pct < 0.5) return false;
   if (!ind.sma_50) return false;
+
+  // Minimum likviditet:
+  // 1) Snitt daglig omsetning > 1M NOK (50d snittvolum × pris)
+  // 2) Siste dags omsetning > 500k NOK
+  // Sikrer at du kan kjøpe/selge uten å flytte kursen
+  if (ind.vol_sma_50) {
+    const avgTurnover = ind.vol_sma_50 * latest.close;
+    if (avgTurnover < 1000000) return false;
+  }
+  const todayTurnover = latest.volume * latest.close;
+  if (todayTurnover < 500000) return false;
+
   return true;
 }
 

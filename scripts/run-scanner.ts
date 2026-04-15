@@ -95,6 +95,9 @@ async function main() {
     if (ind.vol_sma_50 && ind.vol_sma_50 < 10000) continue;
     if (ind.atr_pct && ind.atr_pct < 0.5) continue;
     if (!ind.sma_50 || !ind.atr_14) continue;
+    // Min snitt-omsetning 1M NOK OG siste dag > 500k
+    if (ind.vol_sma_50 && ind.vol_sma_50 * close < 1000000) continue;
+    if (Number(latest.volume) * close < 500000) continue;
 
     const rv = ind.rel_volume ?? 0;
     const relStr = rs(ind.high_52w || close, ind.low_52w || close, close);
