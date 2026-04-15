@@ -45,7 +45,7 @@ export default function SignalsTable({ onTakeSignal, refreshKey }: SignalsTableP
   const fetchSignals = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/signals?days=${days}`);
+      const res = await fetch(`/api/signals?days=${days}&t=${Date.now()}`, { cache: 'no-store' });
       const data = await res.json();
       setSignals(data.signals || []);
     } catch (err) {
