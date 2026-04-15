@@ -469,9 +469,10 @@ export async function runScanner(date?: string): Promise<ScanResult[]> {
   const allSignals: ScanResult[] = [];
 
   for (const ind of indicators) {
-    const { data: prices } = await getSupabase()
+    const { data: pricesDesc } = await getSupabase()
       .from('prices_daily').select('*').eq('symbol', ind.symbol)
-      .lte('date', targetDate).order('date', { ascending: true }).limit(20);
+      .lte('date', targetDate).order('date', { ascending: false }).limit(30);
+    const prices = pricesDesc ? [...pricesDesc].reverse() : null;
 
     if (!prices || prices.length < 10) continue;
 
@@ -509,7 +510,21 @@ export async function runScanner(date?: string): Promise<ScanResult[]> {
     return b.score - a.score;
   });
 
-  return allSignals;
+  // Deduplicate: keep best signal per symbol (except FAILED_BREAKOUT which can coexist)
+  const seen = new Set<string>();
+  const deduped: ScanResult[] = [];
+  for (const sig of allSignals) {
+    if (sig.signal_type === 'FAILED_BREAKOUT') {
+      deduped.push(sig);
+      continue;
+    }
+    if (!seen.has(sig.symbol)) {
+      seen.add(sig.symbol);
+      deduped.push(sig);
+    }
+  }
+
+  return deduped;
 }
 
 export async function runAndStoreSignals(date?: string): Promise<{

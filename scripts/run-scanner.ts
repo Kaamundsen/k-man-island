@@ -80,9 +80,10 @@ async function main() {
   const signals: Signal[] = [];
 
   for (const ind of indicators) {
-    const { data: prices } = await supabase.from('prices_daily').select('*')
+    const { data: pricesDesc } = await supabase.from('prices_daily').select('*')
       .eq('symbol', ind.symbol).lte('date', targetDate)
-      .order('date', { ascending: true }).limit(20);
+      .order('date', { ascending: false }).limit(30);
+    const prices = pricesDesc ? [...pricesDesc].reverse() : null;
     if (!prices || prices.length < 15) continue;
 
     const latest = prices[prices.length - 1];
@@ -200,17 +201,26 @@ async function main() {
     return b.score - a.score;
   });
 
-  console.log(`🎯 ${signals.length} signaler:\n`);
+  // Dedup: ett signal per symbol (unntatt FAILED_BREAKOUT)
+  const seen = new Set<string>();
+  const deduped: Signal[] = [];
   for (const s of signals) {
+    if (s.signal_type === 'FAILED_BREAKOUT') { deduped.push(s); continue; }
+    if (!seen.has(s.symbol)) { seen.add(s.symbol); deduped.push(s); }
+  }
+  const finalSignals = deduped;
+
+  console.log(`🎯 ${finalSignals.length} signaler:\n`);
+  for (const s of finalSignals) {
     const e = s.signal_type === 'FAILED_BREAKOUT' ? '⚠️' : '✅';
     console.log(`${e} ${s.symbol.padEnd(12)} ${s.signal_type.padEnd(16)} Score:${String(s.score).padStart(3)}  Entry:${s.entry_price}  Size:${s.position_size_nok} NOK`);
     console.log(`   ${s.reasons.join(' | ')}`);
   }
 
   // Delete old signals for this date, insert new
-  if (signals.length > 0) {
+  if (finalSignals.length > 0) {
     await supabase.from('signals').delete().eq('date', targetDate);
-    const rows = signals.map(s => ({
+    const rows = finalSignals.map(s => ({
       symbol: s.symbol, date: targetDate, bucket: s.bucket, signal_type: s.signal_type,
       score: s.score, entry_price: s.entry_price, stop_price: s.stop_price, stop_pct: s.stop_pct,
       position_size_nok: s.position_size_nok, r_target_1: s.r_target_1, r_target_2: s.r_target_2,
@@ -218,7 +228,7 @@ async function main() {
     }));
     const { error } = await supabase.from('signals').upsert(rows, { onConflict: 'symbol,date,signal_type' });
     if (error) console.error('Lagringsfeil:', error.message);
-    else console.log(`\n💾 ${rows.length} signaler lagret`);
+    else console.log(`\n💾 ${finalSignals.length} signaler lagret`);
   } else {
     console.log('\nIngen signaler å lagre');
   }
