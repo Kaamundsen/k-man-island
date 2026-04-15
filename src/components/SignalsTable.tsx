@@ -23,6 +23,52 @@ interface Signal {
   company_name: string;
 }
 
+function getSignalComment(signal: Signal): string | null {
+  if (signal.score < 65) return null;
+  const r = signal.reasons;
+  const hasGap = r.some(x => x.includes('Gap opp'));
+  const gapVal = r.find(x => x.includes('Gap opp'))?.match(/([\d.]+)%/)?.[1];
+  const hasVolume = r.some(x => /[Vv]olum.*x/.test(x));
+  const volVal = r.find(x => /[Vv]olum.*x/.test(x))?.match(/([\d.]+)x/)?.[1];
+  const nearHigh = r.some(x => x.includes('fra årstopp'));
+  const nearHighVal = r.find(x => x.includes('fra årstopp'))?.match(/([\d.]+)%/)?.[1];
+  const aboveSma200 = r.some(x => x.includes('SMA50 > SMA200'));
+  const sma20break = r.some(x => x.includes('Breakout over SMA20'));
+  const consolidation = r.some(x => x.includes('konsolidering'));
+  const consVal = r.find(x => x.includes('konsolidering'))?.match(/(\d+)d/)?.[1];
+  const pullbackSma10 = r.some(x => x.includes('Pullback SMA10'));
+  const bounce = r.some(x => x.includes('Bounce-dag'));
+  const lowVol = r.some(x => x.includes('Lavt volum pullback'));
+
+  if (signal.signal_type === 'FAILED_BREAKOUT') {
+    return 'Var nær toppen men falt tilbake med økt salgsvolum. Unngå — vent på ny bekreftelse før eventuelt kjøp.';
+  }
+
+  if (signal.signal_type === 'CONTINUATION') {
+    const parts = [];
+    parts.push('Aksjen er i sterk opptrend og har trukket tilbake til støtte.');
+    if (pullbackSma10) parts.push('Tilbakegangen stoppet ved 10-dagers snitt — klassisk entry i en løpende trend.');
+    if (lowVol) parts.push('Lavt volum på nedturen viser at det er lite salgspress.');
+    if (bounce) parts.push('Grønn dag bekrefter at kjøperne tok over igjen.');
+    return parts.join(' ');
+  }
+
+  if (signal.signal_type === 'HIGH_52W') {
+    return `Ny 52-ukers høy — aksjen bryter ut til ukjent territorium uten motstand over. ${aboveSma200 ? 'Langsiktig trend er opp (SMA50 > SMA200). ' : ''}Momentum-setup.`;
+  }
+
+  // POWER_BREAKOUT
+  const parts: string[] = [];
+  if (consolidation && consVal) parts.push(`${consVal} dagers konsolidering etterfulgt av breakout — energi bygget opp og slippes nå.`);
+  if (hasGap && gapVal) parts.push(`Åpnet ${gapVal}% over gårsdagens kurs — sterk kjøperinteresse ved åpning.`);
+  if (sma20break && !consolidation) parts.push('Brøt opp gjennom 20-dagers snitt — kortsiktig trend snur opp.');
+  if (hasVolume && volVal) parts.push(`Volum ${volVal}x over normalt bekrefter at dette ikke er tilfeldig.`);
+  if (nearHigh && nearHighVal) parts.push(`Kun ${nearHighVal}% fra årstopp — liten motstand igjen over.`);
+  if (aboveSma200) parts.push('Langsiktig trend peker opp (SMA50 > SMA200).');
+  if (parts.length === 0) parts.push('Teknisk setup over SMA50 med momentum mot årstopp.');
+  return parts.join(' ');
+}
+
 const signalTypeConfig: Record<string, { icon: typeof TrendingUp; label: string; color: string; bg: string }> = {
   POWER_BREAKOUT: { icon: Zap, label: 'Breakout', color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/30' },
   HIGH_52W: { icon: TrendingUp, label: 'Årstopp', color: 'text-brand-emerald dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/30' },
@@ -219,6 +265,11 @@ export default function SignalsTable({ onTakeSignal, refreshKey }: SignalsTableP
                     {/* Why this signal */}
                     <div className="mt-4 mb-4">
                       <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Hvorfor dette signalet</div>
+                      {getSignalComment(signal) && (
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-3 leading-relaxed">
+                          {getSignalComment(signal)}
+                        </p>
+                      )}
                       <div className="flex flex-wrap gap-2">
                         {signal.reasons.map((r, i) => (
                           <span key={i} className={clsx(
