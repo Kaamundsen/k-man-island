@@ -86,12 +86,16 @@ async function main() {
     if (!prices || prices.length < 15) continue;
 
     const latest = prices[prices.length - 1];
+
+    // Skip stale data (>7 calendar days old)
+    const daysDiff = Math.floor((new Date(targetDate).getTime() - new Date(latest.date).getTime()) / 86400000);
+    if (daysDiff > 7) continue;
     const prev = prices[prices.length - 2];
     const close = Number(latest.close);
     const open = Number(latest.open);
 
     // Quality
-    if (close < 1) continue;
+    if (close < 5) continue; // Skip penny stocks
     if (ind.vol_sma_50 && ind.vol_sma_50 < 10000) continue;
     if (ind.atr_pct && ind.atr_pct < 0.5) continue;
     if (!ind.sma_50 || !ind.atr_14) continue;

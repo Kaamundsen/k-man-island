@@ -13,3 +13,4 @@ node_modules
 
 # Duplicate nested project folder
 k-man-island/
+.vercel

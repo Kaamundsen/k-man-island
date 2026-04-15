@@ -64,7 +64,8 @@ function passesQualityFilter(ind: IndicatorRow, prices: PriceRow[]): boolean {
   if (prices.length < 15) return false;
   const latest = prices[prices.length - 1];
   if (!latest) return false;
-  if (latest.close < 1) return false;
+  // Minimum pris: kr 5 for OSE, $5 for US — skip penny stocks
+  if (latest.close < 5) return false;
   if (ind.vol_sma_50 && ind.vol_sma_50 < 10000) return false;
   if (ind.atr_pct && ind.atr_pct < 0.5) return false;
   if (!ind.sma_50) return false;
@@ -478,6 +479,12 @@ export async function runScanner(date?: string): Promise<ScanResult[]> {
       date: p.date, open: Number(p.open), high: Number(p.high),
       low: Number(p.low), close: Number(p.close), volume: Number(p.volume),
     }));
+
+    // Skip stale data: latest price must be within 5 trading days of target
+    const latestPriceDate = new Date(typed[typed.length - 1].date);
+    const target = new Date(targetDate as string);
+    const daysDiff = Math.floor((target.getTime() - latestPriceDate.getTime()) / (1000 * 60 * 60 * 24));
+    if (daysDiff > 7) continue; // More than 7 calendar days = stale data
 
     if (!passesQualityFilter(ind, typed)) continue;
 
