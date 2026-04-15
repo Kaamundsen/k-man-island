@@ -70,14 +70,13 @@ function passesQualityFilter(ind: IndicatorRow, prices: PriceRow[]): boolean {
 
   // Minimum likviditet:
   // 1) Snitt daglig omsetning > 1M NOK (50d snittvolum × pris)
-  // 2) Siste dags omsetning > 500k NOK
-  // Sikrer at du kan kjøpe/selge uten å flytte kursen
+  // 2) Siste dags omsetning > 100k NOK
   if (ind.vol_sma_50) {
     const avgTurnover = ind.vol_sma_50 * latest.close;
-    if (avgTurnover < 1000000) return false;
+    if (avgTurnover < 100000) return false;
   }
   const todayTurnover = latest.volume * latest.close;
-  if (todayTurnover < 500000) return false;
+  if (todayTurnover < 100000) return false;
 
   return true;
 }
