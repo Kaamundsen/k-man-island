@@ -96,7 +96,6 @@ async function main() {
     const open = Number(latest.open);
 
     // Quality
-    if (close < 5) continue; // Skip penny stocks
     if (ind.vol_sma_50 && ind.vol_sma_50 < 10000) continue;
     if (ind.atr_pct && ind.atr_pct < 0.5) continue;
     if (!ind.sma_50 || !ind.atr_14) continue;

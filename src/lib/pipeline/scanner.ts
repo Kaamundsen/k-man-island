@@ -64,8 +64,6 @@ function passesQualityFilter(ind: IndicatorRow, prices: PriceRow[]): boolean {
   if (prices.length < 15) return false;
   const latest = prices[prices.length - 1];
   if (!latest) return false;
-  // Minimum pris: kr 5 for OSE, $5 for US — skip penny stocks
-  if (latest.close < 5) return false;
   if (ind.vol_sma_50 && ind.vol_sma_50 < 10000) return false;
   if (ind.atr_pct && ind.atr_pct < 0.5) return false;
   if (!ind.sma_50) return false;
