@@ -24,13 +24,10 @@ interface Signal {
 }
 
 const signalTypeConfig: Record<string, { icon: typeof TrendingUp; label: string; color: string }> = {
-  VCP_BREAKOUT: { icon: Target, label: 'VCP', color: 'text-purple-600 bg-purple-50 dark:bg-purple-900/30 dark:text-purple-400' },
-  HIGH_52W: { icon: TrendingUp, label: '52W High', color: 'text-brand-emerald bg-emerald-50 dark:bg-emerald-900/30 dark:text-emerald-400' },
-  VOLUME_SURGE: { icon: BarChart3, label: 'Vol Surge', color: 'text-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400' },
-  EPISODIC_PIVOT: { icon: Zap, label: 'Episodic', color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-400' },
-  CONTINUATION: { icon: RefreshCcw, label: 'Cont.', color: 'text-cyan-600 bg-cyan-50 dark:bg-cyan-900/30 dark:text-cyan-400' },
-  FAILED_BREAKOUT: { icon: AlertTriangle, label: 'Failed BO', color: 'text-red-600 bg-red-50 dark:bg-red-900/30 dark:text-red-400' },
-  SMART_MONEY: { icon: ArrowUpRight, label: 'Smart $', color: 'text-amber-600 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-400' },
+  POWER_BREAKOUT: { icon: Zap, label: 'Breakout', color: 'text-purple-600 bg-purple-50 dark:bg-purple-900/30 dark:text-purple-400' },
+  HIGH_52W: { icon: TrendingUp, label: 'Årstopp', color: 'text-brand-emerald bg-emerald-50 dark:bg-emerald-900/30 dark:text-emerald-400' },
+  CONTINUATION: { icon: RefreshCcw, label: 'Pullback', color: 'text-cyan-600 bg-cyan-50 dark:bg-cyan-900/30 dark:text-cyan-400' },
+  FAILED_BREAKOUT: { icon: AlertTriangle, label: 'Unngå', color: 'text-red-600 bg-red-50 dark:bg-red-900/30 dark:text-red-400' },
 };
 
 interface SignalsTableProps {
