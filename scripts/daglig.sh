@@ -8,15 +8,15 @@ cd "$(dirname "$0")/.."
 echo "=== K-MAN DAGLIG PIPELINE $(date '+%Y-%m-%d %H:%M') ==="
 echo ""
 
-echo "1/3 Laster priser fra Yahoo Finance..."
+echo "1/4 Laster priser fra Yahoo Finance (OSE + US)..."
 npx tsx scripts/load-prices.ts
 echo ""
 
-echo "2/3 Beregner indikatorer..."
+echo "2/4 Beregner indikatorer..."
 npx tsx scripts/run-pipeline.ts
 echo ""
 
-echo "3/3 Kjører scanner..."
+echo "3/4 Kjører scanner → lagrer signaler..."
 npx tsx scripts/run-scanner.ts
 echo ""
 

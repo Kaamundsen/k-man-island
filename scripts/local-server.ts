@@ -80,6 +80,13 @@ async function runPipeline(): Promise<{ ok: boolean; output: string }> {
     log(scanOut.trim());
     log('✅ Scanner ferdig');
 
+    log('📊 Beregner backtest-resultater...');
+    execSync(`npx tsx ${ROOT}/scripts/compute-signal-results.ts`, {
+      cwd: ROOT, stdio: 'pipe', timeout: 120000,
+      env: { ...process.env }
+    });
+    log('✅ Backtest oppdatert');
+
     log(`✅ Pipeline fullført ${new Date().toLocaleTimeString('nb-NO')}`);
     return { ok: true, output: lines.join('\n') };
   } catch (err: any) {
