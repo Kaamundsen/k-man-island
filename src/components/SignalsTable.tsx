@@ -88,13 +88,29 @@ export default function SignalsTable({ onTakeSignal, refreshKey }: SignalsTableP
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
   const [marketFilter, setMarketFilter] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [dataDate, setDataDate] = useState<string | null>(null);
+
+  const today = new Date().toISOString().split('T')[0];
+
+  function formatDataDate(d: string | null): string {
+    if (!d) return '';
+    if (d === today) return 'I dag';
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (d === yesterday.toISOString().split('T')[0]) return 'I går';
+    return new Date(d).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' });
+  }
 
   const fetchSignals = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/signals?days=${days}&t=${Date.now()}`, { cache: 'no-store' });
+      const url = days <= 1
+        ? `/api/signals?latest=true&t=${Date.now()}`
+        : `/api/signals?days=${days}&t=${Date.now()}`;
+      const res = await fetch(url, { cache: 'no-store' });
       const data = await res.json();
       setSignals(data.signals || []);
+      setDataDate(data.data_date || null);
     } catch (err) {
       console.error('Failed to fetch signals:', err);
     } finally {
@@ -132,6 +148,16 @@ export default function SignalsTable({ onTakeSignal, refreshKey }: SignalsTableP
           <Zap className="w-6 h-6 text-brand-emerald" strokeWidth={2.5} />
           <h2 className="text-2xl font-bold text-brand-slate dark:text-white">Signaler</h2>
           <span className="text-sm text-gray-500 dark:text-gray-400">{filteredSignals.length} funnet</span>
+          {dataDate && (
+            <span className={clsx(
+              'px-2.5 py-1 rounded-full text-xs font-semibold',
+              dataDate === today
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+            )}>
+              {dataDate === today ? '✓' : '🕐'} {formatDataDate(dataDate)}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {/* Market filter */}
