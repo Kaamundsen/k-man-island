@@ -14,3 +14,5 @@ node_modules
 # Duplicate nested project folder
 k-man-island/
 .vercel
+.env.vercel
+.claude/
