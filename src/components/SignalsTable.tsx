@@ -81,6 +81,12 @@ const signalTypeConfig: Record<string, { icon: typeof TrendingUp; label: string;
   FAILED_BREAKOUT: { icon: AlertTriangle, label: 'Unngå', color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/30' },
 };
 
+interface LiveQuote {
+  price: number;
+  change: number;
+  changePercent: number;
+}
+
 interface SignalsTableProps {
   onTakeSignal?: (signal: Signal) => void;
   refreshKey?: number;
@@ -94,6 +100,9 @@ export default function SignalsTable({ onTakeSignal, refreshKey }: SignalsTableP
   const [marketFilter, setMarketFilter] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [dataDate, setDataDate] = useState<string | null>(null);
+  const [liveQuotes, setLiveQuotes] = useState<Record<string, LiveQuote | null>>({});
+  const [quotesLoading, setQuotesLoading] = useState(false);
+  const [quotesTime, setQuotesTime] = useState<Date | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -122,6 +131,32 @@ export default function SignalsTable({ onTakeSignal, refreshKey }: SignalsTableP
       setLoading(false);
     }
   }, [days]);
+
+  const fetchLiveQuotes = useCallback(async (signalList: Signal[]) => {
+    if (signalList.length === 0) return;
+    setQuotesLoading(true);
+    try {
+      const allTickers = [...new Set(signalList.map(s => s.symbol))];
+      // API is capped at 10 — batch if needed
+      const BATCH = 10;
+      const merged: Record<string, LiveQuote | null> = {};
+      for (let i = 0; i < allTickers.length; i += BATCH) {
+        const batch = allTickers.slice(i, i + BATCH);
+        const res = await fetch(
+          `/api/quotes?tickers=${encodeURIComponent(batch.join(','))}&t=${Date.now()}`,
+          { cache: 'no-store' }
+        );
+        const data = await res.json();
+        Object.assign(merged, data);
+      }
+      setLiveQuotes(merged);
+      setQuotesTime(new Date());
+    } catch (err) {
+      console.error('Failed to fetch live quotes:', err);
+    } finally {
+      setQuotesLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     fetchSignals();
@@ -165,6 +200,23 @@ export default function SignalsTable({ onTakeSignal, refreshKey }: SignalsTableP
           )}
         </div>
         <div className="flex items-center gap-2">
+          {/* Live quotes button */}
+          <button
+            onClick={() => fetchLiveQuotes(signals)}
+            disabled={quotesLoading || signals.length === 0}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-brand-emerald text-white hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          >
+            {quotesLoading
+              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              : <RefreshCcw className="w-3.5 h-3.5" />
+            }
+            Oppdater kurs
+          </button>
+          {quotesTime && (
+            <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
+              {quotesTime.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          )}
           {/* Market filter */}
           <div className="flex items-center gap-1 bg-gray-100 dark:bg-dark-border rounded-xl p-1">
             {[null, 'OSE', 'US'].map(m => (
@@ -280,14 +332,34 @@ export default function SignalsTable({ onTakeSignal, refreshKey }: SignalsTableP
 
                   {/* Key stats */}
                   <div className="hidden sm:flex items-center gap-5 text-sm shrink-0">
-                    {/* Entry price — sluttkurs da scanneren kjørte */}
-                    <div className="text-right">
-                      <div className="font-bold text-brand-slate dark:text-white">
-                        {signal.entry_price.toFixed(2)}
-                        {signal.symbol.endsWith('.OL') ? '' : ' USD'}
-                      </div>
-                      <div className="text-xs text-gray-400">sluttkurs</div>
-                    </div>
+                    {/* Price — live if fetched, else entry price */}
+                    {(() => {
+                      const live = liveQuotes[signal.symbol];
+                      if (live) {
+                        const pct = live.changePercent;
+                        const isUp = pct >= 0;
+                        return (
+                          <div className="text-right">
+                            <div className="font-bold text-brand-slate dark:text-white">
+                              {live.price.toFixed(2)}
+                              {signal.symbol.endsWith('.OL') ? '' : ' USD'}
+                            </div>
+                            <div className={clsx('text-xs font-semibold', isUp ? 'text-emerald-500' : 'text-red-500')}>
+                              {isUp ? '+' : ''}{pct.toFixed(2)}%
+                            </div>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div className="text-right">
+                          <div className="font-bold text-brand-slate dark:text-white">
+                            {signal.entry_price.toFixed(2)}
+                            {signal.symbol.endsWith('.OL') ? '' : ' USD'}
+                          </div>
+                          <div className="text-xs text-gray-400">sluttkurs {new Date(signal.date).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' })}</div>
+                        </div>
+                      );
+                    })()}
                     {/* Stop loss — tydelig merket, ikke bare rød % */}
                     {!isFailed && (
                       <div className="text-right">
