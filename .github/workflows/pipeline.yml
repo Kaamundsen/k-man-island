@@ -1,0 +1,64 @@
+name: Daglig Pipeline
+
+on:
+  # Kjør automatisk man-fre kl 22:30 norsk tid (20:30 UTC)
+  schedule:
+    - cron: '30 20 * * 1-5'
+
+  # Tillat manuell kjøring fra GitHub UI eller API ("Oppdater"-knappen)
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Grunn til manuell kjøring'
+        required: false
+        default: 'Manuell oppdatering'
+
+jobs:
+  pipeline:
+    name: Hent priser → Indikatorer → Scanner → Backtest
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Sjekk ut kode
+        uses: actions/checkout@v4
+
+      - name: Sett opp Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Installer avhengigheter
+        run: npm ci
+
+      - name: 1/4 — Last priser (OSE + US)
+        run: npx tsx scripts/load-prices.ts
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        timeout-minutes: 10
+
+      - name: 2/4 — Beregn indikatorer
+        run: npx tsx scripts/run-pipeline.ts
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        timeout-minutes: 10
+
+      - name: 3/4 — Kjør scanner
+        run: npx tsx scripts/run-scanner.ts
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        timeout-minutes: 5
+
+      - name: 4/4 — Beregn backtest-resultater
+        run: npx tsx scripts/compute-signal-results.ts
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        timeout-minutes: 5
+
+      - name: Ferdig
+        run: echo "✅ Pipeline fullført $(date '+%Y-%m-%d %H:%M %Z')"
