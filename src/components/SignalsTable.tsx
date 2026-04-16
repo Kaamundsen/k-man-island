@@ -21,6 +21,11 @@ interface Signal {
   reasons: string[];
   was_taken: boolean;
   company_name: string;
+  // Enriched by API
+  current_price: number | null;
+  day_change_pct: number | null;   // % change from prev close to current
+  drift_pct: number | null;        // % change from signal entry to current
+  price_date: string | null;
 }
 
 function getSignalComment(signal: Signal): string | null {
@@ -275,10 +280,36 @@ export default function SignalsTable({ onTakeSignal, refreshKey }: SignalsTableP
 
                   {/* Key stats */}
                   <div className="hidden sm:flex items-center gap-6 text-sm shrink-0">
+                    {/* Current price + day change */}
                     <div className="text-right">
-                      <div className="font-bold text-brand-slate dark:text-white">{signal.entry_price.toFixed(2)}</div>
-                      <div className="text-xs text-red-400">-{signal.stop_pct.toFixed(1)}%</div>
+                      <div className="font-bold text-brand-slate dark:text-white">
+                        {signal.current_price != null
+                          ? signal.current_price.toFixed(signal.current_price < 10 ? 2 : 2)
+                          : signal.entry_price.toFixed(2)}
+                      </div>
+                      {signal.day_change_pct != null ? (
+                        <div className={clsx(
+                          'text-xs font-semibold',
+                          signal.day_change_pct >= 0 ? 'text-brand-emerald' : 'text-brand-rose'
+                        )}>
+                          {signal.day_change_pct >= 0 ? '+' : ''}{signal.day_change_pct.toFixed(1)}% i dag
+                        </div>
+                      ) : (
+                        <div className="text-xs text-gray-400">siste kurs</div>
+                      )}
                     </div>
+                    {/* Drift since signal */}
+                    {signal.drift_pct != null && Math.abs(signal.drift_pct) > 0.1 && (
+                      <div className="text-right">
+                        <div className={clsx(
+                          'font-bold text-xs',
+                          signal.drift_pct >= 0 ? 'text-emerald-500' : 'text-rose-400'
+                        )}>
+                          {signal.drift_pct >= 0 ? '+' : ''}{signal.drift_pct.toFixed(1)}%
+                        </div>
+                        <div className="text-xs text-gray-400">siden signal</div>
+                      </div>
+                    )}
                     {volText && (
                       <div className="text-right">
                         <div className="font-bold text-blue-600 dark:text-blue-400">{volText}x</div>
@@ -329,8 +360,18 @@ export default function SignalsTable({ onTakeSignal, refreshKey }: SignalsTableP
                         {/* Trade plan */}
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
                           <div className="bg-gray-50 dark:bg-dark-border rounded-xl p-3">
-                            <div className="text-xs text-gray-400 mb-1">Entry</div>
+                            <div className="text-xs text-gray-400 mb-1">
+                              Entry <span className="text-gray-300 dark:text-gray-600">({new Date(signal.date).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' })})</span>
+                            </div>
                             <div className="text-lg font-bold text-brand-slate dark:text-white">{signal.entry_price.toFixed(2)}</div>
+                            {signal.current_price != null && Math.abs((signal.current_price - signal.entry_price) / signal.entry_price * 100) > 0.3 && (
+                              <div className={clsx(
+                                'text-xs mt-0.5',
+                                signal.current_price > signal.entry_price ? 'text-emerald-500' : 'text-rose-400'
+                              )}>
+                                Nå: {signal.current_price.toFixed(2)} ({signal.drift_pct! >= 0 ? '+' : ''}{signal.drift_pct!.toFixed(1)}%)
+                              </div>
+                            )}
                           </div>
                           <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-3">
                             <div className="text-xs text-red-400 mb-1">Stop-loss</div>
