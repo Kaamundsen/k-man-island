@@ -279,35 +279,22 @@ export default function SignalsTable({ onTakeSignal, refreshKey }: SignalsTableP
                   </div>
 
                   {/* Key stats */}
-                  <div className="hidden sm:flex items-center gap-6 text-sm shrink-0">
-                    {/* Current price + day change */}
+                  <div className="hidden sm:flex items-center gap-5 text-sm shrink-0">
+                    {/* Entry price — sluttkurs da scanneren kjørte */}
                     <div className="text-right">
                       <div className="font-bold text-brand-slate dark:text-white">
-                        {signal.current_price != null
-                          ? signal.current_price.toFixed(signal.current_price < 10 ? 2 : 2)
-                          : signal.entry_price.toFixed(2)}
+                        {signal.entry_price.toFixed(2)}
+                        {signal.symbol.endsWith('.OL') ? '' : ' USD'}
                       </div>
-                      {signal.day_change_pct != null ? (
-                        <div className={clsx(
-                          'text-xs font-semibold',
-                          signal.day_change_pct >= 0 ? 'text-brand-emerald' : 'text-brand-rose'
-                        )}>
-                          {signal.day_change_pct >= 0 ? '+' : ''}{signal.day_change_pct.toFixed(1)}% i dag
-                        </div>
-                      ) : (
-                        <div className="text-xs text-gray-400">siste kurs</div>
-                      )}
+                      <div className="text-xs text-gray-400">sluttkurs</div>
                     </div>
-                    {/* Drift since signal */}
-                    {signal.drift_pct != null && Math.abs(signal.drift_pct) > 0.1 && (
+                    {/* Stop loss — tydelig merket, ikke bare rød % */}
+                    {!isFailed && (
                       <div className="text-right">
-                        <div className={clsx(
-                          'font-bold text-xs',
-                          signal.drift_pct >= 0 ? 'text-emerald-500' : 'text-rose-400'
-                        )}>
-                          {signal.drift_pct >= 0 ? '+' : ''}{signal.drift_pct.toFixed(1)}%
+                        <div className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+                          stop {signal.stop_price.toFixed(2)}
                         </div>
-                        <div className="text-xs text-gray-400">siden signal</div>
+                        <div className="text-xs text-gray-400">−{signal.stop_pct.toFixed(1)}% risiko</div>
                       </div>
                     )}
                     {volText && (
@@ -361,22 +348,20 @@ export default function SignalsTable({ onTakeSignal, refreshKey }: SignalsTableP
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
                           <div className="bg-gray-50 dark:bg-dark-border rounded-xl p-3">
                             <div className="text-xs text-gray-400 mb-1">
-                              Entry <span className="text-gray-300 dark:text-gray-600">({new Date(signal.date).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' })})</span>
+                              Sluttkurs {new Date(signal.date).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' })}
                             </div>
-                            <div className="text-lg font-bold text-brand-slate dark:text-white">{signal.entry_price.toFixed(2)}</div>
-                            {signal.current_price != null && Math.abs((signal.current_price - signal.entry_price) / signal.entry_price * 100) > 0.3 && (
-                              <div className={clsx(
-                                'text-xs mt-0.5',
-                                signal.current_price > signal.entry_price ? 'text-emerald-500' : 'text-rose-400'
-                              )}>
-                                Nå: {signal.current_price.toFixed(2)} ({signal.drift_pct! >= 0 ? '+' : ''}{signal.drift_pct!.toFixed(1)}%)
-                              </div>
-                            )}
+                            <div className="text-lg font-bold text-brand-slate dark:text-white">
+                              {signal.entry_price.toFixed(2)}
+                              <span className="text-xs font-normal text-gray-400 ml-1">
+                                {signal.symbol.endsWith('.OL') ? 'NOK' : 'USD'}
+                              </span>
+                            </div>
+                            <div className="text-xs text-gray-400 mt-0.5">Kjøp ved åpning</div>
                           </div>
-                          <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-3">
-                            <div className="text-xs text-red-400 mb-1">Stop-loss</div>
-                            <div className="text-lg font-bold text-red-600 dark:text-red-400">{signal.stop_price.toFixed(2)}</div>
-                            <div className="text-xs text-red-400">-{signal.stop_pct.toFixed(1)}%</div>
+                          <div className="bg-gray-50 dark:bg-dark-border rounded-xl p-3">
+                            <div className="text-xs text-gray-400 mb-1">Stop-loss</div>
+                            <div className="text-lg font-bold text-brand-slate dark:text-white">{signal.stop_price.toFixed(2)}</div>
+                            <div className="text-xs text-gray-400">−{signal.stop_pct.toFixed(1)}% under entry</div>
                           </div>
                           <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-3">
                             <div className="text-xs text-emerald-500 mb-1">Mål 1 (1R)</div>
@@ -391,20 +376,30 @@ export default function SignalsTable({ onTakeSignal, refreshKey }: SignalsTableP
                         </div>
 
                         {/* Position sizing */}
-                        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 mb-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">Posisjonsstørrelse</div>
-                              <div className="text-2xl font-extrabold text-blue-700 dark:text-blue-300">
-                                {signal.position_size_nok.toLocaleString('nb-NO')} kr
+                        {signal.symbol.endsWith('.OL') ? (
+                          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 mb-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">Posisjonsstørrelse</div>
+                                <div className="text-2xl font-extrabold text-blue-700 dark:text-blue-300">
+                                  {signal.position_size_nok.toLocaleString('nb-NO')} kr
+                                </div>
+                              </div>
+                              <div className="text-right text-sm text-blue-600 dark:text-blue-400">
+                                <div>Risiko: {(signal.position_size_nok * signal.stop_pct / 100).toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</div>
+                                <div className="text-xs text-blue-400">1% av portefølje</div>
                               </div>
                             </div>
-                            <div className="text-right text-sm text-blue-600 dark:text-blue-400">
-                              <div>Risiko: {(signal.position_size_nok * signal.stop_pct / 100).toLocaleString('nb-NO', { maximumFractionDigits: 0 })} kr</div>
-                              <div className="text-xs text-blue-400">1% av portefølje</div>
+                          </div>
+                        ) : (
+                          <div className="bg-amber-50 dark:bg-amber-900/10 rounded-xl p-4 mb-4 border border-amber-200 dark:border-amber-800/30">
+                            <div className="text-xs text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wider mb-1">US-aksje — posisjonsstørrelse</div>
+                            <div className="text-sm text-amber-700 dark:text-amber-300">
+                              Priser i USD. Beregn NOK-størrelse basert på dagskurs for USD/NOK.<br/>
+                              <span className="font-semibold">1% risiko = ca. 6 560 kr. Stop er {signal.stop_pct.toFixed(1)}% under entry.</span>
                             </div>
                           </div>
-                        </div>
+                        )}
 
                         {/* Take action */}
                         <div className="flex items-center justify-between">
