@@ -46,7 +46,7 @@ export default function PipelineRunner({ onComplete }: { onComplete?: () => void
   // Initial status fetch
   useEffect(() => {
     fetchStatus();
-  }, []);
+  }, [fetchStatus]);
 
   // Poll while running
   useEffect(() => {
@@ -63,7 +63,7 @@ export default function PipelineRunner({ onComplete }: { onComplete?: () => void
       setPollInterval(id);
       return () => clearInterval(id);
     }
-  }, [status?.running]);
+  }, [status?.running, fetchStatus, onComplete]);
 
   const runPipeline = async () => {
     if (triggering || status?.running) return;
@@ -146,7 +146,7 @@ export default function PipelineRunner({ onComplete }: { onComplete?: () => void
       {status && !serverUp && (
         <div className="mt-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-xl p-3">
           <p className="text-xs text-amber-700 dark:text-amber-400 font-medium mb-1">
-            Start lokal server for å bruke "Oppdater"-knappen:
+            Start lokal server for å bruke &ldquo;Oppdater&rdquo;-knappen:
           </p>
           <code className="text-xs bg-gray-900 text-emerald-400 px-2 py-1 rounded block">
             npx tsx scripts/local-server.ts
