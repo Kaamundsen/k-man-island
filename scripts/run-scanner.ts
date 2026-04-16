@@ -16,7 +16,10 @@ const supabase = createClient(
 
 function getLastTradingDay(): string {
   const now = new Date();
-  if (now.getUTCHours() < 22) now.setDate(now.getDate() - 1);
+  // Oslo market closes 16:30 CEST = 14:30 UTC.
+  // Only fall back to previous day if running BEFORE market close (< 15 UTC).
+  // At 22:30 CEST (20:30 UTC) the pipeline has already loaded today's prices.
+  if (now.getUTCHours() < 15) now.setDate(now.getDate() - 1);
   const day = now.getDay();
   if (day === 0) now.setDate(now.getDate() - 2);
   else if (day === 6) now.setDate(now.getDate() - 1);

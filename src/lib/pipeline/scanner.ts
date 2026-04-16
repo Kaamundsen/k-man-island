@@ -422,8 +422,9 @@ export async function runScanner(date?: string): Promise<ScanResult[]> {
   let targetDate = date;
   if (!targetDate) {
     const now = new Date();
+    // Oslo closes 16:30 CEST = 14:30 UTC. Only use previous day before 15 UTC.
     const utcHour = now.getUTCHours();
-    if (utcHour < 22) now.setDate(now.getDate() - 1);
+    if (utcHour < 15) now.setDate(now.getDate() - 1);
     const day = now.getDay();
     if (day === 0) now.setDate(now.getDate() - 2);
     else if (day === 6) now.setDate(now.getDate() - 1);
@@ -533,7 +534,7 @@ export async function runAndStoreSignals(date?: string): Promise<{
   const targetDate = date || (() => {
     const now = new Date();
     const utcHour = now.getUTCHours();
-    if (utcHour < 22) now.setDate(now.getDate() - 1);
+    if (utcHour < 15) now.setDate(now.getDate() - 1);
     const day = now.getDay();
     if (day === 0) now.setDate(now.getDate() - 2);
     else if (day === 6) now.setDate(now.getDate() - 1);
