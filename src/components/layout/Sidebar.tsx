@@ -17,7 +17,8 @@ import {
   Settings,
   ChevronDown,
   ChevronUp,
-  Radar
+  Radar,
+  BarChart3
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useState } from 'react';
@@ -26,6 +27,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Scanner', href: '/scanner', icon: Radar },
+  { name: 'Backtesting', href: '/backtest', icon: BarChart3 },
   { name: 'Portefølje', href: '/portefolje', icon: Briefcase },
   { name: 'Rapport', href: '/rapport', icon: FileText },
   { name: 'Markedsskanner', href: '/markedsskanner', icon: Search },

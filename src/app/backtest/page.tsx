@@ -1,247 +1,500 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { TrendingUp, Target, Calendar, RefreshCw, BarChart3 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
 import { clsx } from 'clsx';
+import {
+  TrendingUp, Zap, RefreshCcw, Target, AlertTriangle,
+  BarChart3, ChevronDown, ChevronUp, Info
+} from 'lucide-react';
 
-interface BacktestResult {
-  ticker: string;
-  name: string;
-  period: string;
-  kScoreAtEntry: number;
-  entryPrice: number;
-  currentPrice: number;
-  returnPercent: number;
-  daysHeld: number;
-  success: boolean;
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface ScoreGroup {
+  total: number;
+  wins: number;
+  avgR: number;
 }
 
-// Simulerte backtest-resultater basert på K-Score
-const MOCK_BACKTEST_RESULTS: BacktestResult[] = [
-  { ticker: 'STB.OL', name: 'Storebrand', period: '2025-Q4', kScoreAtEntry: 85, entryPrice: 105.20, currentPrice: 116.30, returnPercent: 10.5, daysHeld: 45, success: true },
-  { ticker: 'DNB.OL', name: 'DNB Bank', period: '2025-Q4', kScoreAtEntry: 82, entryPrice: 220.50, currentPrice: 242.70, returnPercent: 10.1, daysHeld: 38, success: true },
-  { ticker: 'MOWI.OL', name: 'Mowi', period: '2025-Q4', kScoreAtEntry: 78, entryPrice: 198.00, currentPrice: 212.40, returnPercent: 7.3, daysHeld: 52, success: true },
-  { ticker: 'SUBC.OL', name: 'Subsea 7', period: '2025-Q3', kScoreAtEntry: 80, entryPrice: 195.00, currentPrice: 222.60, returnPercent: 14.2, daysHeld: 90, success: true },
-  { ticker: 'TEL.OL', name: 'Telenor', period: '2025-Q3', kScoreAtEntry: 75, entryPrice: 125.50, currentPrice: 132.20, returnPercent: 5.3, daysHeld: 78, success: true },
-  { ticker: 'NHY.OL', name: 'Norsk Hydro', period: '2025-Q4', kScoreAtEntry: 72, entryPrice: 62.80, currentPrice: 58.40, returnPercent: -7.0, daysHeld: 35, success: false },
-  { ticker: 'AKER.OL', name: 'Aker', period: '2025-Q4', kScoreAtEntry: 79, entryPrice: 720.00, currentPrice: 829.00, returnPercent: 15.1, daysHeld: 42, success: true },
-  { ticker: 'GJF.OL', name: 'Gjensidige', period: '2025-Q3', kScoreAtEntry: 76, entryPrice: 168.00, currentPrice: 178.50, returnPercent: 6.3, daysHeld: 65, success: true },
-  { ticker: 'SCATC.OL', name: 'Scatec', period: '2025-Q4', kScoreAtEntry: 81, entryPrice: 102.00, currentPrice: 116.30, returnPercent: 14.0, daysHeld: 28, success: true },
-  { ticker: 'KOG.OL', name: 'Kongsberg Gruppen', period: '2025-Q3', kScoreAtEntry: 84, entryPrice: 950.00, currentPrice: 1180.00, returnPercent: 24.2, daysHeld: 120, success: true },
-];
+interface Stats {
+  total: number;
+  completed: number;
+  open: number;
+  win_rate: number;
+  avg_r: number;
+  avg_win_r: number;
+  avg_loss_r: number;
+  expected_value: number;
+  avg_days_held: number;
+  wins: number;
+  losses: number;
+  time_exits: number;
+  target_1_hits: number;
+  target_2_hits: number;
+  target_3_hits: number;
+  score_groups: Record<string, ScoreGroup>;
+}
 
-export default function BacktestPage() {
-  const [results, setResults] = useState<BacktestResult[]>(MOCK_BACKTEST_RESULTS);
-  const [loading, setLoading] = useState(false);
-  const [minKScore, setMinKScore] = useState(70);
+interface BacktestData {
+  overall: Stats | null;
+  by_type: Record<string, Stats | null>;
+  rows?: any[];
+  filters: { type: string | null; minScore: number; fromDate: string };
+}
 
-  const filteredResults = results.filter(r => r.kScoreAtEntry >= minKScore);
-  const successRate = (filteredResults.filter(r => r.success).length / filteredResults.length) * 100;
-  const avgReturn = filteredResults.reduce((sum, r) => sum + r.returnPercent, 0) / filteredResults.length;
-  const totalPositive = filteredResults.filter(r => r.returnPercent > 0).length;
-  const avgDaysHeld = filteredResults.reduce((sum, r) => sum + r.daysHeld, 0) / filteredResults.length;
+// ── Config ─────────────────────────────────────────────────────────────────────
 
-  // Score brackets analysis
-  const scoreBrackets = [
-    { range: '85+', min: 85, max: 100 },
-    { range: '80-84', min: 80, max: 84 },
-    { range: '75-79', min: 75, max: 79 },
-    { range: '70-74', min: 70, max: 74 },
-  ];
+const signalTypeConfig: Record<string, { label: string; color: string; bg: string; icon: typeof Zap }> = {
+  POWER_BREAKOUT: { label: 'Power Breakout', color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/30', icon: Zap },
+  HIGH_52W:       { label: '52-ukers høy',   color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/30', icon: TrendingUp },
+  CONTINUATION:   { label: 'Pullback',        color: 'text-cyan-600 dark:text-cyan-400', bg: 'bg-cyan-50 dark:bg-cyan-900/30', icon: RefreshCcw },
+};
 
-  const bracketStats = scoreBrackets.map(bracket => {
-    const bracketResults = results.filter(r => r.kScoreAtEntry >= bracket.min && r.kScoreAtEntry <= bracket.max);
-    const winRate = bracketResults.length > 0 
-      ? (bracketResults.filter(r => r.success).length / bracketResults.length) * 100 
-      : 0;
-    const avgRet = bracketResults.length > 0
-      ? bracketResults.reduce((sum, r) => sum + r.returnPercent, 0) / bracketResults.length
-      : 0;
-    return {
-      ...bracket,
-      count: bracketResults.length,
-      winRate,
-      avgReturn: avgRet,
-    };
-  });
+const outcomeConfig: Record<string, { label: string; color: string }> = {
+  STOP:      { label: 'Stop',   color: 'text-red-500' },
+  TARGET_1:  { label: '1R',     color: 'text-emerald-500' },
+  TARGET_2:  { label: '2R',     color: 'text-emerald-600' },
+  TARGET_3:  { label: '3R',     color: 'text-emerald-700 dark:text-emerald-300' },
+  TIME_EXIT: { label: 'Tid',    color: 'text-gray-400' },
+  OPEN:      { label: 'Åpen',   color: 'text-blue-400' },
+};
+
+// ── Components ─────────────────────────────────────────────────────────────────
+
+function Verdict({ stats }: { stats: Stats }) {
+  if (stats.completed < 5) return <span className="text-gray-400 text-xs">For lite data</span>;
+  const ev = stats.expected_value;
+  const wr = stats.win_rate;
+  if (ev >= 0.5 && wr >= 55) return <span className="text-xs font-bold text-emerald-500">✅ Lønnsomt setup</span>;
+  if (ev >= 0.2 && wr >= 45) return <span className="text-xs font-bold text-amber-500">⚡ Marginalt positivt</span>;
+  if (ev < 0) return <span className="text-xs font-bold text-red-500">❌ Unngå / filtrer</span>;
+  return <span className="text-xs font-bold text-gray-400">— Nøytralt</span>;
+}
+
+function StatCard({ label, value, sub, color }: { label: string; value: string | number; sub?: string; color?: string }) {
+  return (
+    <div className="bg-surface dark:bg-dark-surface rounded-2xl border border-surface-border dark:border-dark-border p-4">
+      <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">{label}</div>
+      <div className={clsx('text-2xl font-extrabold', color || 'text-brand-slate dark:text-white')}>{value}</div>
+      {sub && <div className="text-xs text-gray-400 mt-0.5">{sub}</div>}
+    </div>
+  );
+}
+
+function TypeCard({ type, stats }: { type: string; stats: Stats | null }) {
+  const cfg = signalTypeConfig[type];
+  const Icon = cfg.icon;
+  const [expanded, setExpanded] = useState(false);
+
+  if (!stats || stats.completed < 3) {
+    return (
+      <div className="bg-surface dark:bg-dark-surface rounded-2xl border border-surface-border dark:border-dark-border p-5 opacity-60">
+        <div className="flex items-center gap-2 mb-2">
+          <span className={clsx('inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold', cfg.color, cfg.bg)}>
+            <Icon className="w-3 h-3" />{cfg.label}
+          </span>
+        </div>
+        <p className="text-sm text-gray-400">For lite data ({stats?.completed ?? 0} fullførte)</p>
+      </div>
+    );
+  }
 
   return (
-    <main className="min-h-screen p-8 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center">
-            <Target className="w-6 h-6 text-white" />
+    <div className="bg-surface dark:bg-dark-surface rounded-2xl border border-surface-border dark:border-dark-border overflow-hidden">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full text-left p-5 hover:bg-gray-50 dark:hover:bg-dark-border/30 transition-colors"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className={clsx('inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold', cfg.color, cfg.bg)}>
+              <Icon className="w-3 h-3" />{cfg.label}
+            </span>
+            <Verdict stats={stats} />
+          </div>
+          {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+        </div>
+        <div className="grid grid-cols-4 gap-4 mt-4">
+          <div>
+            <div className="text-xl font-extrabold text-brand-slate dark:text-white">{stats.win_rate}%</div>
+            <div className="text-xs text-gray-400">treffsikkerhet</div>
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">K-Score Backtest</h1>
-            <p className="text-gray-500 dark:text-gray-400">Validering av K-Score på historiske data</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Summary Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center gap-2 mb-1">
-            <TrendingUp className="w-4 h-4 text-green-500" />
-            <span className="text-sm text-gray-500 dark:text-gray-400">Suksessrate</span>
-          </div>
-          <div className="text-2xl font-bold text-green-600">{successRate.toFixed(1)}%</div>
-          <div className="text-xs text-gray-400">K-Score ≥{minKScore}</div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center gap-2 mb-1">
-            <BarChart3 className="w-4 h-4 text-blue-500" />
-            <span className="text-sm text-gray-500 dark:text-gray-400">Snitt avkastning</span>
-          </div>
-          <div className={clsx('text-2xl font-bold', avgReturn >= 0 ? 'text-green-600' : 'text-red-600')}>
-            {avgReturn >= 0 ? '+' : ''}{avgReturn.toFixed(1)}%
-          </div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center gap-2 mb-1">
-            <Target className="w-4 h-4 text-purple-500" />
-            <span className="text-sm text-gray-500 dark:text-gray-400">Positive trades</span>
-          </div>
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">
-            {totalPositive}/{filteredResults.length}
-          </div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center gap-2 mb-1">
-            <Calendar className="w-4 h-4 text-orange-500" />
-            <span className="text-sm text-gray-500 dark:text-gray-400">Snitt holdperiode</span>
-          </div>
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">{avgDaysHeld.toFixed(0)} dager</div>
-        </div>
-      </div>
-
-      {/* K-Score Filter */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-100 dark:border-gray-700 mb-8">
-        <h3 className="font-bold text-gray-900 dark:text-white mb-4">Filter: Minimum K-Score</h3>
-        <div className="flex items-center gap-4">
-          <input
-            type="range"
-            min="60"
-            max="90"
-            value={minKScore}
-            onChange={(e) => setMinKScore(Number(e.target.value))}
-            className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-          />
-          <span className="text-2xl font-bold text-indigo-600 min-w-[60px]">{minKScore}</span>
-        </div>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-          Viser trades der K-Score var ≥{minKScore} ved kjøpstidspunkt
-        </p>
-      </div>
-
-      {/* Score Bracket Analysis */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-100 dark:border-gray-700 mb-8">
-        <h3 className="font-bold text-gray-900 dark:text-white mb-4">📊 K-Score Intervall-analyse</h3>
-        <div className="grid grid-cols-4 gap-4">
-          {bracketStats.map(bracket => (
-            <div 
-              key={bracket.range}
-              className={clsx(
-                'rounded-xl p-4 text-center',
-                bracket.winRate >= 80 ? 'bg-green-50 dark:bg-green-900/30' :
-                bracket.winRate >= 60 ? 'bg-yellow-50 dark:bg-yellow-900/30' :
-                'bg-red-50 dark:bg-red-900/30'
-              )}
-            >
-              <div className="text-lg font-bold text-gray-900 dark:text-white">{bracket.range}</div>
-              <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">{bracket.count} trades</div>
-              <div className={clsx(
-                'text-2xl font-bold',
-                bracket.winRate >= 70 ? 'text-green-600' : 'text-yellow-600'
-              )}>
-                {bracket.winRate.toFixed(0)}%
-              </div>
-              <div className="text-xs text-gray-500">win rate</div>
-              <div className={clsx(
-                'mt-2 text-sm font-semibold',
-                bracket.avgReturn >= 0 ? 'text-green-600' : 'text-red-600'
-              )}>
-                {bracket.avgReturn >= 0 ? '+' : ''}{bracket.avgReturn.toFixed(1)}% snitt
-              </div>
+            <div className={clsx('text-xl font-extrabold', stats.avg_r >= 0 ? 'text-emerald-500' : 'text-red-500')}>
+              {stats.avg_r >= 0 ? '+' : ''}{stats.avg_r}R
             </div>
-          ))}
+            <div className="text-xs text-gray-400">snitt R</div>
+          </div>
+          <div>
+            <div className={clsx('text-xl font-extrabold', stats.expected_value >= 0 ? 'text-emerald-500' : 'text-red-500')}>
+              {stats.expected_value >= 0 ? '+' : ''}{stats.expected_value}R
+            </div>
+            <div className="text-xs text-gray-400">forventet verdi</div>
+          </div>
+          <div>
+            <div className="text-xl font-extrabold text-brand-slate dark:text-white">{stats.completed}</div>
+            <div className="text-xs text-gray-400">fullførte trades</div>
+          </div>
         </div>
-      </div>
+      </button>
 
-      {/* Results Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-        <div className="p-4 border-b border-gray-100 dark:border-gray-700">
-          <h3 className="font-bold text-gray-900 dark:text-white">Backtest Resultater</h3>
+      {expanded && (
+        <div className="px-5 pb-5 border-t border-surface-border dark:border-dark-border">
+          {/* Outcome distribution */}
+          <div className="mt-4 mb-4">
+            <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Utfallsfordeling</div>
+            <div className="flex gap-2 flex-wrap">
+              {[
+                { key: 'TARGET_3', val: stats.target_3_hits },
+                { key: 'TARGET_2', val: stats.target_2_hits },
+                { key: 'TARGET_1', val: stats.target_1_hits },
+                { key: 'TIME_EXIT', val: stats.time_exits },
+                { key: 'STOP', val: stats.losses },
+              ].map(({ key, val }) => {
+                const pct = stats.completed > 0 ? Math.round((val / stats.completed) * 100) : 0;
+                const oc = outcomeConfig[key];
+                return (
+                  <div key={key} className="flex-1 min-w-[80px] bg-gray-50 dark:bg-dark-border rounded-xl p-3 text-center">
+                    <div className={clsx('text-base font-bold', oc.color)}>{pct}%</div>
+                    <div className="text-[10px] text-gray-400 mt-0.5">{oc.label}</div>
+                    <div className="text-[10px] text-gray-500">{val} trades</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Score group breakdown */}
+          <div className="mb-4">
+            <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Resultat per score-intervall</div>
+            <div className="space-y-2">
+              {['85+', '70-84', '55-69', '45-54'].map(g => {
+                const sg = stats.score_groups[g];
+                if (!sg || sg.total === 0) return null;
+                const wr = Math.round((sg.wins / sg.total) * 100);
+                return (
+                  <div key={g} className="flex items-center gap-3">
+                    <span className="text-xs font-mono text-gray-500 w-12 shrink-0">{g}</span>
+                    <div className="flex-1 h-2 bg-gray-100 dark:bg-dark-border rounded-full overflow-hidden">
+                      <div
+                        className={clsx('h-full rounded-full', wr >= 55 ? 'bg-emerald-400' : wr >= 45 ? 'bg-amber-400' : 'bg-red-400')}
+                        style={{ width: `${wr}%` }}
+                      />
+                    </div>
+                    <span className={clsx('text-xs font-bold w-10 text-right', wr >= 55 ? 'text-emerald-500' : wr >= 45 ? 'text-amber-500' : 'text-red-500')}>
+                      {wr}%
+                    </span>
+                    <span className={clsx('text-xs w-14 text-right', sg.avgR >= 0 ? 'text-emerald-500' : 'text-red-400')}>
+                      {sg.avgR >= 0 ? '+' : ''}{sg.avgR}R
+                    </span>
+                    <span className="text-xs text-gray-400 w-16 text-right">{sg.total} trades</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Win/loss/time averages */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-3 text-center">
+              <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">+{stats.avg_win_r}R</div>
+              <div className="text-xs text-emerald-500">snitt gevinst</div>
+            </div>
+            <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-3 text-center">
+              <div className="text-lg font-bold text-red-500">{stats.avg_loss_r}R</div>
+              <div className="text-xs text-red-400">snitt tap</div>
+            </div>
+            <div className="bg-gray-50 dark:bg-dark-border rounded-xl p-3 text-center">
+              <div className="text-lg font-bold text-brand-slate dark:text-white">{stats.avg_days_held}d</div>
+              <div className="text-xs text-gray-400">snitt holdtid</div>
+            </div>
+          </div>
         </div>
-        <table className="w-full">
-          <thead className="bg-gray-50 dark:bg-gray-700">
-            <tr>
-              <th className="text-left px-4 py-3 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Ticker</th>
-              <th className="text-left px-4 py-3 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Periode</th>
-              <th className="text-right px-4 py-3 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">K-Score</th>
-              <th className="text-right px-4 py-3 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Inngang</th>
-              <th className="text-right px-4 py-3 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Nåværende</th>
-              <th className="text-right px-4 py-3 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Avkastning</th>
-              <th className="text-right px-4 py-3 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Dager</th>
-              <th className="text-center px-4 py-3 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-            {filteredResults.map(result => (
-              <tr key={`${result.ticker}-${result.period}`} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                <td className="px-4 py-3">
-                  <div className="font-bold text-gray-900 dark:text-white">{result.ticker.replace('.OL', '')}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">{result.name}</div>
-                </td>
-                <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{result.period}</td>
-                <td className="px-4 py-3 text-right">
-                  <span className={clsx(
-                    'font-bold',
-                    result.kScoreAtEntry >= 80 ? 'text-green-600' : 'text-yellow-600'
-                  )}>
-                    {result.kScoreAtEntry}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-300">{result.entryPrice.toFixed(2)} kr</td>
-                <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-300">{result.currentPrice.toFixed(2)} kr</td>
-                <td className={clsx(
-                  'px-4 py-3 text-right font-bold',
-                  result.returnPercent >= 0 ? 'text-green-600' : 'text-red-600'
-                )}>
-                  {result.returnPercent >= 0 ? '+' : ''}{result.returnPercent.toFixed(1)}%
-                </td>
-                <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-300">{result.daysHeld}d</td>
-                <td className="px-4 py-3 text-center">
-                  <span className={clsx(
-                    'px-2 py-1 rounded-full text-xs font-bold',
-                    result.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                  )}>
-                    {result.success ? '✓ Suksess' : '✗ Tap'}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      )}
+    </div>
+  );
+}
 
-      {/* Conclusion */}
-      <div className="mt-8 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-xl p-6">
-        <h3 className="font-bold text-gray-900 dark:text-white mb-3">📈 Konklusjon</h3>
-        <p className="text-gray-700 dark:text-gray-300 mb-4">
-          Basert på backtest-data viser K-Score-strategien en suksessrate på <strong>{successRate.toFixed(0)}%</strong> med 
-          en gjennomsnittlig avkastning på <strong>{avgReturn.toFixed(1)}%</strong> over en holdperiode på 
-          ca. <strong>{avgDaysHeld.toFixed(0)} dager</strong>.
-        </p>
-        <div className="bg-white/50 dark:bg-black/20 rounded-lg p-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            <strong>Anbefaling:</strong> K-Score ≥80 gir best risk/reward ratio med høyere win-rate og bedre gjennomsnittlig avkastning.
-            Trades med K-Score 85+ har historisk levert de beste resultatene.
+function SignalRow({ row }: { row: any }) {
+  const oc = outcomeConfig[row.outcome] || outcomeConfig.OPEN;
+  return (
+    <tr className="border-b border-surface-border dark:border-dark-border hover:bg-gray-50 dark:hover:bg-dark-border/30">
+      <td className="px-4 py-2.5 text-sm font-bold text-brand-slate dark:text-white">{row.symbol.replace('.OL','')}</td>
+      <td className="px-4 py-2.5 text-xs text-gray-500">{row.signal_date}</td>
+      <td className="px-4 py-2.5">
+        <span className={clsx('text-xs font-bold px-2 py-0.5 rounded-full', signalTypeConfig[row.signal_type]?.color, signalTypeConfig[row.signal_type]?.bg)}>
+          {signalTypeConfig[row.signal_type]?.label || row.signal_type}
+        </span>
+      </td>
+      <td className="px-4 py-2.5 text-xs text-center font-bold text-brand-slate dark:text-white">{row.score}</td>
+      <td className="px-4 py-2.5 text-xs text-right text-gray-500">{row.entry_actual?.toFixed(2) ?? '—'}</td>
+      <td className="px-4 py-2.5 text-xs text-center">
+        <span className={clsx('font-bold', oc.color)}>{oc.label}</span>
+      </td>
+      <td className={clsx('px-4 py-2.5 text-xs text-right font-bold',
+        row.r_multiple == null ? 'text-gray-400' : row.r_multiple > 0 ? 'text-emerald-500' : 'text-red-500'
+      )}>
+        {row.r_multiple != null ? `${row.r_multiple >= 0 ? '+' : ''}${row.r_multiple}R` : '—'}
+      </td>
+      <td className="px-4 py-2.5 text-xs text-right text-gray-400">{row.days_held ?? '—'}d</td>
+    </tr>
+  );
+}
+
+// ── Main Page ──────────────────────────────────────────────────────────────────
+
+export default function BacktestPage() {
+  const [data, setData] = useState<BacktestData | null>(null);
+  const [rows, setRows] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [setupRequired, setSetupRequired] = useState(false);
+  const [minScore, setMinScore] = useState(45);
+  const [fromDate, setFromDate] = useState('2025-01-01');
+  const [typeFilter, setTypeFilter] = useState<string | null>(null);
+  const [showDetail, setShowDetail] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        minScore: String(minScore),
+        from: fromDate,
+        ...(typeFilter ? { type: typeFilter } : {}),
+      });
+      const statsRes = await fetch(`/api/backtest?${params}`, { cache: 'no-store' });
+      const stats = await statsRes.json();
+      if (stats.setup_required) { setSetupRequired(true); setLoading(false); return; }
+      setData(stats);
+
+      if (showDetail) {
+        const detailRes = await fetch(`/api/backtest?${params}&detail=true`, { cache: 'no-store' });
+        const det = await detailRes.json();
+        setRows(det.rows || []);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [minScore, fromDate, typeFilter, showDetail]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  // ── Setup required screen ────────────────────────────────────────────────────
+  if (setupRequired) {
+    return (
+      <div className="min-h-screen bg-surface-muted dark:bg-dark-surface flex items-center justify-center p-8">
+        <div className="bg-surface dark:bg-dark-bg rounded-3xl border border-surface-border dark:border-dark-border p-8 max-w-lg w-full">
+          <AlertTriangle className="w-10 h-10 text-amber-400 mb-4" />
+          <h2 className="text-xl font-bold text-brand-slate dark:text-white mb-2">Backtesting ikke satt opp ennå</h2>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
+            Tabellen <code className="bg-gray-100 dark:bg-dark-border px-1 rounded">signal_results</code> mangler i databasen.
+            Kjør disse to kommandoene i terminalen:
+          </p>
+          <div className="bg-gray-900 rounded-xl p-4 text-sm font-mono space-y-2 mb-4">
+            <div>
+              <div className="text-emerald-400 text-xs mb-1"># 1. Åpner Supabase SQL Editor (paste SQL og klikk Run)</div>
+              <div className="text-white">npx tsx scripts/setup-db.ts</div>
+            </div>
+            <div>
+              <div className="text-emerald-400 text-xs mb-1"># 2. Seed og beregn historiske resultater</div>
+              <div className="text-white">npx tsx scripts/compute-signal-results.ts --init</div>
+            </div>
+          </div>
+          <p className="text-xs text-gray-400">
+            Dette er en engangsjobb. Etter dette oppdateres backtest-dataen automatisk hver kveld kl 22:30.
           </p>
         </div>
       </div>
-    </main>
+    );
+  }
+
+  // ── Main content ─────────────────────────────────────────────────────────────
+  return (
+    <div className="min-h-screen bg-surface-muted dark:bg-dark-surface">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-8">
+          <BarChart3 className="w-7 h-7 text-brand-emerald" strokeWidth={2.5} />
+          <div>
+            <h1 className="text-3xl font-extrabold text-brand-slate dark:text-white">Backtesting</h1>
+            <p className="text-sm text-gray-400 mt-0.5">Historiske resultater — validerer at signalene faktisk fungerer</p>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-3 mb-6">
+          <div className="flex items-center gap-2 bg-surface dark:bg-dark-surface rounded-xl border border-surface-border dark:border-dark-border px-3 py-2">
+            <span className="text-xs text-gray-400">Min score</span>
+            <div className="flex gap-1">
+              {[45, 55, 65, 70].map(s => (
+                <button key={s} onClick={() => setMinScore(s)}
+                  className={clsx('px-2 py-1 rounded-lg text-xs font-bold transition-all',
+                    minScore === s ? 'bg-brand-emerald text-white' : 'text-gray-400 hover:text-gray-600'
+                  )}>
+                  {s}+
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 bg-surface dark:bg-dark-surface rounded-xl border border-surface-border dark:border-dark-border px-3 py-2">
+            <span className="text-xs text-gray-400">Fra</span>
+            <div className="flex gap-1">
+              {[
+                { label: '3 mnd', val: new Date(Date.now() - 90*86400000).toISOString().split('T')[0] },
+                { label: '6 mnd', val: new Date(Date.now() - 180*86400000).toISOString().split('T')[0] },
+                { label: '1 år',  val: new Date(Date.now() - 365*86400000).toISOString().split('T')[0] },
+                { label: 'Alt',   val: '2024-01-01' },
+              ].map(({ label, val }) => (
+                <button key={label} onClick={() => setFromDate(val)}
+                  className={clsx('px-2 py-1 rounded-lg text-xs font-bold transition-all',
+                    fromDate === val ? 'bg-brand-emerald text-white' : 'text-gray-400 hover:text-gray-600'
+                  )}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex gap-1">
+            {[null, 'POWER_BREAKOUT', 'HIGH_52W', 'CONTINUATION'].map(t => (
+              <button key={t ?? 'all'} onClick={() => setTypeFilter(t)}
+                className={clsx('px-3 py-1.5 rounded-xl text-xs font-bold transition-all border',
+                  typeFilter === t
+                    ? 'bg-brand-slate dark:bg-white text-white dark:text-black border-transparent'
+                    : 'bg-surface dark:bg-dark-surface border-surface-border dark:border-dark-border text-gray-400 hover:text-gray-600'
+                )}>
+                {t ? (signalTypeConfig[t]?.label || t) : 'Alle typer'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="w-6 h-6 border-2 border-brand-emerald border-t-transparent rounded-full animate-spin" />
+            <span className="ml-3 text-gray-400">Laster backtest-data...</span>
+          </div>
+        ) : data ? (
+          <>
+            {/* Overall summary */}
+            {data.overall && data.overall.completed > 0 && (
+              <div className="mb-8">
+                <div className="flex items-center gap-2 mb-4">
+                  <h2 className="text-lg font-bold text-brand-slate dark:text-white">Totalresultat</h2>
+                  <span className="text-xs text-gray-400 flex items-center gap-1">
+                    <Info className="w-3.5 h-3.5" />
+                    {data.overall.completed} fullførte trades, {data.overall.open} åpne
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+                  <StatCard
+                    label="Treffsikkerhet"
+                    value={`${data.overall.win_rate}%`}
+                    sub={`${data.overall.wins} vinn / ${data.overall.losses} tap`}
+                    color={data.overall.win_rate >= 50 ? 'text-emerald-500' : 'text-red-500'}
+                  />
+                  <StatCard
+                    label="Snitt R per trade"
+                    value={`${data.overall.avg_r >= 0 ? '+' : ''}${data.overall.avg_r}R`}
+                    sub="gevinst minus tap"
+                    color={data.overall.avg_r >= 0 ? 'text-emerald-500' : 'text-red-500'}
+                  />
+                  <StatCard
+                    label="Forventet verdi"
+                    value={`${data.overall.expected_value >= 0 ? '+' : ''}${data.overall.expected_value}R`}
+                    sub="per trade i snitt"
+                    color={data.overall.expected_value >= 0 ? 'text-emerald-500' : 'text-red-500'}
+                  />
+                  <StatCard
+                    label="Snitt holdtid"
+                    value={`${data.overall.avg_days_held}d`}
+                    sub={`maks ${20} handelsdager`}
+                  />
+                </div>
+                <div className="bg-blue-50 dark:bg-blue-900/10 rounded-xl p-3 border border-blue-100 dark:border-blue-900/30 flex items-start gap-2">
+                  <Info className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
+                  <p className="text-xs text-blue-600 dark:text-blue-400">
+                    <strong>Forventet verdi (EV)</strong> er det viktigste tallet — hvis positiv er systemet lønnsomt over tid.
+                    EV = (vinnsannsynlighet × snitt gevinst) − (tapssannsynlighet × snitt tap).
+                    {data.overall.expected_value >= 0.3 && ' ✅ Systemet ser lønnsomt ut.'}
+                    {data.overall.expected_value > 0 && data.overall.expected_value < 0.3 && ' ⚡ Marginalt positivt — bruk score 65+ for bedre resultater.'}
+                    {data.overall.expected_value < 0 && ' ❌ Negativt EV — filtrer på score 70+ for å finne de beste setups.'}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Per signal type */}
+            <div className="mb-8">
+              <h2 className="text-lg font-bold text-brand-slate dark:text-white mb-4">Per signaltype</h2>
+              <div className="space-y-3">
+                {['POWER_BREAKOUT', 'HIGH_52W', 'CONTINUATION'].map(type => (
+                  <TypeCard key={type} type={type} stats={data.by_type[type]} />
+                ))}
+              </div>
+            </div>
+
+            {/* Detail table */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-brand-slate dark:text-white">Alle signaler</h2>
+              <button
+                onClick={() => setShowDetail(!showDetail)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-brand-slate dark:bg-white text-white dark:text-black hover:opacity-90 transition-all"
+              >
+                {showDetail ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                {showDetail ? 'Skjul' : 'Vis alle signaler'}
+              </button>
+            </div>
+
+            {showDetail && rows.length > 0 && (
+              <div className="bg-surface dark:bg-dark-surface rounded-2xl border border-surface-border dark:border-dark-border overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-gray-50 dark:bg-dark-muted text-xs text-gray-400 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left">Symbol</th>
+                        <th className="px-4 py-3 text-left">Dato</th>
+                        <th className="px-4 py-3 text-left">Type</th>
+                        <th className="px-4 py-3 text-center">Score</th>
+                        <th className="px-4 py-3 text-right">Entry</th>
+                        <th className="px-4 py-3 text-center">Utfall</th>
+                        <th className="px-4 py-3 text-right">R</th>
+                        <th className="px-4 py-3 text-right">Dager</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows
+                        .filter((r: any) => r.signal_type !== 'FAILED_BREAKOUT')
+                        .slice(0, 200)
+                        .map((r: any) => <SignalRow key={r.id} row={r} />)
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                {rows.length > 200 && (
+                  <div className="px-4 py-3 text-xs text-gray-400 border-t border-surface-border dark:border-dark-border">
+                    Viser 200 av {rows.length} signaler — bruk filter for å innsnevre
+                  </div>
+                )}
+              </div>
+            )}
+
+            {showDetail && rows.length === 0 && (
+              <div className="bg-surface dark:bg-dark-surface rounded-2xl border border-surface-border dark:border-dark-border p-8 text-center">
+                <Target className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                <p className="text-gray-400">Ingen fullførte signaler ennå</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Kjør <code className="bg-gray-100 dark:bg-dark-border px-1 rounded">npx tsx scripts/compute-signal-results.ts --init</code>
+                </p>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-20 text-gray-400">Ingen data</div>
+        )}
+      </div>
+    </div>
   );
 }

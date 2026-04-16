@@ -20,4 +20,8 @@ echo "3/3 Kjører scanner..."
 npx tsx scripts/run-scanner.ts
 echo ""
 
+echo "4/4 Beregner backtest-resultater..."
+npx tsx scripts/compute-signal-results.ts
+echo ""
+
 echo "=== FERDIG — åpne https://k-man-island.vercel.app/scanner ==="
